@@ -28,7 +28,7 @@ import { TransformControls } from "three/examples/jsm/controls/TransformControls
 export default class ChartScene {
   options: Options;
   initOptions: Pick<Options, "helper" | "autoRotate" | "rotateSpeed"> = {
-    helper: true,
+    helper: false,
     autoRotate: true,
     rotateSpeed: 0.01,
   };
