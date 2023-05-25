@@ -1,4 +1,6 @@
-# earthFlywire
+# earthFlyLine
+## [项目地址](#https://github.com/JavaScriptam/earth-flyLine)
+https://github.com/JavaScriptam/earth-flyLine
 
 ## 项目介绍
 
@@ -20,7 +22,7 @@
 # 使用说明
 
 ```bash
-npm install earth-flywire -S
+npm install earth-flyLine -S
 ```
 
 
@@ -28,13 +30,13 @@ npm install earth-flywire -S
 ## 🐸 示例
 
 ```javascript
-import earthFlywire from "earth-flywire";
-//请先下载地图文件 然后注册地图
+import earthFlyLine from "earth-flyLine";
+//请先下载地图文件（可去第三方下载） 然后注册地图 本项目的地图文件在src/map/world
 import geojson from 'xxx/path/world.json'
 chart.registerMap("world", geojson);
 //获取dom节点作为容器 注：该节点请设置宽高
 const dom = document.getElementById("container");
-const chart = earthFlywire.init({
+const chart = earthFlyLine.init({
       dom,
       map: "world",
     });
@@ -65,7 +67,7 @@ chart.addData("flyLine", [
 
 ## 📄 文档
 ```javascript
-earthFlywire.init({
+earthFlyLine.init({
   dom,
   config: {
     R: 140,

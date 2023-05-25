@@ -21,7 +21,7 @@ export default defineConfig({
   build: {
     lib: {
       entry: resolve(__dirname, "src/entry.ts"),
-      name: "earth-flywire",
+      name: "earth-flyLine",
       fileName: (format) => `index.${format}.js`,
     },
     minify: "terser",
