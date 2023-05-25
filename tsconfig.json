@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    "strictPropertyInitialization": false,
+    "target": "ESNext",
+    "allowJs": true,
+    "useDefineForClassFields": true,
+    "module": "ESNext",
+    "rootDir": "src",
+    "moduleResolution": "Node",
+    "strict": true,
+    "baseUrl": ".",
+    "jsx": "preserve",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "lib": ["ESNext", "DOM"],
+    "skipLibCheck": true,
+    "noEmit": true,
+    "paths": {
+      "vue": [
+        "node_modules/vue/types"
+      ],
+      "@/*": [
+        "src/*"
+      ]
+    }
+  },
+  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue","./typings"],
+  "references": [{ "path": "./tsconfig.node.json" }]
+}
