@@ -22,7 +22,7 @@ https://github.com/JavaScriptam/earth-flyLine
 # 使用说明
 
 ```bash
-npm install earth-flyLine -S
+npm install earth-flyline -S
 ```
 
 
@@ -30,7 +30,7 @@ npm install earth-flyLine -S
 ## 🐸 示例
 
 ```javascript
-import earthFlyLine from "earth-flyLine";
+import earthFlyLine from "earth-flyline";
 //请先下载地图文件（可去第三方下载） 然后注册地图 本项目的地图文件在src/map/world
 import geojson from 'xxx/path/world.json'
 chart.registerMap("world", geojson);
