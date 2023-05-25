@@ -1,2 +1,2 @@
-import earthFlywire from "./lib/index";
-export default earthFlywire;
+import earthFlyLine from "./lib/index";
+export default earthFlyLine;
