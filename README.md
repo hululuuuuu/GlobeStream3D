@@ -33,7 +33,7 @@ npm install earth-flyline -S
 import earthFlyLine from "earth-flyline";
 //请先下载地图文件（可去第三方下载） 然后注册地图 本项目的地图文件在src/map/world
 import geojson from 'xxx/path/world.json'
-chart.registerMap("world", geojson);
+earthFlyLine.registerMap("world", geojson);
 //获取dom节点作为容器 注：该节点请设置宽高
 const dom = document.getElementById("container");
 const chart = earthFlyLine.init({
