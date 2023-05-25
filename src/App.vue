@@ -3,7 +3,6 @@ import { onMounted } from "vue";
 import world from "./map/world.json";
 import chart from "@/entry";
 import ChartScene from "@/lib/chartScene";
-import { FeatureCollection } from "geojson";
 let chartInstance: ChartScene;
 const geoJson: any = world;
 chart.registerMap("world", geoJson);
