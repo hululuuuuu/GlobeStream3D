@@ -189,7 +189,7 @@ export default class ChartScene {
   }
   setData = async <K extends keyof SetData>(type: K, data: SetData[K]) => {
     try {
-      this._OperateView.remove(this.earthContainer, "removeAll");
+      this._OperateView.remove(this.earthContainer, type, "removeAll");
       const group = await this._OperateView.setData(type, data);
       this.earthContainer.add(...group);
     } catch (e) {
@@ -204,8 +204,8 @@ export default class ChartScene {
       console.log(e);
     }
   };
-  remove(ids: string[] | "removeAll" = "removeAll") {
-    this._OperateView.remove(this.earthContainer, ids);
+  remove(type: string, ids: string[] | "removeAll" = "removeAll") {
+    this._OperateView.remove(this.earthContainer, type, ids);
   }
   transformControl() {
     const controls = new TransformControls(

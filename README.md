@@ -40,14 +40,17 @@ const chart = earthFlyLine.init({
       dom,
       map: "world",
     });
+//新增数据
 chart.addData("flyLine", [
  {
    from:{
+     id:1,//string | number
       lon: 112.45, //经度
       lat: 34.62, //维度
      ...extraField // 其他自定义字段
     },
     to:{
+      id:2,//string | number
       lon: 14, //经度
       lat: 52, //维度
       ...extraField // 其他自定义字段
@@ -57,6 +60,8 @@ chart.addData("flyLine", [
 .then(() => {
   console.log('塞入数据成功');
 });
+//移除数据
+chart.remove('flyLine',['1-2']) //1-2 原数据中的from.id 和to.id拼接  `${from.id}-${to.id}`
 ```
 
 
@@ -108,4 +113,12 @@ npm install
 npm run build
 ```
 构建好的文件在`dist`文件夹。
+
+## 最后
+1、近期的更新会提供更多api 操作起来更加灵活
+
+2、近期在新增功能上会覆盖绝大多数使用场景
+
+3、近期增加2D地图渲染功能
+
 

@@ -40,10 +40,12 @@ onMounted(() => {
     chartInstance.setData("flyLine", [
       {
         from: {
+          id: 1,
           lon: 112.45, //经度
           lat: 34.62, //维度
         },
         to: {
+          id: 2,
           lon: 14, //经度
           lat: 52, //维度
         },
@@ -91,7 +93,7 @@ function set() {
   ]);
 }
 function del() {
-  chartInstance.remove([pre]);
+  chartInstance.remove("flyLine", []);
 }
 // This starter template is using Vue 3 <script setup> SFCs
 // Check out https://vuejs.org/api/sfc-script-setup.html#script-setup

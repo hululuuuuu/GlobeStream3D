@@ -46,8 +46,7 @@ export default class OperateView {
   setData: OptDataFunc = (type, data) => {
     return this.addData(type, data);
   };
-  remove(earthContainer: Object3D, ids: string[] | "removeAll") {
-    console.log(earthContainer.children);
+  remove(earthContainer: Object3D, type: string, ids: string[] | "removeAll") {
     if (earthContainer.children.length !== 0) {
       earthContainer.children.forEach((item) => {
         if (item instanceof Group && item.name !== "earthGroup") {
