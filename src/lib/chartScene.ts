@@ -64,6 +64,7 @@ export default class ChartScene {
       cameraType = "OrthographicCamera",
       light = "DirectionalLight",
       helper = false,
+      map = "world",
       config,
     } = this.options;
     this._store.setConfig(config);
@@ -135,7 +136,7 @@ export default class ChartScene {
   }
   addFigures() {
     const groupEarth = new CreateEarth(this._store).create();
-    const mapShape = new MapShape(this._store);
+    const mapShape = new MapShape(this);
     groupEarth.add(...mapShape.create());
     this.earthContainer = this.createCube();
     this.earthContainer.add(groupEarth, sprite(this._store.config));
