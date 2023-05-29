@@ -13,7 +13,6 @@ import { Feature, Position } from "geojson";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils";
 import { lon2xyz } from "@/lib/utils/math";
 import Delaunator from "delaunator";
-import Store from "@/lib/store/store";
 import MapStore from "@/lib/store/mapStore";
 import ChartScene from "@/lib/chartScene";
 
