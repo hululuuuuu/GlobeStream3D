@@ -15,13 +15,14 @@ import { lon2xyz } from "@/lib/utils/math";
 import Delaunator from "delaunator";
 import Store from "@/lib/store/store";
 import MapStore from "@/lib/store/mapStore";
+import ChartScene from "@/lib/chartScene";
 
 export default class MapShape {
   private readonly _config: configType;
   features: Feature[];
-  constructor(store: Store) {
-    this._config = store.getConfig();
-    this.features = MapStore.hashMap[this._config.map];
+  constructor(chartScene: ChartScene) {
+    this._config = chartScene._store.getConfig();
+    this.features = MapStore.hashMap[chartScene.options.map];
   }
   create() {
     const arr: Group[] = [];
