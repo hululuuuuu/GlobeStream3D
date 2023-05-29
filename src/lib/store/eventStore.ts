@@ -21,9 +21,8 @@ class EventStore {
   notification(event: MouseEvent) {
     const eventMesh = this.handleRaycaster(event);
     if (eventMesh) {
-      console.log(eventMesh);
+      this.eventMap[event.type](event, eventMesh);
     }
-    this.eventMap[event.type](event, eventMesh);
   }
   handleRaycaster(event: MouseEvent) {
     const Sx = event.clientX; //鼠标单击位置横坐标

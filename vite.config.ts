@@ -25,6 +25,12 @@ export default defineConfig({
       fileName: (format) => `index.${format}.js`,
     },
     minify: "terser",
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true,
+      },
+    },
   },
   css: {
     // 指定传递给 CSS 预处理器的选项; 文件扩展名用作选项的键
