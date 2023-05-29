@@ -193,7 +193,6 @@ const chart = earthFlyLine.init({
 //'click'、'dblclick'、'mousedown'、'mousemove'、'mouseup'、'mouseover'、'mouseout'、'globalout'、'contextmenu'
 chart.on("click", (params) => {
   console.log(params)
-  chart.options.autoRotate = false;
 });
 
 chart.on("mouseover", (params) => {
