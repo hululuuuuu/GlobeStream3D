@@ -56,11 +56,6 @@ onMounted(() => {
           lon: 14, //经度
           lat: 52, //维度
         },
-        style: {
-          pathLineStyle: {
-            color: "red",
-          },
-        },
       },
     ]);
     // chartInstance.on("click", (event: Event, params: any) => {});
