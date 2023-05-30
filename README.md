@@ -7,7 +7,7 @@ https://github.com/JavaScriptam/earth-flyLine
 
 基于three.js 构建3D大屏地球可视化，居家必备，搬砖神器节约时间。
 
-![](https://github.com/JavaScriptam/earth-flyLine/blob/main/markdownImage/earth.gif?raw=true)
+![avatar](https://github.com/JavaScriptam/earth-flyLine/blob/feature/region/markdownImage/earth.gif?raw=true)
 
 ## ✨ 特性
 
@@ -85,17 +85,23 @@ const chart = earthFlyLine.init({
       areaColor: "#2e3564",
       lineColor: "#797eff",
     },
-    spriteColor: "#797eff", //光圈
+    spriteColor: "#797eff", 
     pathStyle: {
-      color: "#cd79ff", //飞线路径配置
+      color: "#cd79ff", 
     },
     flyWireStyle: {
-      //飞线样式配置
       color: "#cd79ff",
     },
     scatterStyle: {
-      //涟漪
       color: "#cd79ff",
+    },
+    hoverRegionStyle: {
+      areaColor: "#cd79ff",
+    },
+    regions: {
+      China: {
+        areaColor: "#2e3564",
+      },
     },
   },
 })
@@ -116,15 +122,17 @@ const chart = earthFlyLine.init({
 
 ### config
 
-| 参数         | 类型   | 说明                   | 默认 |
-| ------------ | ------ | ---------------------- | ---- |
-| R            | number | 地球半径值越大地球越大 | 150  |
-| earth        | object | 地球相关配置           |      |
-| mapStyle     | object | 地图样式配置           |      |
-| spriteColor  | string | 光圈颜色配置           |      |
-| pathStyle    | object | 飞线路径配置           |      |
-| flyWireStyle | object | 蝌蚪飞线配置           |      |
-| scatterStyle | object | 涟漪配置               |      |
+| 参数             | 类型   | 说明                                | 默认      |
+| ---------------- | ------ | ----------------------------------- | --------- |
+| R                | number | 地球半径值越大地球越大              | 150       |
+| earth            | object | 地球相关配置                        |           |
+| mapStyle         | object | 地图样式配置                        |           |
+| spriteColor      | string | 光圈颜色配置                        |           |
+| pathStyle        | object | 飞线路径配置                        |           |
+| flyWireStyle     | object | 蝌蚪飞线配置                        |           |
+| scatterStyle     | object | 涟漪配置                            |           |
+| hoverRegionStyle | object | 鼠标hover地图高亮 不传则不生效      | Undefined |
+| regions          | object | 单独配置地图区域的颜色 不传则不生效 |           |
 
 
 
