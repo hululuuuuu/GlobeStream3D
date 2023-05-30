@@ -7,6 +7,8 @@ https://github.com/JavaScriptam/earth-flyLine
 
 基于three.js 构建3D大屏地球可视化，居家必备，搬砖神器节约时间。
 
+![](https://github.com/JavaScriptam/earth-flyLine/blob/main/markdownImage/earth.gif?raw=true)
+
 ## ✨ 特性
 
 + 📦 开箱即用：简单快速集成，基本零成本上手。
@@ -61,10 +63,6 @@ chart.remove('flyLine',['1-2']) //1-2 原数据中的from.id 和to.id拼接  `${
 ```
 
 
-
-### 😱先这样，然后再那样，成了！🙀
-
-![image-20230522204834295](markdownImage/earth.png)
 
 ## 📄 文档
 
@@ -173,13 +171,13 @@ const chart = earthFlyLine.init({
 
    ### **remove参数解释** 
 
-   - type: 添加数据模型的类型，目前只支持 'flyLine' 
+   - type: 移除数据模型的类型，目前只支持 'flyLine' 
 
    - ids: string[] | 'removeAll'
 
      当ids为 'removeAll' 的时候移除地球上所有当前type类型的组件。
 
-     当ids为 string[] 类型时 移除地球上对应id的数据。例如: [ \`${from.id}-${to.id}\` ] 
+     当ids为 string[] 类型时 移除地球上对应id的数据。例如: [ \`${from.id}-${to.id}\` ]  会移除数据对应的飞线集合
 
 ## 事件
 

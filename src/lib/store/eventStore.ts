@@ -1,14 +1,44 @@
 import ChartScene from "@/lib/chartScene";
-import { Group, Mesh, Object3D, Raycaster, Vector2 } from "three";
+import {
+  Color,
+  Group,
+  Mesh,
+  Object3D,
+  Raycaster,
+  Vector2,
+  Material,
+  MeshBasicMaterial,
+} from "three";
 
 class EventStore {
   eventMap: Record<
     string,
     (event: Event, mesh: Object3D | Group | Mesh | undefined) => void
   > = {};
+  buildInEventMap: Record<
+    string,
+    (event: Event, mesh: Object3D | Group | Mesh | undefined) => void
+  > = {};
   _chartScene: ChartScene;
+  currentMesh: Mesh | null;
+  currentColor: Color;
   constructor(chartScene: ChartScene) {
     this._chartScene = chartScene;
+    //需要hover事件
+    const buildInRequired =
+      this._chartScene.options.config &&
+      this._chartScene.options.config.hoverRegionStyle &&
+      Object.keys(this._chartScene.options.config?.hoverRegionStyle).length > 0;
+    if (buildInRequired) {
+      this.registerBuildInEventMap("mousemove", () => {
+        if (this.currentMesh) {
+          console.log(this.currentMesh);
+          (this.currentMesh.material as MeshBasicMaterial).color.set(
+            this.currentMesh.userData.backupColor
+          );
+        }
+      });
+    }
   }
   registerEventMap(eventName: string, cb: (params: any) => void) {
     this.eventMap[eventName] = cb;
@@ -16,6 +46,23 @@ class EventStore {
       event: MouseEvent
     ) => {
       this.notification(event);
+    }) as EventListener);
+  }
+  registerBuildInEventMap(eventName: string, cb: () => void) {
+    this.buildInEventMap[eventName] = cb;
+    this._chartScene.options.dom.addEventListener(eventName, ((
+      event: MouseEvent
+    ) => {
+      const eventMesh = this.handleRaycaster(event);
+      cb();
+      if (eventMesh && eventMesh.userData.type === "country") {
+        this.currentMesh = eventMesh;
+        (this.currentMesh.material as MeshBasicMaterial).color.set(
+          this._chartScene.options.config!.hoverRegionStyle!.areaColor!
+        );
+      } else {
+        this.currentMesh = null;
+      }
     }) as EventListener);
   }
   notification(event: MouseEvent) {
@@ -48,7 +95,7 @@ class EventStore {
     );
     if (intersects.length > 0) {
       // if(intersects[0].object.isTransformControls)
-      return intersects[0].object;
+      return intersects[0].object as Mesh;
     }
   }
 }

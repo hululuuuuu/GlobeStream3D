@@ -12,6 +12,7 @@ onMounted(() => {
     chartInstance = chart.init({
       dom,
       map: "world",
+      autoRotate: false,
       config: {
         R: 140,
         earth: {
@@ -32,6 +33,14 @@ onMounted(() => {
         scatterStyle: {
           //涟漪
           color: "#cd79ff",
+        },
+        hoverRegionStyle: {
+          areaColor: "#cd79ff",
+        },
+        regions: {
+          China: {
+            areaColor: "#2e3564",
+          },
         },
       },
     });

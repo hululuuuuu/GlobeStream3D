@@ -1,5 +1,9 @@
 import { Group, Object3D } from "three";
+type RGB = `rgb(${number}, ${number}, ${number})`;
+type RGBA = `rgba(${number}, ${number}, ${number}, ${number})`;
+type HEX = `#${string}`;
 
+type Color = RGB | RGBA | HEX;
 export interface Options {
   cameraType?: string;
   dom: HTMLElement;
@@ -11,15 +15,15 @@ export interface Options {
   config?: Partial<configType>;
 }
 export interface PathLineStyle {
-  color: string;
+  color: Color;
   size: number;
 }
 export interface FlyWireStyle {
-  color: string;
+  color: Color;
   size: number;
 }
 export interface ScatterStyle {
-  color: string;
+  color: Color;
   size: number;
 }
 export interface Coordinates {
@@ -34,29 +38,27 @@ export interface LineStyle {
   pathLineStyle: Partial<PathLineStyle>;
 }
 interface Earth {
-  color: string;
+  color: Color;
 }
 interface MapStyle {
-  areaColor?: string;
-  lineColor?: string;
+  areaColor?: Color;
+  lineColor?: Color;
 }
-type Regions = Record<
-  any,
-  {
-    areaColor?: string;
-    lineColor?: string;
-  }
->;
+export interface RegionBaseStyle {
+  areaColor?: Color;
+}
+type RegionsStyle = Record<string, RegionBaseStyle>;
 export interface configType {
   R: number;
   map: string;
   earth: Earth;
   mapStyle: MapStyle;
-  spriteColor: string;
-  regions?: Regions;
+  spriteColor: Color;
   pathStyle: Partial<PathLineStyle>;
   flyWireStyle: Partial<FlyWireStyle>;
   scatterStyle: Partial<ScatterStyle>;
+  regions?: RegionsStyle;
+  hoverRegionStyle?: RegionBaseStyle;
 }
 export interface Coordinates3D {
   x: number;
