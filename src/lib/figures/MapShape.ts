@@ -1,11 +1,13 @@
-import { configType } from "@/lib/interface";
+import { configType, RegionBaseStyle } from "@/lib/interface";
 import {
   BackSide,
   BufferAttribute,
   BufferGeometry,
   Group,
+  Line,
   LineBasicMaterial,
   LineLoop,
+  LineSegments,
   Mesh,
   MeshPhongMaterial,
 } from "three";
@@ -18,6 +20,7 @@ import ChartScene from "@/lib/chartScene";
 
 export default class MapShape {
   private readonly _config: configType;
+  currentStyle: RegionBaseStyle;
   features: Feature[];
   constructor(chartScene: ChartScene) {
     this._config = chartScene._store.getConfig();
@@ -29,6 +32,7 @@ export default class MapShape {
     this.features.forEach((item: Feature) => {
       const countryGroup = new Group();
       countryGroup.name = `group-${item.properties?.name}`;
+      this.getCurrentStyle(item.properties?.name);
       // //如果一个国家是单个轮廓
       let countryCoordinates: Position[][][] = [];
       if (item.geometry.type === "Polygon") {
@@ -38,6 +42,7 @@ export default class MapShape {
       }
       const geometryArr: BufferGeometry[] = [];
       countryCoordinates.forEach((subItem: Position[][]) => {
+        if (!subItem[0]) return;
         const { linePoints, allPoints3d, usefulIndexArr } = this.gridPoint(
           subItem[0]
         );
@@ -52,7 +57,11 @@ export default class MapShape {
       const mesh = this.mergeGeometry(geometryArr);
       countryGroup.add(mesh);
       mesh.name = item.properties?.name;
-      mesh.userData = { ...item.properties };
+      mesh.userData = {
+        ...item.properties,
+        type: "country",
+        backupColor: this.currentStyle.areaColor,
+      };
       arr.push(countryGroup);
     });
     return arr;
@@ -91,11 +100,10 @@ export default class MapShape {
     aggGeometry.computeVertexNormals(); //如果使用受光照影响材质，需要计算生成法线
     // MeshLambertMaterial  MeshBasicMaterial
     const material = new MeshPhongMaterial({
-      color: this._config.mapStyle!.areaColor,
+      color: this.currentStyle.areaColor,
       side: BackSide,
     });
-    const aggMesh = new Mesh(aggGeometry, material);
-    return aggMesh;
+    return new Mesh(aggGeometry, material);
   }
   gridPoint(polygon: Position[]) {
     //边界线的点位合集 和平面图形的点位合集
@@ -106,8 +114,9 @@ export default class MapShape {
     polygon.forEach((item: Position) => {
       lonArr.push(item[0]);
       latArr.push(item[1]);
-      const coord = lon2xyz(this._config.R as number, item[0], item[1]);
-      linePoints.push(coord.x, coord.y, coord.z);
+      const coord1 = lon2xyz(this._config.R + 0.1, item[0], item[1]);
+      const coord = lon2xyz(this._config.R, item[0], item[1]);
+      linePoints.push(coord1.x, coord1.y, coord1.z);
       allPoints3d.push(coord.x, coord.y, coord.z);
     });
     // minMax()计算polygon所有经纬度返回的极大值、极小值
@@ -201,5 +210,12 @@ export default class MapShape {
       }
     }
     return usefulIndexArr;
+  }
+  getCurrentStyle(name: string) {
+    if (this._config.regions?.[name]) {
+      this.currentStyle = this._config.regions[name];
+    } else {
+      this.currentStyle = { ...this._config.mapStyle };
+    }
   }
 }

@@ -123,7 +123,6 @@ export default class FlyWire {
       3
     );
     const material = new PointsMaterial({
-      // color: 0xffff00,
       vertexColors: true, //使用顶点颜色渲染
       size: 3.0, //点大小
     });
