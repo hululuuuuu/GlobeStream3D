@@ -12,6 +12,7 @@ onMounted(() => {
     chartInstance = chart.init({
       dom,
       map: "world",
+      autoRotate: false,
       config: {
         R: 140,
         earth: {
@@ -33,6 +34,14 @@ onMounted(() => {
           //涟漪
           color: "#cd79ff",
         },
+        hoverRegionStyle: {
+          areaColor: "#cd79ff",
+        },
+        regions: {
+          China: {
+            areaColor: "#2e3564",
+          },
+        },
       },
     });
     chartInstance.setData("flyLine", [
@@ -46,11 +55,6 @@ onMounted(() => {
           id: 2,
           lon: 14, //经度
           lat: 52, //维度
-        },
-        style: {
-          pathLineStyle: {
-            color: "red",
-          },
         },
       },
     ]);

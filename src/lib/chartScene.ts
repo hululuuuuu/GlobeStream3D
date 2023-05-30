@@ -50,10 +50,11 @@ export default class ChartScene {
       ...this.initOptions,
       ...params,
     };
-    this._eventStore = new EventStore(this);
+
     this.isPass = this.limitFPS(true);
     this.init();
     this.transformControl();
+    this._eventStore = new EventStore(this);
   }
   on(eventName: string, cb: (params: any) => void) {
     this._eventStore.registerEventMap(eventName, cb);
@@ -68,6 +69,7 @@ export default class ChartScene {
       config,
     } = this.options;
     this._store.setConfig(config);
+
     this.style = dom.getBoundingClientRect();
     this.scene = this.createScene();
     if (cameraType === "OrthographicCamera") {
