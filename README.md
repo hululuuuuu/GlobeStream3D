@@ -1,29 +1,26 @@
 # earthFlyLine
 
 ## [项目地址](#https://github.com/JavaScriptam/earth-flyLine)
+
 https://github.com/JavaScriptam/earth-flyLine
 
 ## 项目介绍
 
 基于three.js 构建3D大屏地球可视化，居家必备，搬砖神器节约时间。
 
-![avatar](https://github.com/JavaScriptam/earth-flyLine/blob/feature/region/markdownImage/earth.gif?raw=true)
+![avatar](https://github.com/JavaScriptam/earth-flyLine/blob/main/markdownImage/earth.gif?raw=true)
 
 ## ✨ 特性
 
 + 📦 开箱即用：简单快速集成，基本零成本上手。
-+ 🛡 Typescript开发：提供完整的类型定义文件。
-
-
-
++ 🛡 Typescript开发：提供完整的类型定义。
++ 🎨 高可扩展：丰富的样式配置和API。
 
 # 使用说明
 
 ```bash
 npm install earth-flyline -S
 ```
-
-
 
 ## 🐸 示例
 
@@ -62,13 +59,11 @@ chart.addData("flyLine", [
 chart.remove('flyLine',['1-2']) //1-2 原数据中的from.id 和to.id拼接  `${from.id}-${to.id}`
 ```
 
-
-
 ## 📄 文档
 
-````bash
+```bash
 earthFlyLine.init(options)=>Chart
-````
+```
 
 ### :smile:文档示例
 
@@ -105,49 +100,46 @@ const chart = earthFlyLine.init({
     },
   },
 })
-
 ```
-
-
 
 ### options
 
-| 参数        | 类型        | 说明           | 是否必填 |
-| ----------- | ----------- | -------------- | -------- |
-| dom         | HTMLElement |                | true     |
-| config      | object      | 视图整体配置   | false    |
-| autoRotate  | boolean     | 地球自转       | false    |
-| rotateSpeed | number      | 地球旋转速度   | false    |
-| map         | string      | 注册的地图名称 | true     |
+| 参数          | 类型          | 说明      | 是否必填  |
+| ----------- | ----------- | ------- | ----- |
+| dom         | HTMLElement |         | true  |
+| config      | object      | 视图整体配置  | false |
+| autoRotate  | boolean     | 地球自转    | false |
+| rotateSpeed | number      | 地球旋转速度  | false |
+| map         | string      | 注册的地图名称 | true  |
 
 ### config
 
-| 参数             | 类型   | 说明                                | 默认      |
-| ---------------- | ------ | ----------------------------------- | --------- |
-| R                | number | 地球半径值越大地球越大              | 150       |
-| earth            | object | 地球相关配置                        |           |
-| mapStyle         | object | 地图样式配置                        |           |
-| spriteColor      | string | 光圈颜色配置                        |           |
-| pathStyle        | object | 飞线路径配置                        |           |
-| flyWireStyle     | object | 蝌蚪飞线配置                        |           |
-| scatterStyle     | object | 涟漪配置                            |           |
-| hoverRegionStyle | object | 鼠标hover地图高亮 不传则不生效      | Undefined |
+| 参数               | 类型     | 说明                 | 默认        |
+| ---------------- | ------ | ------------------ | --------- |
+| R                | number | 地球半径值越大地球越大        | 150       |
+| earth            | object | 地球相关配置             |           |
+| mapStyle         | object | 地图样式配置             |           |
+| spriteColor      | string | 光圈颜色配置             |           |
+| pathStyle        | object | 飞线路径配置             |           |
+| flyWireStyle     | object | 蝌蚪飞线配置             |           |
+| scatterStyle     | object | 涟漪配置               |           |
+| hoverRegionStyle | object | 鼠标hover地图高亮 不传则不生效 | Undefined |
 | regions          | object | 单独配置地图区域的颜色 不传则不生效 |           |
-
-
 
 ### Chart实例方法
 
 1. ```bash
    chart.addData(type,data)
    ```
-
+   
    **addData参数解释** 
-
+   
+   
+   
    - type: 添加数据模型的类型，目前只支持 'flyLine' 
-
+   
    - data:Array[object]
-
+     
      ```javascript
      [
        {
@@ -166,30 +158,28 @@ const chart = earthFlyLine.init({
        }
      ]
      ```
-
+     
      该数据里面有from和to两个字段，代表起始点和终点lon和lat 分别代表经度和纬度。最终会生成带有两个涟漪点位的飞线。
-
+     
      关于id字段：from和to里的id最终会拼接在一起id=\`${from.id}-${to.id}\` ,如果没有传id 则会根据经纬度拼接 拼接逻辑为：id = \`${from.lon}${from.lat}-${to.lon}${to.lat}\` 此id被用于移除飞线模型 
-
-   
 
 2. ```bash
    chart.remove(type,ids) 
    ```
-
-   ### **remove参数解释** 
-
+   
+   ### **remove参数解释**
+   
    - type: 移除数据模型的类型，目前只支持 'flyLine' 
-
+   
    - ids: string[] | 'removeAll'
-
+     
      当ids为 'removeAll' 的时候移除地球上所有当前type类型的组件。
-
+     
      当ids为 string[] 类型时 移除地球上对应id的数据。例如: [ \`${from.id}-${to.id}\` ]  会移除数据对应的飞线集合
 
 ## 事件
 
-```` javascript
+```javascript
 //可以通过on的方式添加 添加处理函数。
 //'click'、'dblclick'、'mousedown'、'mousemove'、'mouseup'、'mouseover'、'mouseout'、'globalout'、'contextmenu'
 chart.on("click", (params) => {
@@ -199,14 +189,12 @@ chart.on("click", (params) => {
 chart.on("mouseover", (params) => {
   chart.options.autoRotate = false;
 });
-
-````
-
-
+```
 
 ## 🛠️ 本地构建
 
 在根目录下执行命令，需要[Node.js](https://nodejs.org)(v16+版本)环境。
+
 ```bash
 # 通过 npm 安装依赖
 npm install
@@ -214,12 +202,22 @@ npm install
 # 打包文件
 npm run build
 ```
+
 构建好的文件在`dist`文件夹。
 
-## 最后
-1、近期的更新会提供更多api 操作起来更加灵活
+## 🤗 感谢
 
-2、近期在新增功能上会覆盖绝大多数使用场景
+感谢这些很棒的项目所提供的功能。
 
-3、近期增加2D地图渲染功能
+ [tween.js](https://github.com/tweenjs/tween.js/)
 
+ [lodash](https://github.com/lodash/lodash)
+
+ [delaunator](https://github.com/mapbox/delaunator) 
+
+## 目前进度
+
+- [x] 地图支持鼠标hover高亮
+- [x] 地图区域支持自定义颜色
+- [ ] 飞线和涟漪动画可配置
+- [ ] 支持2D地图渲染
