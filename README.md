@@ -1,12 +1,10 @@
 # earthFlyLine
 
--------------
 
 ## [项目地址]('https://github.com/JavaScriptam/earth-flyLine'')
 
 https://github.com/JavaScriptam/earth-flyLine
 
-----
 
 ## 项目介绍
 
