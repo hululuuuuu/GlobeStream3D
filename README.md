@@ -1,8 +1,12 @@
 # earthFlyLine
 
-## [项目地址](#https://github.com/JavaScriptam/earth-flyLine)
+-------------
+
+## [项目地址]('https://github.com/JavaScriptam/earth-flyLine'')
 
 https://github.com/JavaScriptam/earth-flyLine
+
+----
 
 ## 项目介绍
 
@@ -128,54 +132,56 @@ const chart = earthFlyLine.init({
 
 ### Chart实例方法
 
-1. ```bash
-   chart.addData(type,data)
-   ```
-   
-   **addData参数解释** 
-   
-   
-   
-   - type: 添加数据模型的类型，目前只支持 'flyLine' 
-   
-   - data:Array[object]
-     
-     ```javascript
-     [
-       {
-         from:{
-            id:1,
-            lon: 112.45, //经度
-            lat: 34.62, //维度
-            ...extraField // 其他自定义字段
-           },
-         to:{
-           id:2,
-           lon: 14, //经度
-           lat: 52, //维度
-           ...extraField // 其他自定义字段
-         },
-       }
-     ]
-     ```
-     
-     该数据里面有from和to两个字段，代表起始点和终点lon和lat 分别代表经度和纬度。最终会生成带有两个涟漪点位的飞线。
-     
-     关于id字段：from和to里的id最终会拼接在一起id=\`${from.id}-${to.id}\` ,如果没有传id 则会根据经纬度拼接 拼接逻辑为：id = \`${from.lon}${from.lat}-${to.lon}${to.lat}\` 此id被用于移除飞线模型 
+> ``` javascript
+> chart.addData(type,data)
+> ```
+>
+> > **addData参数解释** 
+> >
+> > - type: 添加数据模型的类型，目前只支持 'flyLine' 
+> >
+> > - data:Array[object]
+> >
+> >   ```javascript
+> >   [
+> >     {
+> >       from:{
+> >          id:1,
+> >          lon: 112.45, //经度
+> >          lat: 34.62, //维度
+> >          ...extraField // 其他自定义字段
+> >         },
+> >       to:{
+> >         id:2,
+> >         lon: 14, //经度
+> >         lat: 52, //维度
+> >         ...extraField // 其他自定义字段
+> >       },
+> >     }
+> >   ]
+> >   ```
+> >
+> >   该数据里面有from和to两个字段，代表起始点和终点lon和lat 分别代表经度和纬度。最终会生成带有两个涟漪点位的飞线。
+> >
+> >   关于id字段：from和to里的id最终会拼接在一起id=\`${from.id}-${to.id}\` ,如果没有传id 则会根据经纬度拼接 拼接逻辑为：id = \`${from.lon}${from.lat}-${to.lon}${to.lat}\` 此id被用于移除飞线模型 
 
-2. ```bash
-   chart.remove(type,ids) 
-   ```
-   
-   ### **remove参数解释**
-   
-   - type: 移除数据模型的类型，目前只支持 'flyLine' 
-   
-   - ids: string[] | 'removeAll'
-     
-     当ids为 'removeAll' 的时候移除地球上所有当前type类型的组件。
-     
-     当ids为 string[] 类型时 移除地球上对应id的数据。例如: [ \`${from.id}-${to.id}\` ]  会移除数据对应的飞线集合
+> 
+>
+> ``` javascript
+> chart.remove(type,ids)
+> ```
+>
+> > ### **remove参数解释**
+> >
+> > - type: 移除数据模型的类型，目前只支持 'flyLine' 
+> >
+> > - ids: string[] | 'removeAll'
+> >
+> >   当ids为 'removeAll' 的时候移除地球上所有当前type类型的组件。
+> >
+> >   当ids为 string[] 类型时 移除地球上对应id的数据。例如: [ \`${from.id}-${to.id}\` ]  会移除数据对应的飞线集合
+>
+> 
 
 ## 事件
 
@@ -190,6 +196,15 @@ chart.on("mouseover", (params) => {
   chart.options.autoRotate = false;
 });
 ```
+
+##  进度
+
+- [x] 地图支持鼠标hover高亮
+- [x] 地图区域支持自定义颜色
+- [ ] 飞线和涟漪动画可配置
+- [ ] 支持2D地图渲染
+
+
 
 ## 🛠️ 本地构建
 
@@ -215,9 +230,3 @@ npm run build
 
  [delaunator](https://github.com/mapbox/delaunator) 
 
-## 目前进度
-
-- [x] 地图支持鼠标hover高亮
-- [x] 地图区域支持自定义颜色
-- [ ] 飞线和涟漪动画可配置
-- [ ] 支持2D地图渲染
