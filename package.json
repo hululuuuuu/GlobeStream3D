@@ -8,14 +8,15 @@
   "type": "module",
   "files": [
     "dist",
-    "src"
   ],
   "main": "dist/index.es.js",
   "typings": "dist/entry.d.ts",
   "scripts": {
     "dev": "vite",
-    "build": "vue-tsc && vite build"
-
+    "build": "vue-tsc && vite build",
+    "patch":"npm run build && cimi patch main",
+    "minor":"npm run build && cimi patch main",
+    "major":"npm run build && cimi patch main"
   },
   "devDependencies": {
     "@types/delaunator": "^5.0.0",
