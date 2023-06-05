@@ -1,4 +1,4 @@
-import { configType, RegionBaseStyle } from "@/lib/interface";
+import { configType, Options, RegionBaseStyle } from "@/lib/interface";
 import {
   BackSide,
   BufferAttribute,
@@ -22,14 +22,18 @@ export default class MapShape {
   private readonly _config: configType;
   currentStyle: RegionBaseStyle;
   features: Feature[];
+  geometryArr: BufferGeometry[] = [];
+  _options: Options;
   constructor(chartScene: ChartScene) {
     this._config = chartScene._store.getConfig();
+    this._options = chartScene.options;
     this.features = MapStore.hashMap[chartScene.options.map];
   }
   create() {
     const arr: Group[] = [];
     // const features = store.hashMap
     this.features.forEach((item: Feature) => {
+      this.geometryArr = [];
       const countryGroup = new Group();
       countryGroup.name = `group-${item.properties?.name}`;
       this.getCurrentStyle(item.properties?.name);
@@ -40,21 +44,14 @@ export default class MapShape {
       } else if (item.geometry.type === "MultiPolygon") {
         countryCoordinates = item.geometry.coordinates;
       }
-      const geometryArr: BufferGeometry[] = [];
-      countryCoordinates.forEach((subItem: Position[][]) => {
-        if (!subItem[0]) return;
-        const { linePoints, allPoints3d, usefulIndexArr } = this.gridPoint(
-          subItem[0]
-        );
-        const shapeGeometry = this.createShapeGeometry(
-          usefulIndexArr,
-          allPoints3d
-        );
-        geometryArr.push(shapeGeometry);
-        const lineMesh = this.createLineMesh(linePoints);
-        countryGroup.add(lineMesh);
-      });
-      const mesh = this.mergeGeometry(geometryArr);
+      if (this._options.mode === "2d") {
+        const { lineArr } = this.create2d(countryCoordinates);
+        countryGroup.add(...lineArr);
+      } else {
+        const { lineArr } = this.create3d(countryCoordinates);
+        countryGroup.add(...lineArr);
+      }
+      const mesh = this.mergeGeometry();
       countryGroup.add(mesh);
       mesh.name = item.properties?.name;
       mesh.userData = {
@@ -66,13 +63,50 @@ export default class MapShape {
     });
     return arr;
   }
-  createShapeGeometry(usefulIndexArr: number[], allPoints3d: number[]) {
+  create2d(countryCoordinates: Position[][][]) {
+    const lineArr: LineLoop[] = [];
+    countryCoordinates.forEach((subItem: Position[][]) => {
+      if (!subItem[0]) return;
+      const { linePoints2d, allPoints2d, usefulIndexArr } = this.gridPoint(
+        subItem[0]
+      );
+      const shapeGeometry = this.createShapeGeometry(
+        usefulIndexArr,
+        allPoints2d
+      );
+      this.geometryArr.push(shapeGeometry);
+      const lineMesh = this.createLineMesh(linePoints2d);
+      lineArr.push(lineMesh);
+    });
+    return {
+      lineArr,
+    };
+  }
+  create3d(countryCoordinates: Position[][][]) {
+    const lineArr: LineLoop[] = [];
+    countryCoordinates.forEach((subItem: Position[][]) => {
+      if (!subItem[0]) return;
+      const { linePoints3d, allPoints3d, usefulIndexArr, allPoints2d } =
+        this.gridPoint(subItem[0]);
+      const shapeGeometry = this.createShapeGeometry(
+        usefulIndexArr,
+        allPoints3d
+      );
+      this.geometryArr.push(shapeGeometry);
+      const lineMesh = this.createLineMesh(linePoints3d);
+      lineArr.push(lineMesh);
+    });
+    return {
+      lineArr,
+    };
+  }
+  createShapeGeometry(usefulIndexArr: number[], points: number[]) {
     const geometry = new BufferGeometry(); //创建一个几何体
     // 设置几何体顶点索引
     geometry.index = new BufferAttribute(new Uint16Array(usefulIndexArr), 1);
     // 设置几何体顶点位置坐标
     geometry.attributes.position = new BufferAttribute(
-      new Float32Array(allPoints3d),
+      new Float32Array(points),
       3
     );
 
@@ -89,13 +123,13 @@ export default class MapShape {
     });
     return new LineLoop(geometry, lineMaterial);
   }
-  mergeGeometry(geometryArr: BufferGeometry[]) {
+  mergeGeometry() {
     let aggGeometry: BufferGeometry | undefined = undefined;
     //多轮廓
-    if (geometryArr.length > 1) {
-      aggGeometry = mergeGeometries(geometryArr);
+    if (this.geometryArr.length > 1) {
+      aggGeometry = mergeGeometries(this.geometryArr);
     } else {
-      aggGeometry = geometryArr[0];
+      aggGeometry = this.geometryArr[0];
     }
     aggGeometry.computeVertexNormals(); //如果使用受光照影响材质，需要计算生成法线
     // MeshLambertMaterial  MeshBasicMaterial
@@ -108,16 +142,20 @@ export default class MapShape {
   gridPoint(polygon: Position[]) {
     //边界线的点位合集 和平面图形的点位合集
     const allPoints3d: number[] = [],
-      linePoints: number[] = [];
+      linePoints3d: number[] = [],
+      allPoints2d: number[] = [],
+      linePoints2d: number[] = [];
     const lonArr: number[] = []; //polygon的所有经度坐标
     const latArr: number[] = []; //polygon的所有纬度坐标
     polygon.forEach((item: Position) => {
       lonArr.push(item[0]);
       latArr.push(item[1]);
-      const coord1 = lon2xyz(this._config.R + 0.1, item[0], item[1]);
-      const coord = lon2xyz(this._config.R, item[0], item[1]);
-      linePoints.push(coord1.x, coord1.y, coord1.z);
-      allPoints3d.push(coord.x, coord.y, coord.z);
+      const coord_line = lon2xyz(this._config.R + 0.1, item[0], item[1]);
+      const coord_point3d = lon2xyz(this._config.R, item[0], item[1]);
+      linePoints3d.push(coord_line.x, coord_line.y, coord_line.z);
+      linePoints2d.push(...item, 0);
+      allPoints3d.push(coord_point3d.x, coord_point3d.y, coord_point3d.z);
+      allPoints2d.push(...item, 0);
     });
     // minMax()计算polygon所有经纬度返回的极大值、极小值
     const [lonMin, lonMax] = this.minMax(lonArr);
@@ -143,16 +181,20 @@ export default class MapShape {
         polygonPointsArr.push(coord);
         //把符合条件的点位 放到集合里
         const point3D = lon2xyz(this._config.R as number, coord[0], coord[1]);
-        allPoints3d.push(point3D.x, point3D.y, point3D.z);
+        const { x, y, z } = point3D;
+        allPoints3d.push(x, y, z);
+        allPoints2d.push(coord[0], coord[1], 0);
       }
     });
     //渲染国家边界线
-    const allPoints2d = [...polygon, ...polygonPointsArr];
-    const usefulIndexArr = this.trianglePlan(allPoints2d, polygon);
+    const geographyPoints = [...polygon, ...polygonPointsArr];
+    const usefulIndexArr = this.trianglePlan(geographyPoints, polygon);
     return {
-      linePoints,
+      linePoints3d,
       allPoints3d,
+      linePoints2d,
       usefulIndexArr,
+      allPoints2d,
     };
   }
   minMax(arr: number[]) {

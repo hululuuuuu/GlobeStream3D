@@ -32,7 +32,6 @@ class EventStore {
     if (buildInRequired) {
       this.registerBuildInEventMap("mousemove", () => {
         if (this.currentMesh) {
-          console.log(this.currentMesh);
           (this.currentMesh.material as MeshBasicMaterial).color.set(
             this.currentMesh.userData.backupColor
           );
