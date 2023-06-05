@@ -8,6 +8,7 @@ export interface Options {
   cameraType?: string;
   dom: HTMLElement;
   map: string;
+  mode: "2d" | "3d";
   helper?: boolean;
   autoRotate?: boolean;
   rotateSpeed?: number;
@@ -77,5 +78,5 @@ export interface SetData {
 export type OptDataFunc = <K extends keyof SetData>(
   type: K,
   data: SetData[K],
-  earthContainer?: Object3D
+  mainContainer?: Object3D
 ) => Promise<Group[]>;

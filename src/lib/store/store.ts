@@ -27,6 +27,7 @@ class Store {
   //存储以存在的飞线
   flyWireMap: Record<any, true> = {};
   setConfig(conf?: Partial<configType>) {
+    console.log(conf);
     merge(this.config, conf);
   }
   getConfig(): configType {

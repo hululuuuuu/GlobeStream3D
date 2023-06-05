@@ -1,4 +1,4 @@
-# earthFlyLine
+# EarthFlyLine
 
 -------------
 
@@ -118,16 +118,16 @@ const chart = earthFlyLine.init({
 
 ### config
 
-| 参数               | 类型     | 说明                 | 默认        |
-| ---------------- | ------ | ------------------ | --------- |
-| R                | number | 地球半径值越大地球越大        | 150       |
-| earth            | object | 地球相关配置             |           |
-| mapStyle         | object | 地图样式配置             |           |
-| spriteColor      | string | 光圈颜色配置             |           |
-| pathStyle        | object | 飞线路径配置             |           |
-| flyWireStyle     | object | 蝌蚪飞线配置             |           |
-| scatterStyle     | object | 涟漪配置               |           |
-| hoverRegionStyle | object | 鼠标hover地图高亮 不传则不生效 | Undefined |
+| 参数             | 类型   | 说明                                | 默认      |
+| ---------------- | ------ | ----------------------------------- | --------- |
+| R                | number | 地球半径值越大地球越大              | 150       |
+| earth            | object | 地球相关配置                        |           |
+| mapStyle         | object | 地图样式配置                        |           |
+| spriteColor      | string | 光圈颜色配置                        |           |
+| pathStyle        | object | 飞线路径配置                        |           |
+| flyWireStyle     | object | 蝌蚪飞线配置                        |           |
+| scatterStyle     | object | 涟漪配置                            |           |
+| hoverRegionStyle | object | 鼠标hover地图高亮 不传则不生效      | undefined |
 | regions          | object | 单独配置地图区域的颜色 不传则不生效 |           |
 
 ### Chart实例方法
@@ -180,8 +180,11 @@ const chart = earthFlyLine.init({
 > >   当ids为 'removeAll' 的时候移除地球上所有当前type类型的组件。
 > >
 > >   当ids为 string[] 类型时 移除地球上对应id的数据。例如: [ \`${from.id}-${to.id}\` ]  会移除数据对应的飞线集合
+> >   
+> >   ``` javascript
+> >   chart.remove('flyLine',['1-2'])
+> >   ```
 >
-> 
 
 ## 事件
 
@@ -203,6 +206,7 @@ chart.on("mouseover", (params) => {
 - [x] 地图区域支持自定义颜色
 - [ ] 飞线和涟漪动画可配置
 - [ ] 支持2D地图渲染
+- [ ] 支持贴图模式提高性能
 
 
 
