@@ -66,7 +66,8 @@ export default class ChartScene {
       map = "world",
       config,
     } = this.options;
-    this._store.setConfig(config);
+
+    this._store.setConfig(this.options);
     this.mainContainer = this.createCube();
     this.style = dom.getBoundingClientRect();
     this.scene = this.createScene();
@@ -82,15 +83,15 @@ export default class ChartScene {
     //添加组件
     this.renderer = this.createRender();
     this.animate();
-    if (this.options.mode === "2d") {
+    if (this._store.mode === "2d") {
       this.addFigures2d();
-    } else if (this.options.mode === "3d") {
+    } else if (this._store.mode === "3d") {
       this.addFigures3d();
     }
     //设置控制器
     const obControl = new OrbitControls(this.camera, this.renderer.domElement);
-    obControl.enableRotate = false;
-    if (this.options.mode === "3d") {
+    if (this._store.mode === "3d") {
+      obControl.enableRotate = false;
       obControl.enablePan = false;
     }
     dom.appendChild(this.renderer.domElement);
@@ -149,8 +150,11 @@ export default class ChartScene {
     this.transformControl();
   }
   addFigures2d() {
+    const mapGroup = new Group();
+    mapGroup.name = "mapGroup";
     const mapShape = new MapShape(this);
-    this.mainContainer.add(...mapShape.create());
+    mapGroup.add(...mapShape.create());
+    this.mainContainer.add(mapGroup);
     this.scene.add(this.mainContainer);
   }
   createCube() {
@@ -201,7 +205,7 @@ export default class ChartScene {
   }
   setData = async <K extends keyof SetData>(type: K, data: SetData[K]) => {
     try {
-      this._OperateView.remove(this.mainContainer, type, "removeAll");
+      // this._OperateView.remove(this.mainContainer, type, "removeAll");
       const group = await this._OperateView.setData(type, data);
       this.mainContainer.add(...group);
     } catch (e) {

@@ -35,7 +35,7 @@ export default class MapShape {
     this.features.forEach((item: Feature) => {
       this.geometryArr = [];
       const countryGroup = new Group();
-      countryGroup.name = `group-${item.properties?.name}`;
+      countryGroup.name = `countryGroup-${item.properties?.name}`;
       this.getCurrentStyle(item.properties?.name);
       // //如果一个国家是单个轮廓
       let countryCoordinates: Position[][][] = [];

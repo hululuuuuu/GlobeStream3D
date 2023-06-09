@@ -23,7 +23,7 @@ https://github.com/JavaScriptam/earth-flyLine
 # 使用说明
 
 ```bash
-npm install earth-flyline -S
+npm install earth-flyline
 ```
 
 ## 🐸 示例

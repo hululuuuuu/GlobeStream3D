@@ -14,7 +14,8 @@
   "license": "MIT",
   "type": "module",
   "files": [
-    "dist"
+    "dist",
+    "LICENSE"
   ],
   "main": "dist/index.es.js",
   "typings": "dist/entry.d.ts",

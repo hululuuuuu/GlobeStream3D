@@ -32,7 +32,7 @@ const _3Dto2D = (start: Vector3, end: Vector3) => {
   const origin = new Vector3(0, 0, 0); //球心坐标
   const startDir = start.clone().sub(origin); //飞线起点与球心构成方向向量
   const endDir = end.clone().sub(origin); //飞线结束点与球心构成方向向量
-  // dir1和dir2构成一个三角形，.cross()叉乘计算该三角形法线normal
+  // startDir和endDir构成一个三角形，.cross()叉乘计算该三角形法线normal
   const normal = new Vector3().crossVectors(startDir, endDir).normalize();
   const xoy_quaternion = new Quaternion().setFromUnitVectors(
     normal,
@@ -92,4 +92,49 @@ const threePointCenter = (p1: Vector3, p2: Vector3, p3: Vector3) => {
   // 三点外接圆圆心坐标
   return new Vector3(x, y, 0);
 };
-export { lon2xyz, _3Dto2D, radianAOB, threePointCenter };
+//根据两点生成直角坐标系 函数表达式
+function getFunctionExpression(src: Vector3, dist: Vector3) {
+  // 计算斜率
+  const k = (dist.y - src.y) / (dist.x - src.x);
+  // 计算截距
+  const b = src.y - k * src.x;
+
+  //计算与之垂直的 表达式
+  // 计算垂直函数的斜率
+  const k_perpendicular = -1 / k;
+
+  // 计算截距
+  const x1 = (dist.x + src.x) / 2,
+    y1 = (dist.y + src.y) / 2;
+  const b_perpendicular = x1 - k_perpendicular * y1;
+  const distance = src.distanceTo(dist);
+  return getPointByDistance(
+    x1,
+    y1,
+    k_perpendicular,
+    b_perpendicular,
+    distance / 5
+  );
+}
+//根据已知函数距离求点位
+function getPointByDistance(
+  x1: number,
+  y1: number,
+  k: number,
+  b: number,
+  s: number
+) {
+  // 求解一元二次方程
+  const x = s / Math.sqrt(1 + Math.pow(k, 2));
+  const y = (s * k) / Math.sqrt(1 + Math.pow(k, 2));
+  return new Vector3(x1 + x, y1 + y, 0);
+}
+
+export {
+  lon2xyz,
+  _3Dto2D,
+  radianAOB,
+  threePointCenter,
+  getFunctionExpression,
+  getPointByDistance,
+};
