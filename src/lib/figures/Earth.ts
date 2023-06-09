@@ -32,7 +32,7 @@ class CreateEarth {
   create() {
     const earthGroup = new Group(); //地球组对象
     earthGroup.add(this.createSphereMesh()); //球体Mesh插入earthGroup中
-    earthGroup.name = "earthGroup";
+    earthGroup.name = "mapGroup";
     return earthGroup;
   }
 }

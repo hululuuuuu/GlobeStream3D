@@ -1,6 +1,7 @@
-import { configType } from "@/lib/interface";
+import { configType, Options } from "@/lib/interface";
 import { merge } from "lodash";
 class Store {
+  mode: "2d" | "3d" = "3d";
   config: configType = {
     R: 150,
     earth: {
@@ -25,10 +26,10 @@ class Store {
     },
   };
   //存储以存在的飞线
-  flyWireMap: Record<any, true> = {};
-  setConfig(conf?: Partial<configType>) {
-    console.log(conf);
-    merge(this.config, conf);
+  flyLineMap: Record<any, true> = {};
+  setConfig(options: Partial<Options>) {
+    this.mode = options.mode || "3d";
+    merge(this.config, options.config);
   }
   getConfig(): configType {
     return this.config;

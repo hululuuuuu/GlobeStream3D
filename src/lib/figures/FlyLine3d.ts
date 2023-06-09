@@ -12,12 +12,14 @@ import {
 } from "three";
 import { _3Dto2D, radianAOB, threePointCenter } from "@/lib/utils/math";
 import { setTween } from "@/lib/utils/tween";
-import { configType, LineStyle } from "@/lib/interface";
+import { configType } from "@/lib/interface";
 import Store from "@/lib/store/store";
 
-export default class FlyWire {
+export default class FlyLine3d {
   _config: configType;
+  _store: Store;
   constructor(store: Store) {
+    this._store = store;
     this._config = store.getConfig();
   }
   createMesh(positionInfo: [Vector3, Vector3]) {
@@ -55,6 +57,7 @@ export default class FlyWire {
       startDeg,
       startDeg + flyAngle
     );
+    //和创建好的路径圆 圆心坐标保持一致
     tadpolePointsMesh.position.y = centerPosition.y;
     tadpolePointsMesh.name = "tadpolePointsMesh";
     // tadpolePointsMesh.userData.flyEndAngle = endDeg - startDeg - flyAngle;

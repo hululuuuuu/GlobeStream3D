@@ -1,9 +1,10 @@
 import type { OptDataFunc } from "./interface";
 import { Group, Mesh, Object3D, Vector3 } from "three";
-import FlyWire from "@/lib/figures/FlyLine";
+import FlyLine3d from "@/lib/figures/FlyLine3d";
 import { lon2xyz } from "@/lib/utils/math";
 import Scatter from "@/lib/figures/Scatter";
 import Store from "@/lib/store/store";
+import FlyLine2d from "@/lib/figures/FlyLine2d";
 
 export default class OperateView {
   private readonly _store: Store;
@@ -23,20 +24,31 @@ export default class OperateView {
         } else {
           id = `${from.lon}${from.lat}-${to.lon}${to.lat}`;
         }
-        if (this._store.flyWireMap[id]) return;
+        if (this._store.flyLineMap[id]) return;
         const group = new Group();
-
-        const from_position = lon2xyz(storeConfig.R, from.lon, from.lat);
-        const to_position = lon2xyz(storeConfig.R, to.lon, to.lat);
         const scatter = new Scatter(this._store);
-        group.add(scatter.create(from), scatter.create(to));
-        const flyWire = new FlyWire(this._store);
-        group.add(
-          flyWire.create(
-            new Vector3(from_position.x, from_position.y, from_position.z),
-            new Vector3(to_position.x, to_position.y, to_position.z)
-          )
-        );
+        if (this._store.mode === "3d") {
+          const from_position = lon2xyz(storeConfig.R, from.lon, from.lat);
+          const to_position = lon2xyz(storeConfig.R, to.lon, to.lat);
+          group.add(scatter.create(from), scatter.create(to));
+          const flyLine = new FlyLine3d(this._store);
+          group.add(
+            flyLine.create(
+              new Vector3(from_position.x, from_position.y, from_position.z),
+              new Vector3(to_position.x, to_position.y, to_position.z)
+            )
+          );
+        } else {
+          const flyLine = new FlyLine2d(this._store);
+          group.add(
+            flyLine.create(
+              new Vector3(from.lon, from.lat, 0),
+              new Vector3(to.lon, to.lat, 0)
+            )
+          );
+          group.add(scatter.create(from), scatter.create(to));
+        }
+
         group.name = id;
         meshList.push(group);
       });
@@ -47,9 +59,10 @@ export default class OperateView {
     return this.addData(type, data);
   };
   remove(mainContainer: Object3D, type: string, ids: string[] | "removeAll") {
+    console.log(mainContainer);
     if (mainContainer.children.length !== 0) {
       mainContainer.children.forEach((item) => {
-        if (item instanceof Group && item.name !== "earthGroup") {
+        if (item instanceof Group && item.name !== "mapGroup") {
           if (ids === "removeAll") {
             this.disposeGroup(item);
             mainContainer.remove(item);

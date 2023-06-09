@@ -6,7 +6,6 @@ import {
   Object3D,
   Raycaster,
   Vector2,
-  Material,
   MeshBasicMaterial,
 } from "three";
 
