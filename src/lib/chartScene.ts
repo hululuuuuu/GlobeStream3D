@@ -38,7 +38,7 @@ export default class ChartScene {
   };
   camera: Camera;
   isPass: Function;
-  earthContainer: Object3D;
+  mainContainer: Object3D;
   scene: Scene;
   renderer: Renderer;
   _store = new Store();
@@ -50,10 +50,8 @@ export default class ChartScene {
       ...this.initOptions,
       ...params,
     };
-
     this.isPass = this.limitFPS(true);
     this.init();
-    this.transformControl();
     this._eventStore = new EventStore(this);
   }
   on(eventName: string, cb: (params: any) => void) {
@@ -68,8 +66,9 @@ export default class ChartScene {
       map = "world",
       config,
     } = this.options;
-    this._store.setConfig(config);
 
+    this._store.setConfig(this.options);
+    this.mainContainer = this.createCube();
     this.style = dom.getBoundingClientRect();
     this.scene = this.createScene();
     if (cameraType === "OrthographicCamera") {
@@ -82,13 +81,19 @@ export default class ChartScene {
       this.createHelper();
     }
     //添加组件
-    this.addFigures();
     this.renderer = this.createRender();
     this.animate();
+    if (this._store.mode === "2d") {
+      this.addFigures2d();
+    } else if (this._store.mode === "3d") {
+      this.addFigures3d();
+    }
     //设置控制器
     const obControl = new OrbitControls(this.camera, this.renderer.domElement);
-    obControl.enableRotate = false;
-    obControl.enablePan = false;
+    if (this._store.mode === "3d") {
+      obControl.enableRotate = false;
+      obControl.enablePan = false;
+    }
     dom.appendChild(this.renderer.domElement);
   }
   createOrthographicCamera() {
@@ -136,17 +141,25 @@ export default class ChartScene {
     // const h = new DirectionalLightHelper(scene);
     this.scene.add(helper);
   }
-  addFigures() {
+  addFigures3d() {
     const groupEarth = new CreateEarth(this._store).create();
     const mapShape = new MapShape(this);
     groupEarth.add(...mapShape.create());
-    this.earthContainer = this.createCube();
-    this.earthContainer.add(groupEarth, sprite(this._store.config));
-    this.scene.add(this.earthContainer);
+    this.mainContainer.add(groupEarth, sprite(this._store.config));
+    this.scene.add(this.mainContainer);
+    this.transformControl();
+  }
+  addFigures2d() {
+    const mapGroup = new Group();
+    mapGroup.name = "mapGroup";
+    const mapShape = new MapShape(this);
+    mapGroup.add(...mapShape.create());
+    this.mainContainer.add(mapGroup);
+    this.scene.add(this.mainContainer);
   }
   createCube() {
     const obj = new Group();
-    obj.name = "earthContainer";
+    obj.name = "mainContainer";
     return obj;
   }
   createRender() {
@@ -181,8 +194,8 @@ export default class ChartScene {
   animate() {
     if (this.isPass()) {
       tweenUpdate();
-      if (this.options.autoRotate) {
-        this.earthContainer.rotateY(this.options.rotateSpeed!);
+      if (this.options.mode === "3d" && this.options.autoRotate) {
+        this.mainContainer.rotateY(this.options.rotateSpeed!);
       }
       this.renderer.render(this.scene, this.camera);
     }
@@ -192,9 +205,9 @@ export default class ChartScene {
   }
   setData = async <K extends keyof SetData>(type: K, data: SetData[K]) => {
     try {
-      this._OperateView.remove(this.earthContainer, type, "removeAll");
+      // this._OperateView.remove(this.mainContainer, type, "removeAll");
       const group = await this._OperateView.setData(type, data);
-      this.earthContainer.add(...group);
+      this.mainContainer.add(...group);
     } catch (e) {
       console.log(e);
     }
@@ -202,20 +215,20 @@ export default class ChartScene {
   addData = async <K extends keyof SetData>(type: K, data: SetData[K]) => {
     try {
       const group = await this._OperateView.setData(type, data);
-      this.earthContainer.add(...group);
+      this.mainContainer.add(...group);
     } catch (e) {
       console.log(e);
     }
   };
   remove(type: string, ids: string[] | "removeAll" = "removeAll") {
-    this._OperateView.remove(this.earthContainer, type, ids);
+    this._OperateView.remove(this.mainContainer, type, ids);
   }
   transformControl() {
     const controls = new TransformControls(
       this.camera,
       this.renderer.domElement
     );
-    controls.attach(this.earthContainer);
+    controls.attach(this.mainContainer);
     controls.setMode("rotate");
     controls.showX = false;
     controls.axis = null;
