@@ -15,9 +15,11 @@ import Store from "@/lib/store/store";
 
 export default class Scatter {
   private _config: configType;
+  private _store: Store;
   customStyle: ScatterStyle;
   constructor(store: Store) {
     this._config = store.getConfig();
+    this._store = store;
     this.customStyle = this._config.scatterStyle as ScatterStyle;
   }
   setMeshAttr(
@@ -30,13 +32,18 @@ export default class Scatter {
       material.name === "scatter"
         ? this._config.R * 1.001
         : this._config.R * 1.002;
-    const { x, y, z } = lon2xyz(zOffset, lon, lat);
     const size = this._config.R * 0.05;
     mesh.scale.set(size * 1.3, size * 1.3, size * 1.3);
-    mesh.position.set(x, y, z); //设置mesh位置
-    const meshNormal = new Vector3(0, 0, 1);
-    const coordVec3 = new Vector3(x, y, z).normalize();
-    mesh.quaternion.setFromUnitVectors(meshNormal, coordVec3);
+    if (this._store.mode === "3d") {
+      const { x, y, z } = lon2xyz(zOffset, lon, lat);
+      mesh.position.set(x, y, z); //设置mesh位置
+      const meshNormal = new Vector3(0, 0, 1);
+      const coordVec3 = new Vector3(x, y, z).normalize();
+      mesh.quaternion.setFromUnitVectors(meshNormal, coordVec3);
+    } else {
+      mesh.position.set(lon, lat, 0.1);
+    }
+
     mesh.userData = rest;
     return { mesh, size };
   }
