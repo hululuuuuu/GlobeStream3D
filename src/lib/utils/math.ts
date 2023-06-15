@@ -99,7 +99,6 @@ function getFunctionExpression(src: Vector3, dist: Vector3) {
   // 计算截距
   const b = src.y - k * src.x;
 
-  //计算与之垂直的 表达式
   // 计算垂直函数的斜率
   const k_perpendicular = -1 / k;
 

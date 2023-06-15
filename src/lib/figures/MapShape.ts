@@ -4,10 +4,8 @@ import {
   BufferAttribute,
   BufferGeometry,
   Group,
-  Line,
   LineBasicMaterial,
   LineLoop,
-  LineSegments,
   Mesh,
   MeshPhongMaterial,
 } from "three";
@@ -86,8 +84,9 @@ export default class MapShape {
     const lineArr: LineLoop[] = [];
     countryCoordinates.forEach((subItem: Position[][]) => {
       if (!subItem[0]) return;
-      const { linePoints3d, allPoints3d, usefulIndexArr, allPoints2d } =
-        this.gridPoint(subItem[0]);
+      const { linePoints3d, allPoints3d, usefulIndexArr } = this.gridPoint(
+        subItem[0]
+      );
       const shapeGeometry = this.createShapeGeometry(
         usefulIndexArr,
         allPoints3d
