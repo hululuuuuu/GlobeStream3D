@@ -106,13 +106,14 @@ const chart = earthFlyLine.init({
 
 ### options
 
-| 参数          | 类型          | 说明      | 是否必填  |
-| ----------- | ----------- | ------- | ----- |
-| dom         | HTMLElement |         | true  |
-| config      | object      | 视图整体配置  | false |
-| autoRotate  | boolean     | 地球自转    | false |
-| rotateSpeed | number      | 地球旋转速度  | false |
-| map         | string      | 注册的地图名称 | true  |
+| 参数        | 类型         | 说明            | 是否必填 |
+| ----------- | ------------ | --------------- | -------- |
+| dom         | HTMLElement  |                 | true     |
+| config      | object       | 视图整体配置    | false    |
+| autoRotate  | boolean      | 地球自转        | false    |
+| rotateSpeed | number       | 地球旋转速度    | false    |
+| map         | string       | 注册的地图名称  | true     |
+| mode        | '3d' \| '2d' | 渲染模式 默认3d | False    |
 
 ### config
 
