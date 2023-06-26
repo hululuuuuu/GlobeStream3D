@@ -10,6 +10,10 @@
     "js",
     "飞线"
   ],
+  "np": {
+    "yarn": false,
+    "contents": "dist"
+  },
   "private": false,
   "license": "MIT",
   "type": "module",

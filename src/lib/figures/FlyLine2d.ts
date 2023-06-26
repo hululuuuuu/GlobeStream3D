@@ -1,6 +1,5 @@
 import {
   Vector3,
-  ArcCurve,
   Group,
   BufferGeometry,
   LineBasicMaterial,
@@ -9,23 +8,14 @@ import {
   PointsMaterial,
   Color,
   BufferAttribute,
-  CatmullRomCurve3,
-  LineCurve3,
   QuadraticBezierCurve3,
-  Matrix4,
-  SplineCurve,
 } from "three";
-import {
-  _3Dto2D,
-  getFunctionExpression,
-  radianAOB,
-  threePointCenter,
-} from "@/lib/utils/math";
+import { getFunctionExpression } from "@/lib/utils/math";
 import { setTween } from "@/lib/utils/tween";
 import { configType } from "@/lib/interface";
 import Store from "@/lib/store/store";
 
-export default class FlyLine3d {
+export default class FlyLine2d {
   _config: configType;
   _store: Store;
   constructor(store: Store) {
