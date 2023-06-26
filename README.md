@@ -24,7 +24,7 @@ https://github.com/JavaScriptam/earth-flyLine
 npm install earth-flyline
 ```
 
-## 🐸 示例
+## 🚗 开始
 
 ```javascript
 import earthFlyLine from "earth-flyline";
@@ -203,7 +203,7 @@ chart.on("mouseover", (params) => {
 
 - [x] 地图支持鼠标hover高亮
 - [x] 地图区域支持自定义颜色
-- [x] 支持2D地图渲染
+- [x] 支持2D地图渲染和飞线高亮等功能
 - [ ] 飞线和涟漪动画可配置
 - [ ] 支持贴图模式提高性能
 
