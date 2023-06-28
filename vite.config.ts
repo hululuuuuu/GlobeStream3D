@@ -18,7 +18,7 @@ export default ({ mode }) => {
     });
   } else {
     Object.assign(libConfig, {
-      outDir: "preview",
+      outDir: "docs",
     });
   }
   return defineConfig({
