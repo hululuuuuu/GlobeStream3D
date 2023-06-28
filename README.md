@@ -5,6 +5,10 @@
 
 https://github.com/JavaScriptam/earth-flyLine
 
+## [在线预览]('https://javascriptam.github.io/earth-flyLine/')
+https://javascriptam.github.io/earth-flyLine/
+
+### 使用过程中的问题或者建议欢迎提 [issue](https://github.com/JavaScriptam/earth-flyLine/issues) ，如果该项目为您提供了帮助希望来一个star万分感谢。
 
 ## 项目介绍
 
@@ -204,8 +208,7 @@ chart.on("mouseover", (params) => {
 - [x] 地图支持鼠标hover高亮
 - [x] 地图区域支持自定义颜色
 - [x] 支持2D地图渲染和飞线高亮等功能
-- [ ] 飞线和涟漪动画可配置
-- [ ] 支持贴图模式提高性能
+- [ ] 2D地图飞线绘制逻辑重构（进行中）
 
 
 
