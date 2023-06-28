@@ -6,6 +6,7 @@ import dts from "vite-plugin-dts";
 import viteCompression from "vite-plugin-compression";
 // https://vitejs.dev/config/
 export default ({ mode }) => {
+  let base = undefined;
   const libConfig = {};
   if (mode === "lib") {
     Object.assign(libConfig, {
@@ -17,11 +18,13 @@ export default ({ mode }) => {
       },
     });
   } else {
+    base = "/earth-flyLine";
     Object.assign(libConfig, {
       outDir: "docs",
     });
   }
   return defineConfig({
+    base,
     server: {
       open: true,
       host: "0.0.0.0",
