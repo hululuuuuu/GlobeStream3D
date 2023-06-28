@@ -196,8 +196,8 @@ function del() {
 </script>
 
 <template>
-  <div id="container"></div>
   <div id="container1"></div>
+  <div id="container"></div>
 </template>
 
 <style lang="less" scoped>
