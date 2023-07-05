@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { onMounted } from "vue";
+import worldTexture from "./image/earth.png";
 import world from "./map/world.json";
 import chart from "@/entry";
 import ChartScene from "@/lib/chartScene";
 let chartInstance: ChartScene;
 let chartInstance1: ChartScene;
+
 const geoJson: any = world;
 chart.registerMap("world", geoJson);
 onMounted(() => {
@@ -56,6 +58,7 @@ onMounted(() => {
       mode: "3d",
       config: {
         R: 140,
+        texture: worldTexture,
         earth: {
           color: "#13162c",
         },

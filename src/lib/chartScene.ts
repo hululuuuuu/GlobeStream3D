@@ -27,11 +27,13 @@ import { TransformControls } from "three/examples/jsm/controls/TransformControls
 
 export default class ChartScene {
   options: Options;
-  initOptions: Pick<Options, "helper" | "autoRotate" | "rotateSpeed"> = {
-    helper: false,
-    autoRotate: true,
-    rotateSpeed: 0.01,
-  };
+  initOptions: Pick<Options, "helper" | "autoRotate" | "rotateSpeed" | "mode"> =
+    {
+      helper: false,
+      autoRotate: true,
+      rotateSpeed: 0.01,
+      mode: "3d",
+    };
   style = {
     width: 0,
     height: 0,
@@ -143,8 +145,11 @@ export default class ChartScene {
   }
   addFigures3d() {
     const groupEarth = new CreateEarth(this._store).create();
-    const mapShape = new MapShape(this);
-    groupEarth.add(...mapShape.create());
+    //如果非贴图 则正常加载地图文件
+    if (!this.options.config.texture) {
+      const mapShape = new MapShape(this);
+      groupEarth.add(...mapShape.create());
+    }
     this.mainContainer.add(groupEarth, sprite(this._store.config));
     this.scene.add(this.mainContainer);
     this.transformControl();
