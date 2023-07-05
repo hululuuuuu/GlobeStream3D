@@ -8,6 +8,7 @@ class Store {
       color: "#13162c",
     },
     map: "world",
+    texture: "",
     mapStyle: {
       areaColor: "#2e3564",
       lineColor: "#797eff",
