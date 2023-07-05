@@ -33,6 +33,7 @@ npm install earth-flyline
 ```javascript
 import earthFlyLine from "earth-flyline";
 //请先下载地图文件（可去第三方下载） 然后注册地图 本项目的地图文件在src/map/world
+//注：如果不想使用地图文件也可以通过贴图的形式去做详情请查看文档
 import geojson from 'xxx/path/world.json'
 earthFlyLine.registerMap("world", geojson);
 //获取dom节点作为容器 注：该节点请设置宽高
@@ -121,17 +122,18 @@ const chart = earthFlyLine.init({
 
 ### config
 
-| 参数             | 类型   | 说明                                | 默认      |
-| ---------------- | ------ | ----------------------------------- | --------- |
-| R                | number | 地球半径值越大地球越大              | 150       |
-| earth            | object | 地球相关配置                        |           |
-| mapStyle         | object | 地图样式配置                        |           |
-| spriteColor      | string | 光圈颜色配置                        |           |
-| pathStyle        | object | 飞线路径配置                        |           |
-| flyWireStyle     | object | 蝌蚪飞线配置                        |           |
-| scatterStyle     | object | 涟漪配置                            |           |
-| hoverRegionStyle | object | 鼠标hover地图高亮 不传则不生效      | undefined |
-| regions          | object | 单独配置地图区域的颜色 不传则不生效 |           |
+| 参数             | 类型   | 说明                                                 | 默认      |
+| ---------------- | ------ | ---------------------------------------------------- | --------- |
+| R                | number | 地球半径值越大地球越大                               | 150       |
+| texture          | String | 图片url（如果使用贴图则 地图颜色等相关配置则不生效） | Undefined |
+| earth            | object | 地球相关配置                                         |           |
+| mapStyle         | object | 地图样式配置                                         |           |
+| spriteColor      | string | 光圈颜色配置                                         |           |
+| pathStyle        | object | 飞线路径配置                                         |           |
+| flyWireStyle     | object | 蝌蚪飞线配置                                         |           |
+| scatterStyle     | object | 涟漪配置                                             |           |
+| hoverRegionStyle | object | 鼠标hover地图高亮 不传则不生效                       | Undefined |
+| regions          | object | 单独配置地图区域的颜色 不传则不生效                  |           |
 
 ### Chart实例方法
 
