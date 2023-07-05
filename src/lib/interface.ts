@@ -51,6 +51,7 @@ export interface RegionBaseStyle {
 type RegionsStyle = Record<string, RegionBaseStyle>;
 export interface configType {
   R: number;
+  texture: string;
   map: string;
   earth: Earth;
   mapStyle: MapStyle;
