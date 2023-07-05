@@ -58,7 +58,6 @@ onMounted(() => {
       mode: "3d",
       config: {
         R: 140,
-        texture: worldTexture,
         earth: {
           color: "#13162c",
         },
