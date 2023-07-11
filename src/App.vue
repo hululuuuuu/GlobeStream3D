@@ -198,14 +198,29 @@ onMounted(() => {
       //   to: { lon: -84.0216, lat: -35.0322 },
       // },
     ];
-    // chartInstance.setData("flyLine", initData);
+    chartInstance.setData("flyLine", initData);
     chartInstance1.setData("flyLine", initData);
     chartInstance1.addData("point", [
       {
         lon: -43.0075,
         lat: -40.4296,
         style: {
-          color: "#ff0000",
+          color: "yellow",
+          duration: 2000,
+          delay: 0,
+          repeat: 1,
+          onComplete: (data: any) => {
+            //do something
+          },
+        },
+      },
+    ]);
+    chartInstance.addData("point", [
+      {
+        lon: -43.0075,
+        lat: -40.4296,
+        style: {
+          color: "yellow",
           duration: 2000,
           delay: 0,
           repeat: 1,
