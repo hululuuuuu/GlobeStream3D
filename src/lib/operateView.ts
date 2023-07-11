@@ -1,10 +1,11 @@
-import type { OptDataFunc } from "./interface";
+import type { Coordinates, OptDataFunc } from "./interface";
 import { Group, Mesh, Object3D, Vector3 } from "three";
 import FlyLine3d from "@/lib/figures/FlyLine3d";
 import { lon2xyz } from "@/lib/utils/math";
 import Scatter from "@/lib/figures/Scatter";
 import Store from "@/lib/store/store";
 import FlyLine2d from "@/lib/figures/FlyLine2d";
+import { FlyLineData } from "./interface";
 
 export default class OperateView {
   private readonly _store: Store;
@@ -15,8 +16,8 @@ export default class OperateView {
     const meshList: Group[] = [];
     const storeConfig = this._store.getConfig();
     if (type === "flyLine") {
-      data.forEach((item) => {
-        const { from, to, style } = item;
+      (data as FlyLineData[]).forEach((item: FlyLineData) => {
+        const { from, to } = item;
         //生成一个id 规则是优先取id 否则from和to的经纬度字符串拼接
         let id: string;
         if (from.id && to.id) {
@@ -31,7 +32,7 @@ export default class OperateView {
           const from_position = lon2xyz(storeConfig.R, from.lon, from.lat);
           const to_position = lon2xyz(storeConfig.R, to.lon, to.lat);
           group.add(scatter.create(from), scatter.create(to));
-          const flyLine = new FlyLine3d(this._store);
+          const flyLine = new FlyLine3d(this._store, item);
           group.add(
             flyLine.create(
               new Vector3(from_position.x, from_position.y, from_position.z),
@@ -39,7 +40,7 @@ export default class OperateView {
             )
           );
         } else {
-          const flyLine = new FlyLine2d(this._store);
+          const flyLine = new FlyLine2d(this._store, item);
           group.add(
             flyLine.create(
               new Vector3(from.lon, from.lat, 0),
@@ -50,6 +51,18 @@ export default class OperateView {
         }
 
         group.name = id;
+        group.userData.figureType = "flyLine";
+        meshList.push(group);
+      });
+    } else if (type === "point") {
+      (data as Coordinates[]).forEach((item: Coordinates) => {
+        let id: string | number = item.id || `${item.lon}-${item.lat}`;
+        if (this._store.flyLineMap[id]) return;
+        const group = new Group();
+        const scatter = new Scatter(this._store);
+        group.add(scatter.create(item));
+        group.name = id.toString();
+        group.userData.figureType = "point";
         meshList.push(group);
       });
     }
@@ -59,10 +72,13 @@ export default class OperateView {
     return this.addData(type, data);
   };
   remove(mainContainer: Object3D, type: string, ids: string[] | "removeAll") {
-    console.log(mainContainer);
     if (mainContainer.children.length !== 0) {
       mainContainer.children.forEach((item) => {
-        if (item instanceof Group && item.name !== "mapGroup") {
+        if (
+          item instanceof Group &&
+          item.name !== "mapGroup" &&
+          item.userData.figureType === type
+        ) {
           if (ids === "removeAll") {
             this.disposeGroup(item);
             mainContainer.remove(item);

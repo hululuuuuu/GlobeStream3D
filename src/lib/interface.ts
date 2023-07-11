@@ -3,7 +3,7 @@ type RGB = `rgb(${number}, ${number}, ${number})`;
 type RGBA = `rgba(${number}, ${number}, ${number}, ${number})`;
 type HEX = `#${string}`;
 
-type Color = RGB | RGBA | HEX;
+type Color = RGB | RGBA | HEX | string;
 export interface Options {
   cameraType?: string;
   dom: HTMLElement;
@@ -15,17 +15,23 @@ export interface Options {
   light?: "AmbientLight" | "PointLight" | "DirectionalLight" | "RectAreaLight";
   config: Partial<configType>;
 }
-export interface PathLineStyle {
+export interface TweenConfig {
+  duration: number;
+  delay: number;
+  repeat: number;
+  onComplete: (data: any) => void;
+}
+export interface PathStyle {
   color: Color;
   size: number;
 }
-export interface FlyLineStyle {
+export interface FlyLineStyle extends TweenConfig {
   color: Color;
   size: number;
 }
-export interface ScatterStyle {
+export interface ScatterStyle extends TweenConfig {
   color: Color;
-  size: number;
+  size?: number;
 }
 export interface Coordinates {
   id?: string | number;
@@ -35,8 +41,8 @@ export interface Coordinates {
   [key: string]: any;
 }
 export interface LineStyle {
-  flyWireStyle: Partial<FlyLineStyle>;
-  pathLineStyle: Partial<PathLineStyle>;
+  flyLineStyle: Partial<FlyLineStyle>;
+  pathStyle: Partial<PathStyle>;
 }
 interface Earth {
   color: Color;
@@ -56,8 +62,8 @@ export interface configType {
   earth: Earth;
   mapStyle: MapStyle;
   spriteColor: Color;
-  pathStyle: Partial<PathLineStyle>;
-  flyWireStyle: Partial<FlyLineStyle>;
+  pathStyle: Partial<PathStyle>;
+  flyLineStyle: Partial<FlyLineStyle>;
   scatterStyle: Partial<ScatterStyle>;
   regions?: RegionsStyle;
   hoverRegionStyle?: RegionBaseStyle;
@@ -67,17 +73,18 @@ export interface Coordinates3D {
   y: number;
   z: number;
 }
+export interface FlyLineData {
+  from: Coordinates;
+  to: Coordinates;
+  style?: Partial<LineStyle>;
+  [key: string]: any;
+}
 export interface SetData {
-  flyLine: {
-    from: Coordinates;
-    to: Coordinates;
-    style?: Partial<LineStyle>;
-    userData?: Record<any, any>;
-  }[];
+  flyLine: FlyLineData[];
   point: [Coordinates];
 }
 export type OptDataFunc = <K extends keyof SetData>(
   type: K,
   data: SetData[K],
-  mainContainer?: Object3D
+  mainContainer?: Group
 ) => Promise<Group[]>;

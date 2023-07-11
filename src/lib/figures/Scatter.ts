@@ -1,7 +1,12 @@
 import pointImg from "@/assets/image/point.png";
 import scatterImg from "@/assets/image/scatter.png";
 import { lon2xyz } from "../utils/math";
-import { configType, Coordinates, ScatterStyle } from "@/lib/interface";
+import {
+  configType,
+  Coordinates,
+  FlyLineData,
+  ScatterStyle,
+} from "@/lib/interface";
 import { setTween } from "@/lib/utils/tween";
 import {
   Group,
@@ -17,10 +22,12 @@ export default class Scatter {
   private _config: configType;
   private _store: Store;
   customStyle: ScatterStyle;
+  _currentStyle: ScatterStyle;
+  _currentData: Coordinates | undefined;
   constructor(store: Store) {
     this._config = store.getConfig();
     this._store = store;
-    this.customStyle = this._config.scatterStyle as ScatterStyle;
+    this._currentStyle = this._config.scatterStyle as ScatterStyle;
   }
   setMeshAttr(
     geometry: PlaneGeometry,
@@ -32,7 +39,7 @@ export default class Scatter {
       material.name === "scatter"
         ? this._config.R * 1.001
         : this._config.R * 1.002;
-    const size = this._config.R * 0.05;
+    const size = this._config.scatterStyle.size || this._config.R * 0.05;
     mesh.scale.set(size * 1.3, size * 1.3, size * 1.3);
     if (this._store.mode === "3d") {
       const { x, y, z } = lon2xyz(zOffset, lon, lat);
@@ -58,6 +65,10 @@ export default class Scatter {
       function (params) {
         mesh.scale.set(params.size, params.size, params.size);
         mesh.material.opacity = params.opacity;
+      },
+      {
+        ...this._currentStyle,
+        data: this._currentData,
       }
     );
     return mesh;
@@ -68,9 +79,7 @@ export default class Scatter {
     const material = new MeshBasicMaterial({
       map: textureLoader,
       transparent: true,
-      color: this.customStyle
-        ? this.customStyle.color
-        : this._config.scatterStyle.color,
+      color: this._currentStyle.color,
       opacity: 1.0,
       // side: DoubleSide, //双面可见
       depthWrite: false, //禁止写入深度缓冲区数据
@@ -90,9 +99,7 @@ export default class Scatter {
     const material = new MeshBasicMaterial({
       map: textureLoader,
       transparent: true,
-      color: this.customStyle
-        ? this.customStyle.color
-        : this._config.scatterStyle.color,
+      color: this._currentStyle.color,
     });
     material.name = "point";
 
@@ -100,7 +107,7 @@ export default class Scatter {
   }
   create(data: Coordinates) {
     if (data.style) {
-      this.customStyle = data.style;
+      this._currentStyle = data.style;
     }
     const group = new Group();
     const point = this.createPointMesh(data);

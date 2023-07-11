@@ -17,7 +17,7 @@ class Store {
     pathStyle: {
       color: "#cd79ff", //飞线路径配置
     },
-    flyWireStyle: {
+    flyLineStyle: {
       //飞线样式配置
       color: "#cd79ff",
     },
