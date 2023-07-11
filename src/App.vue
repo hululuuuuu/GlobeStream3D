@@ -32,7 +32,7 @@ onMounted(() => {
         pathStyle: {
           color: "#cd79ff", //飞线路径配置
         },
-        flyWireStyle: {
+        flyLineStyle: {
           //飞线样式配置
           color: "#cd79ff",
         },
@@ -58,6 +58,7 @@ onMounted(() => {
       mode: "3d",
       config: {
         R: 140,
+        texture: worldTexture,
         earth: {
           color: "#13162c",
         },
@@ -69,7 +70,7 @@ onMounted(() => {
         pathStyle: {
           color: "#cd79ff", //飞线路径配置
         },
-        flyWireStyle: {
+        flyLineStyle: {
           //飞线样式配置
           color: "#cd79ff",
         },
@@ -89,8 +90,36 @@ onMounted(() => {
     });
     const initData = [
       {
-        from: { lon: -23.0075, lat: 50.4296 },
-        to: { lon: 26.1223, lat: -7.8756 },
+        from: {
+          id: "1",
+          lon: -23.0075,
+          lat: 50.4296,
+          style: {
+            color: "#ff000",
+            duration: 2000,
+            delay: 0,
+            repeat: 1,
+            onComplete: (data: any) => {
+              //do something
+            },
+          },
+        },
+        to: { id: 2, lon: 26.1223, lat: -7.8756 },
+        style: {
+          pathStyle: {
+            color: "#ff000", //飞线路径配置
+          },
+          flyLineStyle: {
+            //飞线样式配置
+            color: "#0000ff",
+            duration: 2000,
+            delay: 0,
+            repeat: 1,
+            onComplete: (data: any) => {
+              //do something
+            },
+          },
+        },
       },
       {
         from: { lon: 142.8123, lat: -58.9813 },
@@ -169,8 +198,23 @@ onMounted(() => {
       //   to: { lon: -84.0216, lat: -35.0322 },
       // },
     ];
-    chartInstance.setData("flyLine", initData);
+    // chartInstance.setData("flyLine", initData);
     chartInstance1.setData("flyLine", initData);
+    chartInstance1.addData("point", [
+      {
+        lon: -43.0075,
+        lat: -40.4296,
+        style: {
+          color: "#ff0000",
+          duration: 2000,
+          delay: 0,
+          repeat: 1,
+          onComplete: (data: any) => {
+            //do something
+          },
+        },
+      },
+    ]);
     // chartInstance.on("click", (event: Event, params: any) => {});
     chartInstance.on("mouseover", () => {
       chartInstance.options.autoRotate = false;

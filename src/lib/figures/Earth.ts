@@ -8,7 +8,6 @@ import {
   SphereGeometry,
   TextureLoader,
 } from "three";
-import store from "@/lib/store/store";
 import { configType } from "@/lib/interface";
 import Store from "@/lib/store/store";
 import { Texture } from "three/src/textures/Texture";
