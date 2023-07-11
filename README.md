@@ -121,22 +121,24 @@ const chart = earthFlyLine.init({
 | mode        | '3d' \| '2d' | 渲染模式 默认3d | false    |
 
 >  ### config
->  | 参数             | 类型   | 说明                                                 | 默认      | 是否必填 |
-| ---------------- | ------ | ---------------------------------------------------- | --------- | -------- |
-| R                | number | 地球半径值越大地球越大                               | 150       | false    |
-| texture          | String | 图片url（如果使用贴图则 地图颜色等相关配置则不生效） | Undefined | false    |
-| earth            | object | 地球相关配置                                         |           | false    |
-| mapStyle         | object | 地图样式配置                                         |           | false    |
-| spriteColor      | string | 光圈颜色配置                                         |           | false    |
-| pathStyle        | object | 飞线路径配置                                         |           | false    |
-| flyLineStyle     | object | 蝌蚪飞线配置                                         |           | false    |
-| scatterStyle     | object | 涟漪配置                                             |           | false    |
-| hoverRegionStyle | object | 鼠标hover地图高亮 不传则不生效                       | Undefined | false    |
-| regions          | object | 单独配置地图区域的颜色 不传则不生效                  |           | false    |
+>| 参数             | 类型   | 说明                                                 | 默认      | 是否必填 |
+>| ---------------- | ------ | ---------------------------------------------------- | --------- | -------- |
+>| R                | number | 地球半径值越大地球越大                               | 150       | false    |
+>| texture          | String | 图片url（如果使用贴图则 地图颜色等相关配置则不生效） | Undefined | false    |
+>| earth            | object | 地球相关配置                                         |           | false    |
+>| mapStyle         | object | 地图样式配置                                         |           | false    |
+>| spriteColor      | string | 光圈颜色配置                                         |           | false    |
+>| pathStyle        | object | 飞线路径配置                                         |           | false    |
+>| flyLineStyle     | object | 蝌蚪飞线配置                                         |           | false    |
+>| scatterStyle     | object | 涟漪配置                                             |           | false    |
+>| hoverRegionStyle | object | 鼠标hover地图高亮 不传则不生效                       | Undefined | false    |
+>| regions          | object | 单独配置地图区域的颜色 不传则不生效                  |           | false    |
+> 
 
-> > config.flyLineStyle &  config.scatterStyle 
->> | 参数       | 参数类型            | 说明                                               | 默认              | 是否必填 |
->| ---------- | ------------------- | -------------------------------------------------- | ----------------- | -------- |
+>  config.flyLineStyle &  config.scatterStyle
+> 
+> | 参数       | 参数类型            | 说明                                               | 默认              | 是否必填 |
+> | ---------- | ------------------- | -------------------------------------------------- | ----------------- | -------- |
 > | color      | RGB \| RGBA \| HEX  | 颜色                                               | #cd79ff           | false    |
 > | size       | number              | 尺寸（飞线表现为粗细，涟漪表现为大小）             |                   | false    |
 > | duration   | number              | 一个完成动画所需时间(单位毫秒)，值越小动画速度越快 | 2000              | false    |
