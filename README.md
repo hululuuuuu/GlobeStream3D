@@ -134,18 +134,19 @@ const chart = earthFlyLine.init({
 >| hoverRegionStyle | object | 鼠标hover地图高亮 不传则不生效                       | Undefined | false    |
 >| regions          | object | 单独配置地图区域的颜色 不传则不生效                  |           | false    |
 > 
+> >  config.flyLineStyle &  config.scatterStyle
+> >
+> > | 参数       | 参数类型            | 说明                                               | 默认              | 是否必填 |
+> > | ---------- | ------------------- | -------------------------------------------------- | ----------------- | -------- |
+> > | color      | RGB \| RGBA \| HEX  | 颜色                                               | #cd79ff           | false    |
+> > | size       | number              | 尺寸（飞线表现为粗细，涟漪表现为大小）             |                   | false    |
+> > | duration   | number              | 一个完成动画所需时间(单位毫秒)，值越小动画速度越快 | 2000              | false    |
+> > | delay      | number              | 延迟执行时间默认                                   | 0                 | false    |
+> > | repeat     | number              | 循环次数                                           | Infinity 无限循环 | false    |
+> > | onComplete | (params:void)=>void | 当repeat循环次数用尽之后的回调                     | undefined         | false    |
+>
 
->  config.flyLineStyle &  config.scatterStyle
-> 
-> | 参数       | 参数类型            | 说明                                               | 默认              | 是否必填 |
-> | ---------- | ------------------- | -------------------------------------------------- | ----------------- | -------- |
-> | color      | RGB \| RGBA \| HEX  | 颜色                                               | #cd79ff           | false    |
-> | size       | number              | 尺寸（飞线表现为粗细，涟漪表现为大小）             |                   | false    |
-> | duration   | number              | 一个完成动画所需时间(单位毫秒)，值越小动画速度越快 | 2000              | false    |
-> | delay      | number              | 延迟执行时间默认                                   | 0                 | false    |
-> | repeat     | number              | 循环次数                                           | Infinity 无限循环 | false    |
-> | onComplete | (params:void)=>void | 当repeat循环次数用尽之后的回调                     | undefined         | false    |
-> 
+
 
 
 
