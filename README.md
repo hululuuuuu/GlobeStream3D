@@ -91,7 +91,7 @@ const chart = earthFlyLine.init({
     pathStyle: {
       color: "#cd79ff", 
     },
-    flyWireStyle: {
+    flyLineStyle: {
       color: "#cd79ff",
     },
     scatterStyle: {
@@ -118,24 +118,37 @@ const chart = earthFlyLine.init({
 | autoRotate  | boolean      | 地球自转        | false    |
 | rotateSpeed | number       | 地球旋转速度    | false    |
 | map         | string       | 注册的地图名称  | true     |
-| mode        | '3d' \| '2d' | 渲染模式 默认3d | False    |
+| mode        | '3d' \| '2d' | 渲染模式 默认3d | false    |
 
-### config
+>  ### config
+>  | 参数             | 类型   | 说明                                                 | 默认      | 是否必填 |
+| ---------------- | ------ | ---------------------------------------------------- | --------- | -------- |
+| R                | number | 地球半径值越大地球越大                               | 150       | false    |
+| texture          | String | 图片url（如果使用贴图则 地图颜色等相关配置则不生效） | Undefined | false    |
+| earth            | object | 地球相关配置                                         |           | false    |
+| mapStyle         | object | 地图样式配置                                         |           | false    |
+| spriteColor      | string | 光圈颜色配置                                         |           | false    |
+| pathStyle        | object | 飞线路径配置                                         |           | false    |
+| flyLineStyle     | object | 蝌蚪飞线配置                                         |           | false    |
+| scatterStyle     | object | 涟漪配置                                             |           | false    |
+| hoverRegionStyle | object | 鼠标hover地图高亮 不传则不生效                       | Undefined | false    |
+| regions          | object | 单独配置地图区域的颜色 不传则不生效                  |           | false    |
 
-| 参数             | 类型   | 说明                                                 | 默认      |
-| ---------------- | ------ | ---------------------------------------------------- | --------- |
-| R                | number | 地球半径值越大地球越大                               | 150       |
-| texture          | String | 图片url（如果使用贴图则 地图颜色等相关配置则不生效） | Undefined |
-| earth            | object | 地球相关配置                                         |           |
-| mapStyle         | object | 地图样式配置                                         |           |
-| spriteColor      | string | 光圈颜色配置                                         |           |
-| pathStyle        | object | 飞线路径配置                                         |           |
-| flyWireStyle     | object | 蝌蚪飞线配置                                         |           |
-| scatterStyle     | object | 涟漪配置                                             |           |
-| hoverRegionStyle | object | 鼠标hover地图高亮 不传则不生效                       | Undefined |
-| regions          | object | 单独配置地图区域的颜色 不传则不生效                  |           |
+> > config.flyLineStyle &  config.scatterStyle 
+>> | 参数       | 参数类型            | 说明                                               | 默认              | 是否必填 |
+>| ---------- | ------------------- | -------------------------------------------------- | ----------------- | -------- |
+> | color      | RGB \| RGBA \| HEX  | 颜色                                               | #cd79ff           | false    |
+> | size       | number              | 尺寸（飞线表现为粗细，涟漪表现为大小）             |                   | false    |
+> | duration   | number              | 一个完成动画所需时间(单位毫秒)，值越小动画速度越快 | 2000              | false    |
+> | delay      | number              | 延迟执行时间默认                                   | 0                 | false    |
+> | repeat     | number              | 循环次数                                           | Infinity 无限循环 | false    |
+> | onComplete | (params:void)=>void | 当repeat循环次数用尽之后的回调                     | undefined         | false    |
+> 
 
-### Chart实例方法
+
+
+
+### 实例方法
 
 > ``` javascript
 > chart.addData(type,data)
@@ -143,32 +156,53 @@ const chart = earthFlyLine.init({
 >
 > > **addData参数解释** 
 > >
-> > - type: 添加数据模型的类型，目前只支持 'flyLine' 
+> > - type: 添加数据模型的类型，目前支持 'flyLine' 和'point'
 > >
 > > - data:Array[object]
 > >
 > >   ```javascript
+> >   type === 'flyLine' 时对应的data数据结构
 > >   [
 > >     {
 > >       from:{
-> >          id:1,
-> >          lon: 112.45, //经度
-> >          lat: 34.62, //维度
-> >          ...extraField // 其他自定义字段
-> >         },
+> >         id:1,
+> >         lon: 112.45, //经度
+> >         lat: 34.62, //维度
+> >         style:scatterStyle //config.scatterStyle 配置一致
+> >         ...userData // 其他自定义字段
+> >       },
 > >       to:{
 > >         id:2,
 > >         lon: 14, //经度
 > >         lat: 52, //维度
-> >         ...extraField // 其他自定义字段
+> >         style:scatterStyle //config.scatterStyle 配置一致
+> >         ...userData // 其他自定义字段
 > >       },
+> >       style:{
+> >         pathStyle:pathStyle //config.pathStyle配置一致
+> >         flyLineStyle：flyLineStyle //config.flyLineStyle配置一致
+> >       }
 > >     }
 > >   ]
+> >   
+> >   type === 'point' 时对应的data数据结构
+> >   [
+> >     {
+> >         id:1,
+> >         lon: 112.45, //经度
+> >         lat: 34.62, //维度
+> >         style:scatterStyle //config.scatterStyle 配置一致
+> >         ...userData // 其他自定义字段
+> >       }
+> >   ]
+> >   
 > >   ```
-> >
+> >   
 > >   该数据里面有from和to两个字段，代表起始点和终点lon和lat 分别代表经度和纬度。最终会生成带有两个涟漪点位的飞线。
-> >
-> >   关于id字段：from和to里的id最终会拼接在一起id=\`${from.id}-${to.id}\` ,如果没有传id 则会根据经纬度拼接 拼接逻辑为：id = \`${from.lon}${from.lat}-${to.lon}${to.lat}\` 此id被用于移除飞线模型 
+> >   
+> >   关于id字段：from和to里的id最终会拼接在一起id=\`${from.id}-${to.id}\` ,如果没有传id 则会根据经纬度拼接 拼接逻辑为：id = \`${from.lon}${from.lat}-${to.lon}${to.lat}\` 此id被用于移除相应类型的模型 
+> >   
+> > - 
 
 > 
 >
@@ -178,7 +212,7 @@ const chart = earthFlyLine.init({
 >
 > > ### **remove参数解释**
 > >
-> > - type: 移除数据模型的类型，目前只支持 'flyLine' 
+> > - type: 移除数据模型的类型，目前支持 'flyLine' 和'scatter'
 > >
 > > - ids: string[] | 'removeAll'
 > >
@@ -205,14 +239,20 @@ chart.on("mouseover", (params) => {
 });
 ```
 
+
+
+
+
 ##  进度
 
 - [x] 地图支持鼠标hover高亮
 - [x] 地图区域支持自定义颜色
 - [x] 支持2D地图渲染和飞线高亮等功能
-- [ ] 支持地球贴图（进行中）
+- [x] 支持地球贴图
+- [x] 支持单独增删涟漪模块 以及涟漪模块颜色大小等配置
+- [x] 支持飞线更多的配置如速度，循环次数等
 - [ ] 2D地图飞线绘制逻辑重构（进行中）
-- [ ] 支持飞线更多的配置如速度，弧度，循环次数自动销毁等
+- [ ] 支持涟漪自定义图片样式
 
 
 

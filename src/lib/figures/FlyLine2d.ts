@@ -12,15 +12,25 @@ import {
 } from "three";
 import { getFunctionExpression } from "@/lib/utils/math";
 import { setTween } from "@/lib/utils/tween";
-import { configType } from "@/lib/interface";
+import { configType, FlyLineData, LineStyle } from "@/lib/interface";
 import Store from "@/lib/store/store";
 
 export default class FlyLine2d {
   _config: configType;
   _store: Store;
-  constructor(store: Store) {
+  _currentData: FlyLineData;
+  _currentConfig: LineStyle;
+  constructor(store: Store, currentData: FlyLineData) {
     this._store = store;
     this._config = store.getConfig();
+    this._currentData = currentData;
+    this._currentConfig = {
+      flyLineStyle: this._config.flyLineStyle,
+      pathStyle: this._config.pathStyle,
+    };
+    if (currentData.style) {
+      Object.assign(this._currentConfig, currentData.style);
+    }
   }
 
   createMesh(positionInfo: [Vector3, Vector3]) {
@@ -39,17 +49,22 @@ export default class FlyLine2d {
     const tadpolePointsMesh = this.createShader(points, tadpoleSize);
     group.add(pathLine, tadpolePointsMesh);
     group.name = "flyLine";
-    setTween({ index: 0 }, { index: points.length - tadpoleSize }, (params) => {
-      tadpolePointsMesh.geometry.setFromPoints(
-        points.slice(params.index, params.index + tadpoleSize)
-      );
-    });
+    setTween(
+      { index: 0 },
+      { index: points.length - tadpoleSize },
+      (params) => {
+        tadpolePointsMesh.geometry.setFromPoints(
+          points.slice(params.index, params.index + tadpoleSize)
+        );
+      },
+      { ...this._currentConfig.flyLineStyle, data: this._currentData }
+    );
     return group;
   }
   createPathLine = (points: Vector3[]) => {
     const geometry = new BufferGeometry().setFromPoints(points);
     const material = new LineBasicMaterial({
-      color: this._config.pathStyle.color,
+      color: this._currentConfig.pathStyle.color,
     });
     const pathLine = new Line(geometry, material);
     pathLine.name = "pathLine";
@@ -64,8 +79,8 @@ export default class FlyLine2d {
       percentArr.push(i / newPoints.length);
     }
     const colorArr = [];
-    const color1 = new Color(this._config.pathStyle.color); //尾拖线颜色
-    const color2 = new Color(this._config.flyWireStyle.color); //飞线蝌蚪头颜色
+    const color1 = new Color(this._currentConfig.pathStyle.color); //尾拖线颜色
+    const color2 = new Color(this._currentConfig.flyLineStyle.color); //飞线蝌蚪头颜色
     for (let i = 0; i < newPoints.length; i++) {
       const color = color1.lerp(color2, i / newPoints.length);
       colorArr.push(color.r, color.g, color.b);

@@ -12,15 +12,25 @@ import {
 } from "three";
 import { _3Dto2D, radianAOB, threePointCenter } from "@/lib/utils/math";
 import { setTween } from "@/lib/utils/tween";
-import { configType } from "@/lib/interface";
+import { configType, FlyLineData, LineStyle } from "@/lib/interface";
 import Store from "@/lib/store/store";
 
 export default class FlyLine3d {
   _config: configType;
   _store: Store;
-  constructor(store: Store) {
+  _currentData: FlyLineData;
+  _currentConfig: LineStyle;
+  constructor(store: Store, currentData: FlyLineData) {
     this._store = store;
     this._config = store.getConfig();
+    this._currentConfig = {
+      flyLineStyle: this._config.flyLineStyle,
+      pathStyle: this._config.pathStyle,
+    };
+    this._currentData = currentData;
+    if (currentData.style) {
+      Object.assign(this._currentConfig, currentData.style);
+    }
   }
   createMesh(positionInfo: [Vector3, Vector3]) {
     const group = new Group();
@@ -45,7 +55,6 @@ export default class FlyLine3d {
     );
     //求得半径
     const R = middlePos.clone().sub(centerPosition).length();
-    // group.add(createPoint(centerPosition))
     const c = radianAOB(sourcePoint, new Vector3(0, -1, 0), centerPosition);
     const startDeg = -Math.PI / 2 + c; //飞线圆弧开始角度
     const endDeg = Math.PI - startDeg; //飞线圆弧结束角度
@@ -60,11 +69,18 @@ export default class FlyLine3d {
     //和创建好的路径圆 圆心坐标保持一致
     tadpolePointsMesh.position.y = centerPosition.y;
     tadpolePointsMesh.name = "tadpolePointsMesh";
-    // tadpolePointsMesh.userData.flyEndAngle = endDeg - startDeg - flyAngle;
-    // tadpolePointsMesh.userData.startAngle = startDeg;
-    setTween({ z: 0 }, { z: endDeg - startDeg }, (params) => {
-      tadpolePointsMesh.rotation.z = params.z;
-    });
+    setTween(
+      { z: 0 },
+      { z: endDeg - startDeg },
+      (params) => {
+        tadpolePointsMesh.rotation.z = params.z;
+      },
+      {
+        ...this._currentConfig.flyLineStyle,
+        data: this._currentData,
+      }
+    );
+
     group.add(tadpolePointsMesh);
     group.add(pathLine);
     group.name = "flyLine";
@@ -87,7 +103,7 @@ export default class FlyLine3d {
     const points = curve.getSpacedPoints(200);
     const geometry = new BufferGeometry().setFromPoints(points);
     const material = new LineBasicMaterial({
-      color: this._config.pathStyle.color,
+      color: this._currentConfig.pathStyle.color,
     });
     const pathLine = new Line(geometry, material);
     pathLine.name = "pathLine";
@@ -110,8 +126,8 @@ export default class FlyLine3d {
       percentArr.push(i / newPoints.length);
     }
     const colorArr = [];
-    const color1 = new Color(this._config.pathStyle.color); //尾拖线颜色
-    const color2 = new Color(this._config.flyWireStyle.color); //飞线蝌蚪头颜色
+    const color1 = new Color(this._currentConfig.pathStyle.color); //尾拖线颜色
+    const color2 = new Color(this._currentConfig.flyLineStyle.color); //飞线蝌蚪头颜色
     for (let i = 0; i < newPoints.length; i++) {
       const color = color1.lerp(color2, i / newPoints.length);
       colorArr.push(color.r, color.g, color.b);
