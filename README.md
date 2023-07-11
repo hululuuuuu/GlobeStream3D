@@ -267,11 +267,10 @@ chart.on("mouseover", (params) => {
 # 通过 npm 安装依赖
 npm install
 
-# 打包文件
-npm run build
+# 开发调试
+npm run dev
 ```
 
-构建好的文件在`dist`文件夹。
 
 ## 🤗 感谢
 
