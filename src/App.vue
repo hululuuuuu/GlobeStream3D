@@ -95,7 +95,7 @@ onMounted(() => {
           lon: -23.0075,
           lat: 50.4296,
           style: {
-            color: "#ff000",
+            color: "#ff0000",
             duration: 2000,
             delay: 0,
             repeat: 1,
@@ -107,7 +107,7 @@ onMounted(() => {
         to: { id: 2, lon: 26.1223, lat: -7.8756 },
         style: {
           pathStyle: {
-            color: "#ff000", //飞线路径配置
+            color: "#ff0000", //飞线路径配置
           },
           flyLineStyle: {
             //飞线样式配置
