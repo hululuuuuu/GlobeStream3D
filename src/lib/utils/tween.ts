@@ -9,6 +9,7 @@ export function setTween(
   const myConfig = {
     duration: 2000,
     delay: 0,
+    repeat: Infinity,
   };
   merge(myConfig, config);
   const ro = new TWEEN.Tween(from); //创建tween动画实例
@@ -19,6 +20,12 @@ export function setTween(
     cb(e);
   }); //执行回调
   ro.start();
-  ro.repeat(Infinity);
+  ro.repeat(myConfig.repeat);
+  if (config && config.onComplete) {
+    ro.onComplete(() => {
+      config.onComplete(config.data);
+    });
+  }
+
   return ro;
 }
