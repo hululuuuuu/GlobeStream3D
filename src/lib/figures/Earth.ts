@@ -61,3 +61,5 @@ class CreateEarth {
   }
 }
 export default CreateEarth;
+{
+}
