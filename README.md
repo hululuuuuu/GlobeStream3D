@@ -5,8 +5,7 @@
 ## [Online preview]('https://javascriptam.github.io/earth-flyLine/')
 https://javascriptam.github.io/earth-flyLine/
 
-### If you have any questions or suggestions during use, please feel free to mention [issue](https://github.com/JavaScriptam/earth-flyLine/issues). If this project has provided you with help, I would like to thank you very much.
-
+### Please let us know if you encounter any [issues](https://github.com/JavaScriptam/earth-flyLine/issues) while using our project. Your feedback is valuable and will help us improve it.If you find our project helpful, please give us a star to support us. Thank you for support！！！
 ## Introduction
 
 Building 3D large screen earth visualization based on three.js, essential for home, High efficiency component。
@@ -282,4 +281,3 @@ Thanks for the features provided by these awesome projects.
  [lodash](https://github.com/lodash/lodash)
 
  [delaunator](https://github.com/mapbox/delaunator) 
-
