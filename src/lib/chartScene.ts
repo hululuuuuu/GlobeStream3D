@@ -146,7 +146,7 @@ export default class ChartScene {
   addFigures3d() {
     const groupEarth = new CreateEarth(this._store).create();
     //如果非贴图 则正常加载地图文件
-    if (!this.options.config.texture) {
+    if (!this.options.config || !this.options.config.texture) {
       const mapShape = new MapShape(this);
       groupEarth.add(...mapShape.create());
     }
