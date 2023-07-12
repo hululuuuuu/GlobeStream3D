@@ -5,10 +5,11 @@ type HEX = `#${string}`;
 
 type Color = RGB | RGBA | HEX | string;
 export interface Options {
-  cameraType?: string;
   dom: HTMLElement;
   map: string;
-  mode: "2d" | "3d";
+  cameraType?: string;
+  bgColor?: Color;
+  mode?: "2d" | "3d";
   helper?: boolean;
   autoRotate?: boolean;
   rotateSpeed?: number;

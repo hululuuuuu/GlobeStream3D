@@ -56,6 +56,37 @@ onMounted(() => {
       map: "world",
       autoRotate: true,
       mode: "3d",
+      config: {
+        R: 140,
+        texture: worldTexture,
+        earth: {
+          color: "#13162c",
+        },
+        mapStyle: {
+          areaColor: "#2e3564",
+          lineColor: "#797eff",
+        },
+        spriteColor: "#797eff", //光圈
+        pathStyle: {
+          color: "#cd79ff", //飞线路径配置
+        },
+        flyLineStyle: {
+          //飞线样式配置
+          color: "#cd79ff",
+        },
+        scatterStyle: {
+          //涟漪
+          color: "#cd79ff",
+        },
+        hoverRegionStyle: {
+          areaColor: "#cd79ff",
+        },
+        regions: {
+          China: {
+            areaColor: "#2e3564",
+          },
+        },
+      },
     });
     const initData = [
       {
