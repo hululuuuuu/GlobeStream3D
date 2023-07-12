@@ -1,5 +1,5 @@
-# EarthFlyLine
 <h4 align="right"><a href="https://github.com/JavaScriptam/earth-flyLine/blob/main">English</a> | <strong>简体中文</strong></h4>
+# EarthFlyLine
 
 ## [项目地址]('https://github.com/JavaScriptam/earth-flyLine'')
 
