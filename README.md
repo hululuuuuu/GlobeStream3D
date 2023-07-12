@@ -110,14 +110,14 @@ const chart = earthFlyLine.init({
 
 ### options
 
-| 参数        | 类型         | 说明                           | 是否必填 |
-| ----------- | ------------ | ------------------------------ | -------- |
-| dom         | HTMLElement  |                                | true     |
-| config      | object       |                                | false    |
-| autoRotate  | boolean      | The earth rotates              | false    |
-| rotateSpeed | number       | Speed of rotation of the earth | false    |
-| map         | string       | Name of the registered map     | true     |
-| mode        | '3d' \| '2d' | Rendering mode defaults to 3d  | false    |
+| Property        | Type         | Description                           | Default | Required |
+| ----------- | ------------ | ------------------------------ | -------- | ----------- |
+| dom         | HTMLElement  |                                | true     | true |
+| config      | object       |                                | -    | false |
+| autoRotate  | boolean      | The earth rotates              | True | false |
+| rotateSpeed | number       | Speed of rotation of the earth | 0.01 | false |
+| map         | string       | Name of the registered map     | - | true |
+| mode        | '3d' \| '2d' | Rendering mode defaults to 3d  | '3d' | false |
 
 >  ### config
 >| Property         | Type   | Description                                                  | Default | Required |
