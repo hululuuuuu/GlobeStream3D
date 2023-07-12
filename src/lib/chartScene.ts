@@ -24,16 +24,20 @@ import { update as tweenUpdate } from "@tweenjs/tween.js";
 import Store from "@/lib/store/store";
 import EventStore from "@/lib/store/eventStore";
 import { TransformControls } from "three/examples/jsm/controls/TransformControls";
+import { merge } from "lodash";
 
 export default class ChartScene {
   options: Options;
-  initOptions: Pick<Options, "helper" | "autoRotate" | "rotateSpeed" | "mode"> =
-    {
-      helper: false,
-      autoRotate: true,
-      rotateSpeed: 0.01,
-      mode: "3d",
-    };
+  initOptions: Pick<
+    Options,
+    "helper" | "autoRotate" | "rotateSpeed" | "mode" | "bgColor"
+  > = {
+    helper: false,
+    autoRotate: true,
+    rotateSpeed: 0.01,
+    mode: "3d",
+    bgColor: "#040D21",
+  };
   style = {
     width: 0,
     height: 0,
@@ -49,9 +53,10 @@ export default class ChartScene {
   constructor(params: Partial<Options>) {
     this.options = {
       ...this.options,
-      ...this.initOptions,
-      ...params,
+      config: this._store.config,
     };
+    merge(this.options, this.initOptions, params);
+    console.log(this.options);
     this.isPass = this.limitFPS(true);
     this.init();
     this._eventStore = new EventStore(this);
@@ -146,7 +151,7 @@ export default class ChartScene {
   addFigures3d() {
     const groupEarth = new CreateEarth(this._store).create();
     //如果非贴图 则正常加载地图文件
-    if (!this.options.config || !this.options.config.texture) {
+    if (!this.options.config.texture) {
       const mapShape = new MapShape(this);
       groupEarth.add(...mapShape.create());
     }
@@ -173,7 +178,7 @@ export default class ChartScene {
     });
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(this.style.width, this.style.height);
-    renderer.setClearColor("#040D21", 1);
+    renderer.setClearColor(this.options.bgColor!, 1);
     return renderer;
   }
   //限制帧数
