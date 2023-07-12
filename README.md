@@ -1,6 +1,6 @@
 <h4 align="right"><strong>English</strong> | <a href="https://github.com/JavaScriptam/earth-flyLine/blob/main/README_CN.md">简体中文</a></h4>
 
-# EarthFlyLine
+# earth-flyLine
 
 ## [Online preview]('https://javascriptam.github.io/earth-flyLine/')
 https://javascriptam.github.io/earth-flyLine/

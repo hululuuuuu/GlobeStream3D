@@ -112,12 +112,6 @@ onMounted(() => {
           flyLineStyle: {
             //飞线样式配置
             color: "#0000ff",
-            duration: 2000,
-            delay: 0,
-            repeat: 1,
-            onComplete: (data: any) => {
-              //do something
-            },
           },
         },
       },
