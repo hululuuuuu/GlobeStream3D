@@ -59,7 +59,7 @@ onMounted(() => {
       config: {
         R: 140,
         texture: worldTexture,
-        bgColor: "red",
+        bgColor: "#040D21",
         earth: {
           color: "#13162c",
         },
