@@ -28,16 +28,13 @@ import { merge } from "lodash";
 
 export default class ChartScene {
   options: Options;
-  initOptions: Pick<
-    Options,
-    "helper" | "autoRotate" | "rotateSpeed" | "mode" | "bgColor"
-  > = {
-    helper: false,
-    autoRotate: true,
-    rotateSpeed: 0.01,
-    mode: "3d",
-    bgColor: "#040D21",
-  };
+  initOptions: Pick<Options, "helper" | "autoRotate" | "rotateSpeed" | "mode"> =
+    {
+      helper: false,
+      autoRotate: true,
+      rotateSpeed: 0.01,
+      mode: "3d",
+    };
   style = {
     width: 0,
     height: 0,
@@ -178,7 +175,7 @@ export default class ChartScene {
     });
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(this.style.width, this.style.height);
-    renderer.setClearColor(this.options.bgColor!, 1);
+    renderer.setClearColor(this.options.config.bgColor!, 1);
     return renderer;
   }
   //限制帧数

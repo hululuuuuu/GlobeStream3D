@@ -8,7 +8,6 @@ export interface Options {
   dom: HTMLElement;
   map: string;
   cameraType?: string;
-  bgColor?: Color;
   mode?: "2d" | "3d";
   helper?: boolean;
   autoRotate?: boolean;
@@ -60,6 +59,7 @@ export interface configType {
   R: number;
   map: string;
   texture: string;
+  bgColor: Color;
   earth: Earth;
   mapStyle: MapStyle;
   spriteColor: Color;
