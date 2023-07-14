@@ -59,7 +59,6 @@ onMounted(() => {
       config: {
         R: 140,
         texture: worldTexture,
-        bgColor: "#040D21",
         earth: {
           color: "#13162c",
         },
@@ -247,8 +246,6 @@ function add() {
 function del() {
   chartInstance.remove("flyLine", []);
 }
-// This starter template is using Vue 3 <script setup> SFCs
-// Check out https://vuejs.org/api/sfc-script-setup.html#script-setup
 </script>
 
 <template>
