@@ -82,7 +82,7 @@ export interface FlyLineData {
 }
 export interface SetData {
   flyLine: FlyLineData[];
-  point: [Coordinates];
+  point: Coordinates[];
 }
 export type OptDataFunc = <K extends keyof SetData>(
   type: K,

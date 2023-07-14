@@ -53,7 +53,6 @@ export default class ChartScene {
       config: this._store.config,
     };
     merge(this.options, this.initOptions, params);
-    console.log(this.options);
     this.isPass = this.limitFPS(true);
     this.init();
     this._eventStore = new EventStore(this);
@@ -172,6 +171,7 @@ export default class ChartScene {
   createRender() {
     const renderer = new WebGLRenderer({
       antialias: true,
+      alpha: true,
     });
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(this.style.width, this.style.height);
