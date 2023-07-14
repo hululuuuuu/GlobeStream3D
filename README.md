@@ -6,7 +6,7 @@
 
 ## 📄 在线预览
 
-请[预览](https://javascriptam.github.io/earth-flyline-docs/)
+请[预览](https://javascriptam.github.io/earth-flyline-docs/?starlight-theme=dark)
 
 ## 项目介绍
 
@@ -44,7 +44,7 @@ const chart = earthFlyLine.init({
 
 # 文档
 
-请查看[文档](https://javascriptam.github.io/earth-flyline-docs/guides/start/)
+请查看[文档](https://javascriptam.github.io/earth-flyline-docs/guides/start/?starlight-theme=dark)
 
 
 ## 🤗 感谢
