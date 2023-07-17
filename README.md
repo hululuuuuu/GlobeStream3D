@@ -2,12 +2,6 @@
 
 # earth-flyLine
 
-### 使用过程中的问题或者建议欢迎提 [issue](https://github.com/JavaScriptam/earth-flyLine/issues) ，如果该项目为您提供了帮助希望来一个star万分感谢。
-
-## 📄 在线预览
-
-请[预览](https://javascriptam.github.io/earth-flyline-docs/?starlight-theme=dark)
-
 ## 项目介绍
 
 基于three.js 构建3D大屏地球可视化，居家必备，搬砖神器节约时间。
@@ -42,14 +36,16 @@ const chart = earthFlyLine.init({
     });
 ```
 
-# 文档
+## 📄 文档
 
-请查看[文档](https://javascriptam.github.io/earth-flyline-docs/guides/start/?starlight-theme=dark)
+[在线预览及文档地址](https://javascriptam.github.io/earth-flyline-docs/?starlight-theme=dark)
+
+使用过程中的问题或者建议欢迎提 [issue](https://github.com/JavaScriptam/earth-flyLine/issues) ，如果该项目为您提供了帮助希望来一个star万分感谢。
 
 
 ## 🤗 感谢
 
-感谢这些很棒的项目所提供的功能。
+感谢这些开源项目提供的功能。
 
  [tween.js](https://github.com/tweenjs/tween.js/)
 
