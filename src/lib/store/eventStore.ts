@@ -21,22 +21,23 @@ class EventStore {
   _chartScene: ChartScene;
   currentMesh: Mesh | null;
   currentColor: Color;
+  areaColorNeedChange: boolean | undefined = false;
   constructor(chartScene: ChartScene) {
     this._chartScene = chartScene;
     //需要hover事件
-    const buildInRequired =
+    this.areaColorNeedChange =
       this._chartScene.options.config &&
       this._chartScene.options.config.hoverRegionStyle &&
       Object.keys(this._chartScene.options.config?.hoverRegionStyle).length > 0;
-    if (buildInRequired) {
-      this.registerBuildInEventMap("mousemove", () => {
+    this.registerBuildInEventMap("mousemove", () => {
+      if (this.areaColorNeedChange) {
         if (this.currentMesh) {
           (this.currentMesh.material as MeshBasicMaterial).color.set(
             this.currentMesh.userData.backupColor
           );
         }
-      });
-    }
+      }
+    });
   }
   registerEventMap(eventName: string, cb: (params: any) => void) {
     this.eventMap[eventName] = cb;
@@ -52,8 +53,18 @@ class EventStore {
       event: MouseEvent
     ) => {
       const eventMesh = this.handleRaycaster(event);
+      //说明hover的是地球
+      if (eventMesh && eventMesh.type !== "TransformControlsPlane") {
+        this._chartScene.earthHovered = true;
+      } else {
+        this._chartScene.earthHovered = false;
+      }
       cb();
-      if (eventMesh && eventMesh.userData.type === "country") {
+      if (
+        eventMesh &&
+        eventMesh.userData.type === "country" &&
+        this.areaColorNeedChange
+      ) {
         this.currentMesh = eventMesh;
         (this.currentMesh.material as MeshBasicMaterial).color.set(
           this._chartScene.options.config!.hoverRegionStyle!.areaColor!

@@ -39,6 +39,7 @@ export default class ChartScene {
     width: 0,
     height: 0,
   };
+  earthHovered: boolean = false;
   camera: Camera;
   isPass: Function;
   mainContainer: Object3D;
@@ -198,10 +199,26 @@ export default class ChartScene {
       }
     };
   }
+  shouldRotate() {
+    if (this.options.mode === "3d") {
+      //hover停止旋转
+      if (this.options.config.stopRotateByHover) {
+        if (this.earthHovered) {
+          return false;
+        } else {
+          return this.options.autoRotate;
+        }
+      } else {
+        return this.options.autoRotate;
+      }
+    } else {
+      return false;
+    }
+  }
   animate() {
     if (this.isPass()) {
       tweenUpdate();
-      if (this.options.mode === "3d" && this.options.autoRotate) {
+      if (this.shouldRotate()) {
         this.mainContainer.rotateY(this.options.rotateSpeed!);
       }
       this.renderer.render(this.scene, this.camera);

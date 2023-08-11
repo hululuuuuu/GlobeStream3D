@@ -38,7 +38,7 @@ const chart = earthFlyLine.init({
 
 ## 📄 文档
 
-[在线预览及文档地址](https://javascriptam.github.io/earth-flyline-docs/?starlight-theme=dark)
+[在线预览及文档地址](https://earth-flyline-docs.vercel.app/?starlight-theme=dark)
 
 使用过程中的问题或者建议欢迎提 [issue](https://github.com/JavaScriptam/earth-flyLine/issues) ，如果该项目为您提供了帮助希望来一个star万分感谢。
 

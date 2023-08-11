@@ -57,8 +57,9 @@ onMounted(() => {
       autoRotate: true,
       mode: "3d",
       config: {
-        R: 140,
+        stopRotateByHover: true,
         texture: worldTexture,
+        R: 140,
         earth: {
           color: "#13162c",
         },
@@ -224,7 +225,6 @@ onMounted(() => {
         },
       },
     ]);
-    // chartInstance.on("click", (event: Event, params: any) => {});
     chartInstance.on("mouseover", () => {
       chartInstance.options.autoRotate = false;
     });
@@ -232,7 +232,6 @@ onMounted(() => {
       chartInstance.options.autoRotate = true;
     });
   }
-  // scene.add(shape())
 });
 function add() {
   chartInstance.addData("flyLine", [

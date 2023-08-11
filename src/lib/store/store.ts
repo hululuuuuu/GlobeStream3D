@@ -8,6 +8,7 @@ class Store {
       color: "#13162c",
     },
     map: "world",
+    stopRotateByHover: true,
     texture: "",
     bgColor: "#040D21",
     mapStyle: {
