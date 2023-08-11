@@ -59,6 +59,7 @@ export interface configType {
   R: number;
   map: string;
   texture: string;
+  stopRotateByHover: boolean;
   bgColor: Color;
   earth: Earth;
   mapStyle: MapStyle;
