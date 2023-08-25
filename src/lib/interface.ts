@@ -10,16 +10,33 @@ export interface Options {
   cameraType?: string;
   mode?: "2d" | "3d";
   helper?: boolean;
+  limitFps?: boolean;
   autoRotate?: boolean;
   rotateSpeed?: number;
   light?: "AmbientLight" | "PointLight" | "DirectionalLight" | "RectAreaLight";
   config: Partial<configType>;
 }
+export interface TweenParams {
+  from: {
+    size?: number;
+    color?: Color;
+    opacity?: number;
+  };
+  to: {
+    size?: number | number[];
+    color?: Color | Color[];
+    opacity?: number | number[];
+  };
+}
 export interface TweenConfig {
-  duration: number;
-  delay: number;
-  repeat: number;
-  onComplete: (data: any) => void;
+  duration?: number;
+  delay?: number;
+  repeat?: number;
+  onComplete?: (data: any) => void;
+  customFigure?: {
+    texture: string;
+    animate?: false | TweenParams;
+  };
 }
 export interface PathStyle {
   color: Color;
@@ -44,6 +61,10 @@ export interface LineStyle {
   flyLineStyle: Partial<FlyLineStyle>;
   pathStyle: Partial<PathStyle>;
 }
+export interface SpriteStyle {
+  color: Color;
+  show?: boolean;
+}
 interface Earth {
   color: Color;
 }
@@ -60,10 +81,13 @@ export interface configType {
   map: string;
   texture: string;
   stopRotateByHover: boolean;
-  bgColor: Color;
+  bgStyle: {
+    color: Color;
+    opacity?: number;
+  };
   earth: Earth;
   mapStyle: MapStyle;
-  spriteColor: Color;
+  spriteStyle: SpriteStyle;
   pathStyle: Partial<PathStyle>;
   flyLineStyle: Partial<FlyLineStyle>;
   scatterStyle: Partial<ScatterStyle>;

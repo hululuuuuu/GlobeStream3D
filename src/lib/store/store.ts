@@ -10,12 +10,18 @@ class Store {
     map: "world",
     stopRotateByHover: true,
     texture: "",
-    bgColor: "#040D21",
+    bgStyle: {
+      color: "#040D21",
+      opacity: 1,
+    },
     mapStyle: {
       areaColor: "#2e3564",
       lineColor: "#797eff",
     },
-    spriteColor: "#797eff", //光圈
+    spriteStyle: {
+      color: "#797eff",
+      show: true,
+    }, //光圈
     pathStyle: {
       color: "#cd79ff", //飞线路径配置
     },

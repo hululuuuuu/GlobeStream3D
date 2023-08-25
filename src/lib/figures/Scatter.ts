@@ -1,12 +1,7 @@
 import pointImg from "@/assets/image/point.png";
 import scatterImg from "@/assets/image/scatter.png";
 import { lon2xyz } from "../utils/math";
-import {
-  configType,
-  Coordinates,
-  FlyLineData,
-  ScatterStyle,
-} from "@/lib/interface";
+import { configType, Coordinates, ScatterStyle } from "@/lib/interface";
 import { setTween } from "@/lib/utils/tween";
 import {
   Group,
@@ -21,14 +16,15 @@ import Store from "@/lib/store/store";
 export default class Scatter {
   private _config: configType;
   private _store: Store;
-  customStyle: ScatterStyle;
   _currentStyle: ScatterStyle;
   _currentData: Coordinates | undefined;
+
   constructor(store: Store) {
     this._config = store.getConfig();
     this._store = store;
     this._currentStyle = this._config.scatterStyle as ScatterStyle;
   }
+
   setMeshAttr(
     geometry: PlaneGeometry,
     material: MeshBasicMaterial,
@@ -39,7 +35,11 @@ export default class Scatter {
       material.name === "scatter"
         ? this._config.R * 1.001
         : this._config.R * 1.002;
-    const size = this._config.scatterStyle.size || this._config.R * 0.05;
+
+    const size =
+      this._currentStyle.size ||
+      this._config.scatterStyle.size ||
+      this._config.R * 0.05;
     mesh.scale.set(size * 1.3, size * 1.3, size * 1.3);
     if (this._store.mode === "3d") {
       const { x, y, z } = lon2xyz(zOffset, lon, lat);
@@ -54,6 +54,7 @@ export default class Scatter {
     mesh.userData = rest;
     return { mesh, size };
   }
+
   createScatterMesh = (data: Coordinates) => {
     const { geometry, material } = this.createScatter();
     const { mesh, size } = this.setMeshAttr(geometry, material, data);
@@ -73,6 +74,7 @@ export default class Scatter {
     );
     return mesh;
   };
+
   createScatter() {
     const geometry = new PlaneGeometry(1, 1);
     const textureLoader = new TextureLoader().load(scatterImg);
@@ -87,12 +89,14 @@ export default class Scatter {
     material.name = "scatter";
     return { geometry, material };
   }
+
   createPointMesh = (data: Coordinates) => {
     const { geometry, material } = this.createPoint();
     const { mesh } = this.setMeshAttr(geometry, material, data);
     mesh.name = "point";
     return mesh;
   };
+
   createPoint() {
     const geometry = new PlaneGeometry(1, 1);
     const textureLoader = new TextureLoader().load(pointImg);
@@ -105,17 +109,63 @@ export default class Scatter {
 
     return { geometry, material };
   }
+
+  createCustomMesh = (data: Coordinates) => {
+    const { geometry, material } = this.createCustom();
+    const { mesh, size } = this.setMeshAttr(geometry, material, data);
+    mesh.name = "scatter";
+    const aminate = this._currentStyle.customFigure?.animate;
+    if (aminate) {
+      //设置动画
+      setTween(
+        aminate.from,
+        aminate.to,
+        function (params) {
+          const { size, opacity } = params;
+          size && mesh.scale.set(size, size, size);
+          opacity && (mesh.material.opacity = opacity);
+        },
+        {
+          ...this._currentStyle,
+          data: this._currentData,
+        }
+      );
+    }
+    return mesh;
+  };
+  createCustom() {
+    const geometry = new PlaneGeometry(1, 1);
+    const textureLoader = new TextureLoader().load(
+      this._currentStyle.customFigure?.texture!
+    );
+    const material = new MeshBasicMaterial({
+      map: textureLoader,
+      transparent: true,
+      color: this._currentStyle.color,
+      opacity: 1.0,
+      // side: DoubleSide, //双面可见
+      depthWrite: false, //禁止写入深度缓冲区数据
+    });
+    material.name = "scatter";
+    return { geometry, material };
+  }
   create(data: Coordinates) {
     if (data.style) {
       this._currentStyle = data.style;
     }
     const group = new Group();
-    const point = this.createPointMesh(data);
-    const scatter = this.createScatterMesh(data);
-    point.userData = { ...data };
-    scatter.userData = { ...data };
+    if (!this._currentStyle.customFigure?.texture) {
+      const point = this.createPointMesh(data);
+      const scatter = this.createScatterMesh(data);
+      point.userData = { ...data };
+      scatter.userData = { ...data };
+      group.add(point, scatter);
+    } else {
+      const scatter = this.createCustomMesh(data);
+      scatter.userData = { ...data };
+      group.add(scatter);
+    }
     group.name = "pointScatter";
-    group.add(point, scatter);
     return group;
   }
 }
