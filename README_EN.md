@@ -85,7 +85,9 @@ const chart = earthFlyLine.init({
       areaColor: "#2e3564",
       lineColor: "#797eff",
     },
-    spriteColor: "#797eff", 
+    spriteStyle: {
+        color:"#797eff"
+    }, 
     pathStyle: {
       color: "#cd79ff", 
     },
@@ -120,12 +122,12 @@ const chart = earthFlyLine.init({
 
 >  ### config
 >| Property         | Type   | Description                                                  | Default | Required |
->| ---------------- | ------ | ------------------------------------------------------------ | ------- | -------- |
+>|------------------|--------| ------------------------------------------------------------ | ------- | -------- |
 >| R                | number | The larger the radius of the earth, the bigger the earth.    | 150     | false    |
 >| texture          | String | Picture url (if you use a map, the map area color and other related configurations will not take effect) | -       | false    |
 >| earth            | object | Earth configuration                                          | -       | false    |
 >| mapStyle         | object | Map style configuration                                      | -       | false    |
->| spriteColor      | string | Earth background aperture color configuration                | -       | false    |
+>| spriteStyle      | object | Earth background aperture color configuration                | -       | false    |
 >| pathStyle        | object | Flying line path configuration                               | -       | false    |
 >| flyLineStyle     | object | Flying line configuration                                    | -       | false    |
 >| scatterStyle     | object | Scatter configuration                                        | -       | false    |

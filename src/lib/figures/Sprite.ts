@@ -9,7 +9,7 @@ export default (config: configType) => {
   const texture = textureLoader.load(img); //加载纹理贴图
   // 创建精灵材质对象SpriteMaterial
   const spriteMaterial = new SpriteMaterial({
-    color: config.spriteColor,
+    color: config.spriteStyle.color,
     map: texture, //设置精灵纹理贴图
     transparent: true, //开启透明
     opacity: 1, //可以通过透明度整体调节光圈

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted } from "vue";
 import worldTexture from "./image/earth.png";
+import triangle from "./image/triangel.svg";
 import world from "./map/world.json";
 import chart from "@/entry";
 import ChartScene from "@/lib/chartScene";
@@ -21,6 +22,7 @@ onMounted(() => {
       mode: "2d",
       config: {
         R: 140,
+
         earth: {
           color: "#13162c",
         },
@@ -28,7 +30,9 @@ onMounted(() => {
           areaColor: "#2e3564",
           lineColor: "#797eff",
         },
-        spriteColor: "#797eff", //光圈
+        spriteStyle: {
+          color: "#797eff",
+        }, //光圈
         pathStyle: {
           color: "#cd79ff", //飞线路径配置
         },
@@ -54,7 +58,7 @@ onMounted(() => {
       dom: dom1,
       helper: false,
       map: "world",
-      autoRotate: true,
+      autoRotate: false,
       mode: "3d",
       config: {
         stopRotateByHover: true,
@@ -67,7 +71,10 @@ onMounted(() => {
           areaColor: "#2e3564",
           lineColor: "#797eff",
         },
-        spriteColor: "#797eff", //光圈
+        spriteStyle: {
+          color: "#797eff",
+          show: false,
+        }, //光圈
         pathStyle: {
           color: "#cd79ff", //飞线路径配置
         },
@@ -120,78 +127,6 @@ onMounted(() => {
         from: { lon: 142.8123, lat: -58.9813 },
         to: { lon: 157.0064, lat: 10.7816 },
       },
-      // {
-      //   from: { lon: -175.6286, lat: 72.8359 },
-      //   to: { lon: -39.071, lat: -35.438 },
-      // },
-      // {
-      //   from: { lon: 178.7439, lat: 25.8303 },
-      //   to: { lon: 137.19, lat: 17.118 },
-      // },
-      // {
-      //   from: { lon: -162.6725, lat: 37.277 },
-      //   to: { lon: -37.1681, lat: 38.5162 },
-      // },
-      // {
-      //   from: { lon: -7.5945, lat: 37.2754 },
-      //   to: { lon: 41.4114, lat: 41.5946 },
-      // },
-      // {
-      //   from: { lon: -32.529, lat: -75.5152 },
-      //   to: { lon: 153.8553, lat: -39.7648 },
-      // },
-      // {
-      //   from: { lon: -59.8013, lat: -19.3771 },
-      //   to: { lon: 171.8885, lat: 71.9592 },
-      // },
-      // {
-      //   from: { lon: 103.1917, lat: 40.3037 },
-      //   to: { lon: 38.4639, lat: 89.3409 },
-      // },
-      // {
-      //   from: { lon: 92.6181, lat: -75.1948 },
-      //   to: { lon: 23.1154, lat: 54.6066 },
-      // },
-      // {
-      //   from: { lon: -25.6806, lat: 32.5669 },
-      //   to: { lon: 26.8173, lat: -23.3473 },
-      // },
-      // {
-      //   from: { lon: -144.6571, lat: 15.0555 },
-      //   to: { lon: 114.9389, lat: 25.1615 },
-      // },
-      // {
-      //   from: { lon: 11.6155, lat: -19.31 },
-      //   to: { lon: 88.6194, lat: 33.1181 },
-      // },
-      // {
-      //   from: { lon: 162.8275, lat: 50.742 },
-      //   to: { lon: -128.8369, lat: 8.1522 },
-      // },
-      // {
-      //   from: { lon: -89.4121, lat: -47.4232 },
-      //   to: { lon: -148.0117, lat: -7.9949 },
-      // },
-      // {
-      //   from: { lon: -146.2076, lat: -83.4571 },
-      //   to: { lon: 133.6261, lat: -37.512 },
-      // },
-      // {
-      //   from: { lon: -105.7075, lat: 8.3978 },
-      //   to: { lon: 48.2922, lat: 57.0248 },
-      // },
-      // {
-      //   from: { lon: 39.599, lat: 81.3458 },
-      //   to: { lon: 113.3542, lat: 44.2259 },
-      // },
-      // {
-      //   from: { lon: -154.6959, lat: -20.9316 },
-      //   to: { lon: -95.5265, lat: -74.9423 },
-      // },
-      // {
-      //   from: { lon: -168.7863, lat: 85.2333 },
-      //   to: { lon: -84.0216, lat: -35.0322 },
-      // },
     ];
     chartInstance.setData("flyLine", initData);
     chartInstance1.setData("flyLine", initData);
@@ -202,35 +137,47 @@ onMounted(() => {
         style: {
           color: "yellow",
           duration: 2000,
-          delay: 0,
-          repeat: 1,
-          onComplete: (data: any) => {
-            //do something
+          customFigure: {
+            texture: triangle,
+            animate: {
+              from: {
+                size: 11,
+              },
+              to: {
+                size: 22,
+              },
+            },
           },
         },
       },
     ]);
-    chartInstance.addData("point", [
-      {
-        lon: -43.0075,
-        lat: -40.4296,
-        style: {
-          color: "yellow",
-          duration: 2000,
-          delay: 0,
-          repeat: 1,
-          onComplete: (data: any) => {
-            //do something
-          },
-        },
-      },
-    ]);
-    chartInstance.on("mouseover", () => {
-      chartInstance.options.autoRotate = false;
-    });
-    chartInstance.on("mouseout", () => {
-      chartInstance.options.autoRotate = true;
-    });
+    // chartInstance.addData("point", [
+    //   {
+    //     lon: -43.0075,
+    //     lat: -40.4296,
+    //     style: {
+    //       color: "yellow",
+    //       duration: 2000,
+    //       customFigure: {
+    //         texture: triangle,
+    //         animate: {
+    //           from: {
+    //             size: 0.1,
+    //           },
+    //           to: {
+    //             size: 1,
+    //           },
+    //         },
+    //       },
+    //     },
+    //   },
+    // ]);
+    // chartInstance.on("mouseover", () => {
+    //   chartInstance.options.autoRotate = false;
+    // });
+    // chartInstance.on("mouseout", () => {
+    //   chartInstance.options.autoRotate = true;
+    // });
   }
 });
 function add() {

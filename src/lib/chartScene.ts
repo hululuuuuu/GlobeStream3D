@@ -54,7 +54,7 @@ export default class ChartScene {
       config: this._store.config,
     };
     merge(this.options, this.initOptions, params);
-    this.isPass = this.limitFPS(true);
+    this.isPass = this.limitFPS(this.options.limitFps);
     this.init();
     this._eventStore = new EventStore(this);
   }
@@ -152,7 +152,11 @@ export default class ChartScene {
       const mapShape = new MapShape(this);
       groupEarth.add(...mapShape.create());
     }
-    this.mainContainer.add(groupEarth, sprite(this._store.config));
+    if (this._store.config.spriteStyle.show) {
+      this.mainContainer.add(sprite(this._store.config));
+    }
+    this.mainContainer.add(groupEarth);
+
     this.scene.add(this.mainContainer);
     this.transformControl();
   }
@@ -176,11 +180,14 @@ export default class ChartScene {
     });
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(this.style.width, this.style.height);
-    renderer.setClearColor(this.options.config.bgColor!, 1);
+    renderer.setClearColor(
+      this.options.config.bgStyle?.color!,
+      this.options.config.bgStyle?.opacity
+    );
     return renderer;
   }
   //限制帧数
-  limitFPS(isLimit: boolean) {
+  limitFPS(isLimit: boolean | undefined) {
     // 创建一个时钟对象Clock
     const clock = new Clock();
     // 设置渲染频率为30FBS，也就是每秒调用渲染器render方法大约30次
@@ -190,7 +197,7 @@ export default class ChartScene {
     // 如果执行一次renderer.render，timeS重新置0
     let timeS = 0;
     return function () {
-      if (isLimit) return true;
+      if (!isLimit) return true;
       const T = clock.getDelta();
       timeS = timeS + T;
       if (timeS > renderT) {
