@@ -39,7 +39,10 @@ class EventStore {
       }
     });
   }
-  registerEventMap(eventName: string, cb: (params: any) => void) {
+  registerEventMap(
+    eventName: string,
+    cb: (event: Event, mesh: Object3D | Group | Mesh | undefined) => void
+  ) {
     this.eventMap[eventName] = cb;
     this._chartScene.options.dom.addEventListener(eventName, ((
       event: MouseEvent

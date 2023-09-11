@@ -62,7 +62,6 @@ onMounted(() => {
       mode: "3d",
       config: {
         stopRotateByHover: true,
-        texture: worldTexture,
         R: 140,
         earth: {
           color: "#13162c",
@@ -172,12 +171,10 @@ onMounted(() => {
     //     },
     //   },
     // ]);
-    // chartInstance.on("mouseover", () => {
-    //   chartInstance.options.autoRotate = false;
-    // });
-    // chartInstance.on("mouseout", () => {
-    //   chartInstance.options.autoRotate = true;
-    // });
+    chartInstance1.on("click", (event: Event, mesh: any) => {
+      chartInstance.options.autoRotate = false;
+      console.log(event, mesh);
+    });
   }
 });
 function add() {
