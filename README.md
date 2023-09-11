@@ -13,7 +13,7 @@
 + 📦 开箱即用：简单快速集成，基本零成本上手。
 + 🛡 Typescript开发：提供完整的类型定义。
 + 🎨 高可扩展：丰富的样式配置和API。
-+ 💪 逻辑统一:同时支持3D地球2D地图,一份参数3D和2D的相同样式和动画一致。
++ 💪 逻辑统一:同时支持3D地球2D地图,一份参数3D和2D的一致的样式和动画。
 
 ## 📄 在线预览及文档
 [地址1](https://javascriptam.github.io/earth-flyline-docs/?starlight-theme=dark)

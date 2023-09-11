@@ -8,6 +8,7 @@ import {
   Clock,
   DirectionalLight,
   Group,
+  Mesh,
   Object3D,
   OrthographicCamera,
   PerspectiveCamera,
@@ -58,7 +59,10 @@ export default class ChartScene {
     this.init();
     this._eventStore = new EventStore(this);
   }
-  on(eventName: string, cb: (params: any) => void) {
+  on(
+    eventName: string,
+    cb: (event: Event, mesh: Object3D | Group | Mesh | undefined) => void
+  ) {
     this._eventStore.registerEventMap(eventName, cb);
   }
   init() {

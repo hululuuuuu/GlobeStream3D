@@ -2,7 +2,6 @@ import ChartScene from "./chartScene";
 import MapStore from "./store/mapStore";
 import { Options } from "@/lib/interface";
 import { FeatureCollection } from "geojson";
-
 function init(params: Partial<Options>) {
   return new ChartScene(params);
 }
