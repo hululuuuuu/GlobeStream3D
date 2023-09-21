@@ -152,7 +152,7 @@ const chart = earthFlyLine.init({
 >  >
 >  >  scatterStyle.customFigure（For the animated field, please refer to [tween.js](https://github.com/tweenjs/tween.js/blob/main/README.md)）
 >  >
->  >  ```json
+>  >  ```javascript
 >  >  { 
 >  >    	
 >  >    texture: imgUrl or svgUrl, //note: that the picture or svg in the texture field needs to be white. You can refer to (/ src/image/triangel) svg and png images under this item. The color can be controlled through the scatterStyle.color field.
@@ -173,7 +173,7 @@ const chart = earthFlyLine.init({
 >  >
 >  >  bgStyle
 >  >
->  >  ````json
+>  >  ````javascript
 >  >  {
 >  >    color: "#040D21",
 >  >    opacity: 1,
@@ -184,7 +184,7 @@ const chart = earthFlyLine.init({
 >  >
 >  >  Currently, only color (which can be understood as the color of the ocean) is supported, and more api such as reflective materials will be exposed later.
 >  >
->  >  ````json
+>  >  ````javascript
 >  >  {
 >  >    color: "#13162c",
 >  >  }
@@ -192,7 +192,7 @@ const chart = earthFlyLine.init({
 >  >
 >  >  mapStyle
 >  >
->  >  ````json
+>  >  ````javascript
 >  >  {
 >  >    areaColor: "#2e3564", 
 >  >    lineColor: "#797eff",
@@ -201,7 +201,7 @@ const chart = earthFlyLine.init({
 >  >
 >  >  spriteStyle
 >  >
->  >  ````json
+>  >  ````javascript
 >  >  {
 >  >    color: "#797eff",
 >  >    show: true,
@@ -210,7 +210,7 @@ const chart = earthFlyLine.init({
 >  >
 >  >  pathStyle
 >  >
->  >  ```json
+>  >  ```javascript
 >  >  {
 >  >    color: "#cd79ff", 
 >  >  }
