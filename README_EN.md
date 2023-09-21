@@ -114,37 +114,110 @@ const chart = earthFlyLine.init({
 | Property        | Type         | Description                           | Default | Required |
 | ----------- | ------------ | ------------------------------ | -------- | ----------- |
 | dom         | HTMLElement  |                                | true     | true |
-| config      | object       |                                | -    | false |
+| config      | object       | For more information, please see the config configuration below. | -    | false |
 | autoRotate  | boolean      | The earth rotates              | True | false |
 | rotateSpeed | number       | Speed of rotation of the earth | 0.01 | false |
 | map         | string       | Name of the registered map     | - | true |
 | mode        | '3d' \| '2d' | Rendering mode defaults to 3d  | '3d' | false |
+| stopRotateByHover | boolean | Mouse hover and rotate to stop | true | false |
+| limitFps | boolean | lock 30 frames | false | false |
+|  |  |  |  |  |
 
 >  ### config
->| Property         | Type   | Description                                                  | Default | Required |
->|------------------|--------| ------------------------------------------------------------ | ------- | -------- |
->| R                | number | The larger the radius of the earth, the bigger the earth.    | 150     | false    |
->| texture          | String | Picture url (if you use a map, the map area color and other related configurations will not take effect) | -       | false    |
->| earth            | object | Earth configuration                                          | -       | false    |
->| mapStyle         | object | Map style configuration                                      | -       | false    |
->| spriteStyle      | object | Earth background aperture color configuration                | -       | false    |
->| pathStyle        | object | Flying line path configuration                               | -       | false    |
->| flyLineStyle     | object | Flying line configuration                                    | -       | false    |
->| scatterStyle     | object | Scatter configuration                                        | -       | false    |
->| hoverRegionStyle | object | The mouse hover map will not work unless it is highlighted   | -       | false    |
->| regions          | object | Configuring the color of a separate map area does not work unless passed | -       | false    |
-> 
-> >  config.flyLineStyle &  config.scatterStyle
-> >
-> > | Property   | Type                | Description                                                  | Default           | Required |
-> > | ---------- | ------------------- | ------------------------------------------------------------ | ----------------- | -------- |
-> > | color      | RGB \| RGBA \| HEX  | color                                                        | #cd79ff           | false    |
-> > | size       | number              | Size (the flying line appears as thickness and the scatter shows as size) | -                 | false    |
-> > | duration   | number              | Time (in milliseconds) to complete the animation, with lower values indicating faster animation | 2000              | false    |
-> > | delay      | number              | Deferred execution time default                              | 0                 | false    |
-> > | repeat     | number              | Number of loops                                              | Infinity 无限循环 | false    |
-> > | onComplete | (params:void)=>void | A callback when the repeat loop runs out of times            | -                 | false    |
+>  | Property         | Type   | Description                                                  | Default | Required |
+>  | ---------------- | ------ | ------------------------------------------------------------ | ------- | -------- |
+>  | R                | number | The larger the radius of the earth, the bigger the earth.    | 150     | false    |
+>  | texture          | String | Picture url (if you use a map, the map area color and other related configurations will not take effect) | -       | false    |
+>  | earth            | object | Earth configuration                                          | -       | false    |
+>  | mapStyle         | object | Map style configuration                                      | -       | false    |
+>  | spriteStyle      | object | Earth background aperture color configuration                | -       | false    |
+>  | pathStyle        | object | Flying line path configuration                               | -       | false    |
+>  | flyLineStyle     | object | Flying line configuration                                    | -       | false    |
+>  | scatterStyle     | object | Scatter configuration                                        | -       | false    |
+>  | hoverRegionStyle | object | The mouse hover map will not work unless it is highlighted   | -       | false    |
+>  | regions          | object | Configuring the color of a separate map area does not work unless passed | -       | false    |
+>  | bgStyle          | object | Scene background style                                       |         | false    |
 >
+>  >  flyLineStyle & scatterStyle
+>  >
+>  >  | Property     | Type                | Description                                                  | Default           | Required |
+>  >  | ------------ | ------------------- | ------------------------------------------------------------ | ----------------- | -------- |
+>  >  | color        | RGB \| RGBA \| HEX  | color                                                        | #cd79ff           | false    |
+>  >  | size         | number              | Size (the flying line appears as thickness and the scatter shows as size) | -                 | false    |
+>  >  | duration     | number              | Time (in milliseconds) to complete the animation, with lower values indicating faster animation | 2000              | false    |
+>  >  | delay        | number              | Deferred execution time default                              | 0                 | false    |
+>  >  | repeat       | number              | Number of loops                                              | Infinity 无限循环 | false    |
+>  >  | onComplete   | (params:void)=>void | A callback when the repeat loop runs out of times            | -                 | false    |
+>  >  | customFigure | Object              | Custom coordinate marker                                     |                   |          |
+>  >
+>  >  scatterStyle.customFigure（For the animated field, please refer to [tween.js](https://github.com/tweenjs/tween.js/blob/main/README.md)）
+>  >
+>  >  ```json
+>  >  { 
+>  >    	
+>  >    texture: imgUrl or svgUrl, //note: that the picture or svg in the texture field needs to be white. You can refer to (/ src/image/triangel) svg and png images under this item. The color can be controlled through the scatterStyle.color field.
+>  >    animate: { //If animate is not configured, there will be no animation.
+>  >      from: {
+>  >        size?: 11,
+>  >        opacity?: 0,
+>  >      },
+>  >      to: {
+>  >        size?: [22,11],
+>  >        opacity?: [1,0],
+>  >      },
+>  >    },
+>  >  },
+>  >  
+>  >  
+>  >  ```
+>  >
+>  >  bgStyle
+>  >
+>  >  ````json
+>  >  {
+>  >    color: "#040D21",
+>  >    opacity: 1,
+>  >  }
+>  >  ````
+>  >
+>  >  earth
+>  >
+>  >  Currently, only color (which can be understood as the color of the ocean) is supported, and more api such as reflective materials will be exposed later.
+>  >
+>  >  ````json
+>  >  {
+>  >    color: "#13162c",
+>  >  }
+>  >  ````
+>  >
+>  >  mapStyle
+>  >
+>  >  ````json
+>  >  {
+>  >    areaColor: "#2e3564", 
+>  >    lineColor: "#797eff",
+>  >  }
+>  >  ````
+>  >
+>  >  spriteStyle
+>  >
+>  >  ````json
+>  >  {
+>  >    color: "#797eff",
+>  >    show: true,
+>  >  }
+>  >  ````
+>  >
+>  >  pathStyle
+>  >
+>  >  ```json
+>  >  {
+>  >    color: "#cd79ff", 
+>  >  }
+>  >  ```
+>
+
+
 
 
 
