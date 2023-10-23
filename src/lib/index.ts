@@ -10,4 +10,5 @@ function registerMap(name: string, map: FeatureCollection) {
   const features = map.features;
   MapStore.registerMap(name, features);
 }
+
 export default { init, registerMap };

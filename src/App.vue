@@ -32,6 +32,7 @@ onMounted(() => {
         },
         spriteStyle: {
           color: "#797eff",
+          size: 4,
         }, //光圈
         pathStyle: {
           color: "#cd79ff", //飞线路径配置
@@ -72,7 +73,7 @@ onMounted(() => {
         },
         spriteStyle: {
           color: "#797eff",
-          show: false,
+          show: true,
         }, //光圈
         pathStyle: {
           color: "#cd79ff", //飞线路径配置

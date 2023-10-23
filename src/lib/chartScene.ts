@@ -65,6 +65,19 @@ export default class ChartScene {
   ) {
     this._eventStore.registerEventMap(eventName, cb);
   }
+  clearThree(obj: any) {
+    while (obj.children.length > 0) {
+      this.clearThree(obj.children[0]);
+      obj.remove(obj.children[0]);
+    }
+    if (obj.geometry) obj.geometry.dispose();
+    if (obj.material) obj.material.dispose();
+    if (obj.texture) obj.texture.dispose();
+  }
+  destory() {
+    this.clearThree(this.scene);
+    this.options.dom.innerHTML = "";
+  }
   init() {
     const {
       dom,
