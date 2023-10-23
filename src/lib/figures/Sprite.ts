@@ -1,5 +1,5 @@
 import { Sprite, SpriteMaterial, TextureLoader } from "three";
-import img from "@/assets/image/sprite.png";
+import img from "@/assets/image/sprite1.png";
 import store from "@/lib/store/store";
 import { configType } from "@/lib/interface";
 
@@ -17,7 +17,8 @@ export default (config: configType) => {
   });
   // 创建表示地球光圈的精灵模型
   const sprite = new Sprite(spriteMaterial);
-  sprite.scale.set(config.R! * 3.0, config.R! * 3.0, 1); //适当缩放精灵
+  const cardinalNumber = config.spriteStyle.size || 3;
+  sprite.scale.set(config.R! * cardinalNumber, config.R! * cardinalNumber, 1); //适当缩放精灵
   // sprite.scale.set(R*4.0, R*4.0, 1);//光圈相比较地球偏大
   return sprite;
 };

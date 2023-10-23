@@ -64,6 +64,7 @@ export interface LineStyle {
 export interface SpriteStyle {
   color: Color;
   show?: boolean;
+  size?: number;
 }
 interface Earth {
   color: Color;
