@@ -1,5 +1,5 @@
 import { Sprite, SpriteMaterial, TextureLoader } from "three";
-import img from "@/assets/image/sprite1.png";
+import img from "@/assets/image/sprite.png";
 import store from "@/lib/store/store";
 import { configType } from "@/lib/interface";
 
