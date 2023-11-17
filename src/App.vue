@@ -21,37 +21,30 @@ onMounted(() => {
       autoRotate: false,
       mode: "2d",
       config: {
-        R: 140,
-
+        R: 130,
         earth: {
-          color: "#13162c",
+          color: "#04051b",
+        },
+        bgStyle: {
+          color: "#040D21",
+          opacity: 0,
         },
         mapStyle: {
-          areaColor: "#2e3564",
-          lineColor: "#797eff",
+          areaColor: "#013e87",
+          lineColor: "#516aaf",
         },
         spriteStyle: {
-          color: "#797eff",
-          size: 4,
-        }, //光圈
+          color: "#138cdf",
+          size: 2.5,
+        },
         pathStyle: {
-          color: "#cd79ff", //飞线路径配置
+          color: "#7aaae9",
         },
         flyLineStyle: {
-          //飞线样式配置
-          color: "#cd79ff",
+          color: "#02fff6",
         },
         scatterStyle: {
-          //涟漪
-          color: "#cd79ff",
-        },
-        hoverRegionStyle: {
-          areaColor: "#cd79ff",
-        },
-        regions: {
-          China: {
-            areaColor: "#2e3564",
-          },
+          color: "#02fff6",
         },
       },
     });
