@@ -27,6 +27,11 @@ import EventStore from "@/lib/store/eventStore";
 import { TransformControls } from "three/examples/jsm/controls/TransformControls";
 import { merge } from "lodash";
 
+/**
+ * ChartScene class is used to create a 3D scene using Three.js.
+ * It provides methods to initialize the scene, create camera, light, helper, figures, and renderer.
+ * It also provides methods to control the animation and transformation of the scene.
+ */
 export default class ChartScene {
   options: Options;
   initOptions: Pick<Options, "helper" | "autoRotate" | "rotateSpeed" | "mode"> =
@@ -49,22 +54,38 @@ export default class ChartScene {
   _store = new Store();
   _eventStore: EventStore;
   _OperateView = new OperateView(this._store);
+
+  /**
+   * Constructor for the ChartScene class.
+   * @param {Partial<Options>} params - The initial options for the scene.
+   */
   constructor(params: Partial<Options>) {
     this.options = {
       ...this.options,
       config: this._store.config,
     };
     merge(this.options, this.initOptions, params);
-    this.isPass = this.limitFPS(this.options.limitFps);
+    this.isPass = this.lockFps(this.options.limitFps);
     this.init();
     this._eventStore = new EventStore(this);
   }
+
+  /**
+   * Method to register an event.
+   * @param {string} eventName - The name of the event.
+   * @param {(event: Event, mesh: Object3D | Group | Mesh | undefined) => void} cb - The callback function to be executed when the event is triggered.
+   */
   on(
     eventName: string,
     cb: (event: Event, mesh: Object3D | Group | Mesh | undefined) => void
   ) {
     this._eventStore.registerEventMap(eventName, cb);
   }
+
+  /**
+   * Method to clear Three.js objects.
+   * @param {any} obj - The Three.js object to be cleared.
+   */
   clearThree(obj: any) {
     while (obj.children.length > 0) {
       this.clearThree(obj.children[0]);
@@ -74,10 +95,18 @@ export default class ChartScene {
     if (obj.material) obj.material.dispose();
     if (obj.texture) obj.texture.dispose();
   }
+
+  /**
+   * Method to destroy the scene.
+   */
   destory() {
     this.clearThree(this.scene);
     this.options.dom.innerHTML = "";
   }
+
+  /**
+   * Method to initialize the scene.
+   */
   init() {
     const {
       dom,
@@ -101,7 +130,6 @@ export default class ChartScene {
     if (helper) {
       this.createHelper();
     }
-    //添加组件
     this.renderer = this.createRender();
     this.animate();
     if (this._store.mode === "2d") {
@@ -109,7 +137,6 @@ export default class ChartScene {
     } else if (this._store.mode === "3d") {
       this.addFigures3d();
     }
-    //设置控制器
     const obControl = new OrbitControls(this.camera, this.renderer.domElement);
     if (this._store.mode === "3d") {
       obControl.enableRotate = false;
@@ -117,17 +144,32 @@ export default class ChartScene {
     }
     dom.appendChild(this.renderer.domElement);
   }
+
+  /**
+   * Method to create an orthographic camera.
+   * @returns {OrthographicCamera} The created orthographic camera.
+   */
   createOrthographicCamera() {
     const k = this.style.width / this.style.height;
     const s = 200;
     const camera = new OrthographicCamera(-s * k, s * k, s, -s, 1, 1500);
-    camera.position.set(0, 0, 500); //沿着z轴观察
-    camera.lookAt(0, 0, 0); //相机指向Three.js坐标系原点
+    camera.position.set(0, 0, 500);
+    camera.lookAt(0, 0, 0);
     return camera;
   }
+
+  /**
+   * Method to create a scene.
+   * @returns {Scene} The created scene.
+   */
   createScene() {
     return new Scene();
   }
+
+  /**
+   * Method to create a perspective camera.
+   * @returns {PerspectiveCamera} The created perspective camera.
+   */
   createCamera() {
     const camera = new PerspectiveCamera(
       95,
@@ -139,13 +181,16 @@ export default class ChartScene {
     camera.lookAt(new Vector3(0, 0, 0));
     return camera;
   }
+
+  /**
+   * Method to create a light.
+   * @param {string} lightType - The type of the light.
+   */
   createLight(lightType: string) {
     const color: string = "#fff";
     if (lightType === "DirectionalLight") {
       const light = new DirectionalLight(color, 1);
-      // 设置光源位置
       light.position.set(2000, 2000, 3000);
-      // 设置用于计算阴影的光源对象
       light.castShadow = true;
       this.scene.add(light);
     } else if (lightType === "AmbientLight") {
@@ -157,14 +202,20 @@ export default class ChartScene {
       this.scene.add(light);
     }
   }
+
+  /**
+   * Method to create a helper.
+   */
   createHelper() {
     const helper = new AxesHelper(250);
-    // const h = new DirectionalLightHelper(scene);
     this.scene.add(helper);
   }
+
+  /**
+   * Method to add 3D figures to the scene.
+   */
   addFigures3d() {
     const groupEarth = new CreateEarth(this._store).create();
-    //如果非贴图 则正常加载地图文件
     if (!this.options.config.texture) {
       const mapShape = new MapShape(this);
       groupEarth.add(...mapShape.create());
@@ -177,6 +228,10 @@ export default class ChartScene {
     this.scene.add(this.mainContainer);
     this.transformControl();
   }
+
+  /**
+   * Method to add 2D figures to the scene.
+   */
   addFigures2d() {
     const mapGroup = new Group();
     mapGroup.name = "mapGroup";
@@ -185,12 +240,22 @@ export default class ChartScene {
     this.mainContainer.add(mapGroup);
     this.scene.add(this.mainContainer);
   }
+
+  /**
+   * Method to create a cube.
+   * @returns {Group} The created cube.
+   */
   createCube() {
     const obj = new Group();
     obj.name = "mainContainer";
     return obj;
   }
-  createRender() {
+
+  /**
+   * Method to create a renderer.
+   * @returns {WebGLRenderer} The created renderer.
+   */
+  createRender(): WebGLRenderer {
     const renderer = new WebGLRenderer({
       antialias: true,
       alpha: true,
@@ -203,15 +268,16 @@ export default class ChartScene {
     );
     return renderer;
   }
-  //限制帧数
-  limitFPS(isLimit: boolean | undefined) {
-    // 创建一个时钟对象Clock
+
+  /**
+   * Method to limit the frames per second.
+   * @param {boolean | undefined} isLimit - Whether to limit the frames per second.
+   * @returns {Function} The function to check whether to render the next frame.
+   */
+  lockFps(isLimit: boolean = false) {
     const clock = new Clock();
-    // 设置渲染频率为30FBS，也就是每秒调用渲染器render方法大约30次
     const FPS = 30;
-    const renderT = 1 / FPS; //单位秒  间隔多长时间渲染渲染一次
-    // 声明一个变量表示render()函数被多次调用累积时间
-    // 如果执行一次renderer.render，timeS重新置0
+    const renderT = 1 / FPS;
     let timeS = 0;
     return function () {
       if (!isLimit) return true;
@@ -223,9 +289,13 @@ export default class ChartScene {
       }
     };
   }
+
+  /**
+   * Method to check whether to rotate the scene.
+   * @returns {boolean} Whether to rotate the scene.
+   */
   shouldRotate() {
     if (this.options.mode === "3d") {
-      //hover停止旋转
       if (this.options.config.stopRotateByHover) {
         if (this.earthHovered) {
           return false;
@@ -239,6 +309,10 @@ export default class ChartScene {
       return false;
     }
   }
+
+  /**
+   * Method to animate the scene.
+   */
   animate() {
     if (this.isPass()) {
       tweenUpdate();
@@ -251,15 +325,26 @@ export default class ChartScene {
       this.animate();
     });
   }
+
+  /**
+   * Method to set data to the scene.
+   * @param {K} type - The type of the data.
+   * @param {SetData[K]} data - The data to be set.
+   */
   setData = async <K extends keyof SetData>(type: K, data: SetData[K]) => {
     try {
-      // this._OperateView.remove(this.mainContainer, type, "removeAll");
       const group = await this._OperateView.setData(type, data);
       this.mainContainer.add(...group);
     } catch (e) {
       console.log(e);
     }
   };
+
+  /**
+   * Method to add data to the scene.
+   * @param {K} type - The type of the data.
+   * @param {SetData[K]} data - The data to be added.
+   */
   addData = async <K extends keyof SetData>(type: K, data: SetData[K]) => {
     try {
       const group = await this._OperateView.setData(type, data);
@@ -268,9 +353,19 @@ export default class ChartScene {
       console.log(e);
     }
   };
+
+  /**
+   * Method to remove data from the scene.
+   * @param {string} type - The type of the data.
+   * @param {string[] | "removeAll"} ids - The ids of the data to be removed.
+   */
   remove(type: string, ids: string[] | "removeAll" = "removeAll") {
     this._OperateView.remove(this.mainContainer, type, ids);
   }
+
+  /**
+   * Method to control the transformation of the scene.
+   */
   transformControl() {
     const controls = new TransformControls(
       this.camera,
