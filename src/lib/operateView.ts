@@ -51,6 +51,7 @@ export default class OperateView {
         }
 
         group.name = id;
+
         group.userData.figureType = "flyLine";
         meshList.push(group);
       });
@@ -73,7 +74,8 @@ export default class OperateView {
   };
   remove(mainContainer: Object3D, type: string, ids: string[] | "removeAll") {
     if (mainContainer.children.length !== 0) {
-      mainContainer.children.forEach((item) => {
+      for (let i = mainContainer.children.length - 1; i >= 0; i--) {
+        let item = mainContainer.children[i];
         if (
           item instanceof Group &&
           item.name !== "mapGroup" &&
@@ -89,9 +91,10 @@ export default class OperateView {
             }
           }
         }
-      });
+      }
     }
   }
+
   disposeGroup(group: Group) {
     group.traverse((item) => {
       if (!(item instanceof Group)) {

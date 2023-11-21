@@ -14,40 +14,40 @@ onMounted(() => {
   const dom = document.getElementById("container");
   const dom1 = document.getElementById("container1");
   if (dom && dom1) {
-    chartInstance = chart.init({
-      dom,
-      helper: false,
-      map: "world",
-      autoRotate: false,
-      mode: "2d",
-      config: {
-        R: 130,
-        earth: {
-          color: "#04051b",
-        },
-        bgStyle: {
-          color: "#040D21",
-          opacity: 0,
-        },
-        mapStyle: {
-          areaColor: "#013e87",
-          lineColor: "#516aaf",
-        },
-        spriteStyle: {
-          color: "#138cdf",
-          size: 2.5,
-        },
-        pathStyle: {
-          color: "#7aaae9",
-        },
-        flyLineStyle: {
-          color: "#02fff6",
-        },
-        scatterStyle: {
-          color: "#02fff6",
-        },
-      },
-    });
+    // chartInstance = chart.init({
+    //   dom,
+    //   helper: false,
+    //   map: "world",
+    //   autoRotate: false,
+    //   mode: "2d",
+    //   config: {
+    //     R: 130,
+    //     earth: {
+    //       color: "#04051b",
+    //     },
+    //     bgStyle: {
+    //       color: "#040D21",
+    //       opacity: 0,
+    //     },
+    //     mapStyle: {
+    //       areaColor: "#013e87",
+    //       lineColor: "#516aaf",
+    //     },
+    //     spriteStyle: {
+    //       color: "#138cdf",
+    //       size: 2.5,
+    //     },
+    //     pathStyle: {
+    //       color: "#7aaae9",
+    //     },
+    //     flyLineStyle: {
+    //       color: "#02fff6",
+    //     },
+    //     scatterStyle: {
+    //       color: "#02fff6",
+    //     },
+    //   },
+    // });
     chartInstance1 = chart.init({
       dom: dom1,
       helper: false,
@@ -121,7 +121,7 @@ onMounted(() => {
         to: { lon: 157.0064, lat: 10.7816 },
       },
     ];
-    chartInstance.setData("flyLine", initData);
+    // chartInstance.setData("flyLine", initData);
     chartInstance1.setData("flyLine", initData);
     chartInstance1.addData("point", [
       {
@@ -167,25 +167,26 @@ onMounted(() => {
     // ]);
     chartInstance1.on("click", (event: Event, mesh: any) => {
       chartInstance.options.autoRotate = false;
-      console.log(event, mesh);
     });
   }
 });
 function add() {
-  chartInstance.addData("flyLine", [
+  chartInstance1.addData("flyLine", [
     {
-      from: { id: 1, lon: 112.45, lat: 34.62 },
-      to: { id: 2, lon: 114, lat: 22 },
+      from: { id: 7, lon: 112.45, lat: 34.62 },
+      to: { id: 6, lon: 114, lat: 22 },
     },
   ]);
 }
 
 function del() {
-  chartInstance.remove("flyLine", []);
+  chartInstance1.remove("flyLine", ["7-6"]);
 }
 </script>
 
 <template>
+  <div @click="del">移除</div>
+  <div @click="add">新增</div>
   <div id="container1"></div>
   <div id="container"></div>
 </template>
