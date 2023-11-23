@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { onMounted } from "vue";
+import { onMounted, ref, shallowRef } from "vue";
 import worldTexture from "./image/earth.png";
 import triangle from "./image/triangel.svg";
 import world from "./map/world.json";
 import chart from "@/entry";
 import ChartScene from "@/lib/chartScene";
 let chartInstance: ChartScene;
-let chartInstance1: ChartScene;
+let chartInstance1 = shallowRef<ChartScene>(null);
 
 const geoJson: any = world;
 chart.registerMap("world", geoJson);
@@ -48,14 +48,14 @@ onMounted(() => {
     //     },
     //   },
     // });
-    chartInstance1 = chart.init({
+    chartInstance1.value = chart.init({
       dom: dom1,
       helper: false,
       map: "world",
-      autoRotate: false,
+      autoRotate: true,
       mode: "3d",
       config: {
-        stopRotateByHover: true,
+        stopRotateByHover: false,
         R: 140,
         earth: {
           color: "#13162c",
@@ -122,8 +122,8 @@ onMounted(() => {
       },
     ];
     // chartInstance.setData("flyLine", initData);
-    chartInstance1.setData("flyLine", initData);
-    chartInstance1.addData("point", [
+    chartInstance1.value.setData("flyLine", initData);
+    chartInstance1.value.addData("point", [
       {
         lon: -43.0075,
         lat: -40.4296,
@@ -165,13 +165,14 @@ onMounted(() => {
     //     },
     //   },
     // ]);
-    chartInstance1.on("click", (event: Event, mesh: any) => {
-      chartInstance.options.autoRotate = false;
+    chartInstance1.value.on("click", (event: Event, mesh: any) => {
+      console.log(mesh);
+      chartInstance1.value.options.autoRotate = false;
     });
   }
 });
 function add() {
-  chartInstance1.addData("flyLine", [
+  chartInstance1.value.addData("flyLine", [
     {
       from: { id: 7, lon: 112.45, lat: 34.62 },
       to: { id: 6, lon: 114, lat: 22 },
@@ -180,20 +181,23 @@ function add() {
 }
 
 function del() {
-  chartInstance1.remove("flyLine", ["7-6"]);
+  chartInstance1.value.remove("flyLine", ["7-6"]);
 }
 </script>
 
 <template>
   <div @click="del">移除</div>
   <div @click="add">新增</div>
-  <div id="container1"></div>
-  <div id="container"></div>
+  <div style="position: relative">
+    <div id="container1"></div>
+  </div>
+
+  <div style="position: absolute; top: 100px" id="container"></div>
 </template>
 
 <style lang="less" scoped>
 #container {
-  width: 800px;
+  width: 300px;
   height: 800px;
   margin-bottom: 40px;
 }
