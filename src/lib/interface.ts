@@ -1,4 +1,5 @@
 import { Group } from "three";
+
 type RGB = `rgb(${number}, ${number}, ${number})`;
 type RGBA = `rgba(${number}, ${number}, ${number}, ${number})`;
 type HEX = `#${string}`;
@@ -50,14 +51,21 @@ export interface ScatterStyle extends TweenConfig {
   color: Color;
   size?: number;
 }
-export interface Coordinates {
-  id?: string | number;
+
+export interface LessCoordinate {
   lon: number;
   lat: number;
+}
+export interface Coordinates extends LessCoordinate {
+  id?: string | number;
   style?: ScatterStyle;
   [key: string]: any;
 }
 export interface LineStyle {
+  flyLineStyle: Partial<FlyLineStyle>;
+  pathStyle: Partial<PathStyle>;
+}
+export interface RoadStyle {
   flyLineStyle: Partial<FlyLineStyle>;
   pathStyle: Partial<PathStyle>;
 }
@@ -92,6 +100,7 @@ export interface configType {
   pathStyle: Partial<PathStyle>;
   flyLineStyle: Partial<FlyLineStyle>;
   scatterStyle: Partial<ScatterStyle>;
+  roadStyle: Partial<RoadStyle>;
   regions?: RegionsStyle;
   hoverRegionStyle?: RegionBaseStyle;
 }
@@ -106,9 +115,16 @@ export interface FlyLineData {
   style?: Partial<LineStyle>;
   [key: string]: any;
 }
+
+export interface RoadData {
+  path: LessCoordinate[];
+  style?: Partial<RoadStyle>;
+  id: string | number;
+}
 export interface SetData {
   flyLine: FlyLineData[];
   point: Coordinates[];
+  road: RoadData[];
 }
 export type OptDataFunc = (
   type: keyof SetData,

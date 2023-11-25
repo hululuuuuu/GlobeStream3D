@@ -1,5 +1,6 @@
 import { configType, Options } from "@/lib/interface";
 import { merge } from "lodash";
+
 class Store {
   mode: "2d" | "3d" = "3d";
   config: configType = {
@@ -28,6 +29,15 @@ class Store {
     flyLineStyle: {
       //飞线样式配置
       color: "#cd79ff",
+    },
+    roadStyle: {
+      //道路样式配置
+      flyLineStyle: {
+        color: "#cd79ff",
+      },
+      pathStyle: {
+        color: "#cd79ff",
+      },
     },
     scatterStyle: {
       //涟漪
