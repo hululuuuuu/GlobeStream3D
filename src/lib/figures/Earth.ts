@@ -1,10 +1,7 @@
 import {
   Group,
   Mesh,
-  MeshBasicMaterial,
-  MeshMatcapMaterial,
   MeshPhongMaterial,
-  MeshPhysicalMaterial,
   SphereGeometry,
   TextureLoader,
 } from "three";
@@ -23,6 +20,9 @@ class CreateEarth {
     //材质对象Material
     const material = new MeshPhongMaterial({
       color: this._config.earth.color,
+      // color: 0x00ff00, // 绿色
+      // transparent: true,
+      // opacity: 0,
     });
 
     const earthMesh = new Mesh(geometry, material); //网格模型对象Mesh

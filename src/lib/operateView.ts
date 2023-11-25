@@ -1,11 +1,12 @@
-import type { Coordinates, OptDataFunc } from "./interface";
+import type { Coordinates, OptDataFunc, RoadData } from "./interface";
+import { FlyLineData, LessCoordinate } from "./interface";
 import { Group, Mesh, Object3D, Vector3 } from "three";
 import FlyLine3d from "@/lib/figures/FlyLine3d";
-import { lon2xyz } from "@/lib/utils/math";
+import { lon2xyz, uuid } from "@/lib/utils/math";
 import Scatter from "@/lib/figures/Scatter";
 import Store from "@/lib/store/store";
 import FlyLine2d from "@/lib/figures/FlyLine2d";
-import { FlyLineData } from "./interface";
+import { Road } from "@/lib/figures/Road";
 
 export default class OperateView {
   private readonly _store: Store;
@@ -49,9 +50,7 @@ export default class OperateView {
           );
           group.add(scatter.create(from), scatter.create(to));
         }
-
         group.name = id;
-
         group.userData.figureType = "flyLine";
         meshList.push(group);
       });
@@ -64,6 +63,28 @@ export default class OperateView {
         group.add(scatter.create(item));
         group.name = id.toString();
         group.userData.figureType = "point";
+        meshList.push(group);
+      });
+    } else if (type === "road") {
+      (data as RoadData[]).forEach((item: RoadData) => {
+        let id: string | number = item.id || uuid();
+        const subPoints: Vector3[] = item.path.map(
+          ({ lon, lat }: LessCoordinate, index) => {
+            if (this._store.mode === "2d") {
+              return new Vector3(lon, lat, 0);
+            } else {
+              const position = lon2xyz(storeConfig.R * 1.1, lon, lat);
+              return new Vector3(position.x, position.y, position.z);
+            }
+          }
+        );
+        const roadMesh = new Road(this._store, {
+          path: subPoints,
+          style: item.style,
+        });
+        const group = roadMesh.create(subPoints);
+        group.name = id.toString();
+        group.userData.figureType = "road";
         meshList.push(group);
       });
     }
