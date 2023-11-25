@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { onMounted, ref, shallowRef } from "vue";
-import worldTexture from "./image/earth.png";
+import { onMounted } from "vue";
 import triangle from "./image/triangel.svg";
 import world from "./map/world.json";
 import chart from "@/entry";
 import ChartScene from "@/lib/chartScene";
+
 let chartInstance: ChartScene;
-let chartInstance1 = shallowRef<ChartScene>(null);
+let chartInstance1: ChartScene;
 
 const geoJson: any = world;
 chart.registerMap("world", geoJson);
@@ -14,45 +14,61 @@ onMounted(() => {
   const dom = document.getElementById("container");
   const dom1 = document.getElementById("container1");
   if (dom && dom1) {
-    // chartInstance = chart.init({
-    //   dom,
-    //   helper: false,
-    //   map: "world",
-    //   autoRotate: false,
-    //   mode: "2d",
-    //   config: {
-    //     R: 130,
-    //     earth: {
-    //       color: "#04051b",
-    //     },
-    //     bgStyle: {
-    //       color: "#040D21",
-    //       opacity: 0,
-    //     },
-    //     mapStyle: {
-    //       areaColor: "#013e87",
-    //       lineColor: "#516aaf",
-    //     },
-    //     spriteStyle: {
-    //       color: "#138cdf",
-    //       size: 2.5,
-    //     },
-    //     pathStyle: {
-    //       color: "#7aaae9",
-    //     },
-    //     flyLineStyle: {
-    //       color: "#02fff6",
-    //     },
-    //     scatterStyle: {
-    //       color: "#02fff6",
-    //     },
-    //   },
-    // });
-    chartInstance1.value = chart.init({
+    chartInstance = chart.init({
+      dom,
+      helper: false,
+      map: "world",
+      autoRotate: false,
+      mode: "2d",
+      config: {
+        stopRotateByHover: false,
+        R: 140,
+        earth: {
+          color: "#13162c",
+        },
+        mapStyle: {
+          areaColor: "#2e3564",
+          lineColor: "#797eff",
+        },
+        spriteStyle: {
+          color: "#797eff",
+          show: true,
+        }, //光圈
+        pathStyle: {
+          color: "#cd79ff", //飞线路径配置
+        },
+        flyLineStyle: {
+          //飞线样式配置
+          color: "#cd79ff",
+        },
+        scatterStyle: {
+          //涟漪
+          color: "#cd79ff",
+        },
+        roadStyle: {
+          flyLineStyle: {
+            //飞线样式配置
+            color: "#cd79ff",
+          },
+          pathStyle: {
+            color: "#cd79ff", //飞线路径配置
+          },
+        },
+        hoverRegionStyle: {
+          areaColor: "#cd79ff",
+        },
+        regions: {
+          China: {
+            areaColor: "#2e3564",
+          },
+        },
+      },
+    });
+    chartInstance1 = chart.init({
       dom: dom1,
       helper: false,
       map: "world",
-      autoRotate: true,
+      autoRotate: false,
       mode: "3d",
       config: {
         stopRotateByHover: false,
@@ -78,6 +94,15 @@ onMounted(() => {
         scatterStyle: {
           //涟漪
           color: "#cd79ff",
+        },
+        roadStyle: {
+          flyLineStyle: {
+            //飞线样式配置
+            color: "#cd79ff",
+          },
+          pathStyle: {
+            color: "#cd79ff", //飞线路径配置
+          },
         },
         hoverRegionStyle: {
           areaColor: "#cd79ff",
@@ -116,14 +141,10 @@ onMounted(() => {
           },
         },
       },
-      {
-        from: { lon: 142.8123, lat: -58.9813 },
-        to: { lon: 157.0064, lat: 10.7816 },
-      },
     ];
     // chartInstance.setData("flyLine", initData);
-    chartInstance1.value.setData("flyLine", initData);
-    chartInstance1.value.addData("point", [
+    chartInstance1.setData("flyLine", initData);
+    chartInstance1.addData("point", [
       {
         lon: -43.0075,
         lat: -40.4296,
@@ -165,23 +186,53 @@ onMounted(() => {
     //     },
     //   },
     // ]);
-    chartInstance1.value.on("click", (event: Event, mesh: any) => {
-      console.log(mesh);
-      chartInstance1.value.options.autoRotate = false;
+    chartInstance1.on("click", (event: Event, mesh: any) => {
+      chartInstance1.options.autoRotate = false;
     });
   }
 });
 function add() {
-  chartInstance1.value.addData("flyLine", [
+  chartInstance.addData("road", [
     {
-      from: { id: 7, lon: 112.45, lat: 34.62 },
-      to: { id: 6, lon: 114, lat: 22 },
+      id: "7-6",
+      path: [
+        {
+          lon: -23.0075,
+          lat: 50.4296,
+        },
+        {
+          lon: -26.1223,
+          lat: -7.8756,
+        },
+        {
+          lon: -43.0075,
+          lat: -40.4296,
+        },
+        {
+          lon: -23.0075,
+          lat: 50.4296,
+        },
+      ],
+      style: {
+        flyLineStyle: {
+          //飞线样式配置
+          color: "red",
+        },
+        pathStyle: {
+          color: "red",
+        },
+      },
+    },
+  ]);
+  chartInstance.addData("point", [
+    {
+      lon: -23.0075,
+      lat: 50.4296,
     },
   ]);
 }
-
 function del() {
-  chartInstance1.value.remove("flyLine", ["7-6"]);
+  chartInstance.remove("road", ["7-6"]);
 }
 </script>
 
@@ -192,12 +243,12 @@ function del() {
     <div id="container1"></div>
   </div>
 
-  <div style="position: absolute; top: 100px" id="container"></div>
+  <div id="container"></div>
 </template>
 
 <style lang="less" scoped>
 #container {
-  width: 300px;
+  width: 800px;
   height: 800px;
   margin-bottom: 40px;
 }

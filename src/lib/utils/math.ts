@@ -1,4 +1,4 @@
-import { Vector3, Quaternion } from "three";
+import { Quaternion, Vector3 } from "three";
 import { Coordinates3D } from "@/lib/interface";
 
 /**
@@ -53,7 +53,6 @@ const _3Dto2D = (start: Vector3, end: Vector3) => {
     .clone()
     .applyQuaternion(xoy_quaternion_middle);
   const end_xoy_middle = end_xoy.clone().applyQuaternion(xoy_quaternion_middle);
-  // scene.add(helpView(8,start_xoy_middle,end_xoy_middle))
 
   const quaternionInverse = xoy_quaternion
     .clone()
@@ -128,7 +127,21 @@ function getPointByDistance(
   const y = (s * k) / Math.sqrt(1 + Math.pow(k, 2));
   return new Vector3(x1 + x, y1 + y, 0);
 }
-
+function uuid() {
+  let s: any[] = [];
+  const hexDigits = "0123456789abcdef";
+  for (let i = 0; i < 36; i++) {
+    s[i] = hexDigits.substr(Math.floor(Math.random() * 0x10), 1);
+  }
+  // bits 12-15 of the time_hi_and_version field to 0010
+  s[14] = "4";
+  // bits 6-7 of the clock_seq_hi_and_reserved to 01
+  // tslint:disable-next-line:no-bitwise
+  s[19] = hexDigits.substr((s[19] & 0x3) | 0x8, 1);
+  // tslint:disable-next-line:no-bitwise
+  s[8] = s[13] = s[18] = s[23] = "-";
+  return s.join("");
+}
 export {
   lon2xyz,
   _3Dto2D,
@@ -136,4 +149,5 @@ export {
   threePointCenter,
   getFunctionExpression,
   getPointByDistance,
+  uuid,
 };
