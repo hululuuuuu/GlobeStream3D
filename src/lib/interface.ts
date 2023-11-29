@@ -89,6 +89,7 @@ export interface configType {
   R: number;
   map: string;
   texture: string;
+  enableZoom?: boolean;
   stopRotateByHover: boolean;
   bgStyle: {
     color: Color;

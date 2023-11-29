@@ -28,6 +28,7 @@ export default ({ mode }) => {
     server: {
       open: true,
       host: "0.0.0.0",
+      port: 5176,
     },
     resolve: {
       alias: [

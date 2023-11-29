@@ -5,6 +5,7 @@ class Store {
   mode: "2d" | "3d" = "3d";
   config: configType = {
     R: 150,
+    enableZoom: true,
     earth: {
       color: "#13162c",
     },
