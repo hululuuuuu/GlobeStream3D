@@ -142,6 +142,9 @@ export default class ChartScene {
       obControl.enableRotate = false;
       obControl.enablePan = false;
     }
+    if (!this._store.config.enableZoom) {
+      obControl.enableZoom = false;
+    }
     dom.appendChild(this.renderer.domElement);
   }
 
@@ -149,7 +152,7 @@ export default class ChartScene {
    * Method to create an orthographic camera.
    * @returns {OrthographicCamera} The created orthographic camera.
    */
-  createOrthographicCamera() {
+  createOrthographicCamera(): OrthographicCamera {
     const k = this.style.width / this.style.height;
     const s = 200;
     const camera = new OrthographicCamera(-s * k, s * k, s, -s, 1, 1500);
@@ -162,7 +165,7 @@ export default class ChartScene {
    * Method to create a scene.
    * @returns {Scene} The created scene.
    */
-  createScene() {
+  createScene(): Scene {
     return new Scene();
   }
 
@@ -170,7 +173,7 @@ export default class ChartScene {
    * Method to create a perspective camera.
    * @returns {PerspectiveCamera} The created perspective camera.
    */
-  createCamera() {
+  createCamera(): PerspectiveCamera {
     const camera = new PerspectiveCamera(
       95,
       this.style.width / this.style.height,
@@ -245,7 +248,7 @@ export default class ChartScene {
    * Method to create a cube.
    * @returns {Group} The created cube.
    */
-  createCube() {
+  createCube(): Group {
     const obj = new Group();
     obj.name = "mainContainer";
     return obj;
@@ -274,7 +277,7 @@ export default class ChartScene {
    * @param {boolean | undefined} isLimit - Whether to limit the frames per second.
    * @returns {Function} The function to check whether to render the next frame.
    */
-  lockFps(isLimit: boolean = false) {
+  lockFps(isLimit: boolean = false): Function {
     const clock = new Clock();
     const FPS = 30;
     const renderT = 1 / FPS;
@@ -294,7 +297,7 @@ export default class ChartScene {
    * Method to check whether to rotate the scene.
    * @returns {boolean} Whether to rotate the scene.
    */
-  shouldRotate() {
+  shouldRotate(): boolean | undefined {
     if (this.options.mode === "3d") {
       if (this.options.config.stopRotateByHover) {
         if (this.earthHovered) {

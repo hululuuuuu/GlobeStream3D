@@ -21,6 +21,7 @@ onMounted(() => {
       autoRotate: false,
       mode: "2d",
       config: {
+        enableZoom: false,
         stopRotateByHover: false,
         R: 140,
         earth: {
@@ -71,6 +72,7 @@ onMounted(() => {
       autoRotate: false,
       mode: "3d",
       config: {
+        enableZoom: false,
         stopRotateByHover: false,
         R: 140,
         earth: {
