@@ -1,4 +1,4 @@
-import { configType, Options, RegionBaseStyle } from "@/lib/interface";
+import { Options, RegionBaseStyle, StoreConfig } from "@/lib/interface";
 import {
   BackSide,
   BufferAttribute,
@@ -17,7 +17,7 @@ import MapStore from "@/lib/store/mapStore";
 import ChartScene from "@/lib/chartScene";
 
 export default class MapShape {
-  private readonly _config: configType;
+  private readonly _config: StoreConfig;
   currentStyle: RegionBaseStyle;
   features: Feature[];
   geometryArr: BufferGeometry[] = [];

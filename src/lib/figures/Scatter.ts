@@ -1,7 +1,7 @@
 import pointImg from "@/assets/image/point.png";
 import scatterImg from "@/assets/image/scatter.png";
 import { lon2xyz } from "../utils/math";
-import { configType, Coordinates, ScatterStyle } from "@/lib/interface";
+import { Coordinates, ScatterStyle, StoreConfig } from "@/lib/interface";
 import { setTween } from "@/lib/utils/tween";
 import {
   Group,
@@ -14,8 +14,8 @@ import {
 import Store from "@/lib/store/store";
 
 export default class Scatter {
-  private _config: configType;
-  private _store: Store;
+  private readonly _config: StoreConfig;
+  private readonly _store: Store;
   _currentStyle: ScatterStyle;
   _currentData: Coordinates | undefined;
 

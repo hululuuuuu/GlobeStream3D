@@ -62,7 +62,7 @@ export default class ChartScene {
   constructor(params: Partial<Options>) {
     this.options = {
       ...this.options,
-      config: this._store.config,
+      config: this._store.getConfig(),
     };
     merge(this.options, this.initOptions, params);
     this.isPass = this.lockFps(this.options.limitFps);
@@ -224,7 +224,7 @@ export default class ChartScene {
       groupEarth.add(...mapShape.create());
     }
     if (this._store.config.spriteStyle.show) {
-      this.mainContainer.add(sprite(this._store.config));
+      this.mainContainer.add(sprite(this._store.getConfig()));
     }
     this.mainContainer.add(groupEarth);
 

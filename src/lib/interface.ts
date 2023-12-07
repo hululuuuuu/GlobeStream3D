@@ -3,8 +3,50 @@ import { Group } from "three";
 type RGB = `rgb(${number}, ${number}, ${number})`;
 type RGBA = `rgba(${number}, ${number}, ${number}, ${number})`;
 type HEX = `#${string}`;
-
 type Color = RGB | RGBA | HEX | string;
+export const InitConfig = {
+  R: 160,
+  enableZoom: true,
+  earth: {
+    color: "#13162c",
+    material: "MeshPhongMaterial",
+  },
+  map: "world",
+  stopRotateByHover: true,
+  texture: "",
+  bgStyle: {
+    color: "#040D21",
+    opacity: 1,
+  },
+  mapStyle: {
+    areaColor: "#2e3564",
+    lineColor: "#797eff",
+  },
+  spriteStyle: {
+    color: "#797eff",
+    show: true,
+  }, //光圈
+  pathStyle: {
+    color: "#cd79ff", //飞线路径配置
+  },
+  flyLineStyle: {
+    //飞线样式配置
+    color: "#cd79ff",
+  },
+  roadStyle: {
+    //道路样式配置
+    flyLineStyle: {
+      color: "#cd79ff",
+    },
+    pathStyle: {
+      color: "#cd79ff",
+    },
+  },
+  scatterStyle: {
+    //涟漪
+    color: "#cd79ff",
+  },
+};
 export interface Options {
   dom: HTMLElement;
   map: string;
@@ -17,6 +59,7 @@ export interface Options {
   light?: "AmbientLight" | "PointLight" | "DirectionalLight" | "RectAreaLight";
   config: Partial<configType>;
 }
+export type StoreConfig = typeof InitConfig & Partial<configType>;
 export interface TweenParams {
   from: {
     size?: number;
@@ -76,7 +119,14 @@ export interface SpriteStyle {
 }
 interface Earth {
   color: Color;
+  material?:
+    | "MeshPhongMaterial"
+    | "MeshBasicMaterial"
+    | "MeshLambertMaterial"
+    | "MeshMatcapMaterial"
+    | "MeshNormalMaterial";
 }
+
 interface MapStyle {
   areaColor?: Color;
   lineColor?: Color;
