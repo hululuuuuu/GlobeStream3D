@@ -1,4 +1,4 @@
-import { configType, RoadStyle } from "@/lib/interface";
+import { RoadStyle, StoreConfig } from "@/lib/interface";
 import Store from "@/lib/store/store";
 import {
   ArcCurve,
@@ -21,7 +21,7 @@ import { setTween } from "@/lib/utils/tween";
 import { merge } from "lodash";
 
 export class Road {
-  _config: configType;
+  private readonly _config: StoreConfig;
   _store: Store;
   _currentData: {
     path: Vector3[];

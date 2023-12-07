@@ -28,8 +28,8 @@ onMounted(() => {
           color: "#13162c",
         },
         mapStyle: {
-          areaColor: "#2e3564",
           lineColor: "#797eff",
+          areaColor: "#2e3564",
         },
         spriteStyle: {
           color: "#797eff",
@@ -74,7 +74,7 @@ onMounted(() => {
       config: {
         enableZoom: false,
         stopRotateByHover: false,
-        R: 140,
+        R: 120,
         earth: {
           color: "#13162c",
         },

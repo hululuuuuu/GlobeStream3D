@@ -1,22 +1,22 @@
 import {
-  Vector3,
   ArcCurve,
-  Group,
+  BufferAttribute,
   BufferGeometry,
-  LineBasicMaterial,
+  Color,
+  Group,
   Line,
+  LineBasicMaterial,
   Points,
   PointsMaterial,
-  Color,
-  BufferAttribute,
+  Vector3,
 } from "three";
 import { _3Dto2D, radianAOB, threePointCenter } from "@/lib/utils/math";
 import { setTween } from "@/lib/utils/tween";
-import { configType, FlyLineData, LineStyle } from "@/lib/interface";
+import { FlyLineData, LineStyle, StoreConfig } from "@/lib/interface";
 import Store from "@/lib/store/store";
 
 export default class FlyLine3d {
-  _config: configType;
+  private readonly _config: StoreConfig;
   _store: Store;
   _currentData: FlyLineData;
   _currentConfig: LineStyle;
