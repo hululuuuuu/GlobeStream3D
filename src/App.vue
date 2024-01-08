@@ -142,6 +142,10 @@ onMounted(() => {
             color: "#0000ff",
           },
         },
+        productData: {
+          id: "1",
+          name: "飞线1",
+        }
       },
     ];
     // chartInstance.setData("flyLine", initData);
