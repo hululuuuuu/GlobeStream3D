@@ -107,6 +107,8 @@ export default class FlyLine3d {
     });
     const pathLine = new Line(geometry, material);
     pathLine.name = "pathLine";
+    const { from, to, ...rest } = this._currentData;
+    Object.assign(pathLine.userData, rest);
     return pathLine;
   };
   createShader = (r: number, startAngle: number, endAngle: number) => {
