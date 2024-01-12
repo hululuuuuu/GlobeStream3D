@@ -14,6 +14,7 @@ import { _3Dto2D, radianAOB, threePointCenter } from "@/lib/utils/math";
 import { setTween } from "@/lib/utils/tween";
 import { FlyLineData, LineStyle, StoreConfig } from "@/lib/interface";
 import Store from "@/lib/store/store";
+import { addUserDataToMesh } from "@/lib/utils";
 
 export default class FlyLine3d {
   private readonly _config: StoreConfig;
@@ -107,6 +108,7 @@ export default class FlyLine3d {
     });
     const pathLine = new Line(geometry, material);
     pathLine.name = "pathLine";
+    addUserDataToMesh(pathLine, this._currentData);
     return pathLine;
   };
   createShader = (r: number, startAngle: number, endAngle: number) => {
