@@ -189,6 +189,7 @@ onMounted(() => {
     //   },
     // ]);
     chartInstance1.on("click", (event: Event, mesh: any) => {
+      console.log(mesh);
       chartInstance1.options.autoRotate = false;
     });
   }
