@@ -4,12 +4,13 @@ import {
   BufferGeometry,
   Color,
   Group,
-  Line,
-  LineBasicMaterial,
   Points,
   PointsMaterial,
   Vector3,
 } from "three";
+import { LineGeometry } from "three/examples/jsm/lines/LineGeometry";
+import { Line2 } from "three/examples/jsm/lines/Line2";
+import { LineMaterial } from "three/examples/jsm/lines/LineMaterial";
 import { _3Dto2D, radianAOB, threePointCenter } from "@/lib/utils/math";
 import { setTween } from "@/lib/utils/tween";
 import { FlyLineData, LineStyle, StoreConfig } from "@/lib/interface";
@@ -102,11 +103,16 @@ export default class FlyLine3d {
       false // aClockwise
     );
     const points = curve.getSpacedPoints(200);
-    const geometry = new BufferGeometry().setFromPoints(points);
-    const material = new LineBasicMaterial({
-      color: this._currentConfig.pathStyle.color,
+    const geometry = new LineGeometry();
+    geometry.setPositions(points.map((item) => [item.x, item.y, 0]).flat());
+    const material = new LineMaterial({
+      color: new Color(this._currentConfig.pathStyle.color).getHex(),
+      linewidth: (this._currentConfig.pathStyle.size || 1) / 1000,
+      vertexColors: false,
+      dashed: false,
+      alphaToCoverage: false,
     });
-    const pathLine = new Line(geometry, material);
+    const pathLine = new Line2(geometry, material);
     pathLine.name = "pathLine";
     addUserDataToMesh(pathLine, this._currentData);
     return pathLine;
@@ -145,7 +151,7 @@ export default class FlyLine3d {
     );
     const material = new PointsMaterial({
       vertexColors: true, //使用顶点颜色渲染
-      size: 3.0, //点大小
+      size: this._currentConfig.flyLineStyle.size || 3.0, //点大小
     });
     const tadpolePointsMesh = new Points(geometry, material);
     material.onBeforeCompile = function (shader) {
