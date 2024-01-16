@@ -19,32 +19,13 @@
 + 🎨 高可扩展：丰富的样式配置和API。
 + 💪 逻辑统一:同时支持3D地球2D地图,一份参数3D和2D的一致的样式和动画。
 
-## 📄 在线预览及文档
-[地址1](https://javascriptam.github.io/earth-flyline-docs/?starlight-theme=dark)
+[//]: # (## 📄 在线预览及文档)
 
-[地址2](https://earth-flyline-docs-igp99epao-javascriptam.vercel.app/?starlight-theme=dark)
+[//]: # ([地址1]&#40;https://javascriptam.github.io/earth-flyline-docs/?starlight-theme=dark&#41;)
 
-# 使用说明
+[//]: # ()
+[//]: # ([地址2]&#40;https://earth-flyline-docs-igp99epao-javascriptam.vercel.app/?starlight-theme=dark&#41;)
 
-```bash
-npm install earth-flyline
-```
-
-## 🚗 开始
-
-```javascript
-import earthFlyLine from "earth-flyline";
-//请先下载地图文件（可去第三方下载） 然后注册地图 本项目的地图文件在src/map/world
-//注：如果不想使用地图文件也可以通过贴图的形式去做详情请查看文档
-import geojson from 'xxx/path/world.json'
-earthFlyLine.registerMap("world", geojson);
-//获取dom节点作为容器 注：该节点请设置宽高
-const dom = document.getElementById("container");
-const chart = earthFlyLine.init({
-      dom,
-      map: "world",
-    });
-```
 
 ## Issues
 
