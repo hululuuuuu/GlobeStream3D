@@ -1,4 +1,4 @@
-<h4 align="right"><a href="https://github.com/JavaScriptam/earth-flyLine/blob/main/README_EN.md">English</a> | <strong>简体中文</strong></h4>
+<h4 align="right"><a href="https://github.com/hululuuuuu/GlobeStream3D/blob/main/README_EN.md">English</a> | <strong>简体中文</strong></h4>
 
 # GlobeStream3D
 
