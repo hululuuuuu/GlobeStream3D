@@ -21,7 +21,7 @@
 ## 📄 在线预览及文档
 
 
-[文档地址](https://earth-flyline-docs-igp99epao-javascriptam.vercel.app)
+[文档地址](https://earth-flyline-docs.vercel.app/)
 
 
 ## Issues
