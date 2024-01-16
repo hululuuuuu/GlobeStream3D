@@ -20,15 +20,15 @@
 
 [//]: # (## 📄 在线预览及文档)
 
-[//]: # ([地址1]&#40;https://javascriptam.github.io/earth-flyline-docs/?starlight-theme=dark&#41;)
+[//]: # ([地址1]&#40;https://javascriptam.github.io/earth-flyline-docs)
 
 [//]: # ()
-[//]: # ([地址2]&#40;https://earth-flyline-docs-igp99epao-javascriptam.vercel.app/?starlight-theme=dark&#41;)
+[//]: # ([地址2]&#40;https://earth-flyline-docs-igp99epao-javascriptam.vercel.app)
 
 
 ## Issues
 
-使用过程中的问题或者建议欢迎提 [issue](https://github.com/JavaScriptam/earth-flyLine/issues) ，如果该项目为您提供了帮助希望来一个star万分感谢。
+使用过程中的问题或者建议欢迎提 [issue](https://github.com/JavaScriptam/GlobeStream3D/issues) ，如果该项目为您提供了帮助希望来一个star万分感谢。
 
 
 ## 🤗 感谢
