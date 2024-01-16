@@ -20,10 +20,8 @@
 
 ## 📄 在线预览及文档
 
-[地址1](https://javascriptam.github.io/earth-flyline-docs
 
-
-[地址2](https://earth-flyline-docs-igp99epao-javascriptam.vercel.app
+[文档地址](https://earth-flyline-docs-igp99epao-javascriptam.vercel.app)
 
 
 ## Issues
