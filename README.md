@@ -11,7 +11,6 @@
 
 基于three.js 构建3D地球，居家必备，搬砖神器节约时间。
 
-![avatar](https://github.com/JavaScriptam/earth-flyLine/blob/main/markdownImage/earth.gif?raw=true)
 ## ✨ 特性
 
 + 📦 开箱即用：简单快速集成，基本零成本上手。
