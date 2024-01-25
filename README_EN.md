@@ -2,15 +2,14 @@
 
 # GlobeStream3D
 
-## [Online preview]('https://javascriptam.github.io/earth-flyLine/')
-https://javascriptam.github.io/earth-flyLine/
+## [Online preview]('https://github.com/hululuuuuu/GlobeStream3D')
+https://github.com/hululuuuuu/GlobeStream3D
 
-### Please let us know if you encounter any [issues](https://github.com/JavaScriptam/earth-flyLine/issues) while using our project. Your feedback is valuable and will help us improve it.If you find our project helpful, please give us a star to support us. Thank you for support！！！
+### Please let us know if you encounter any [issues](https://github.com/hululuuuuu/GlobeStream3D/issues) while using our project. Your feedback is valuable and will help us improve it.If you find our project helpful, please give us a star to support us. Thank you for support！！！
 ## Introduction
 
 Building 3D large screen earth visualization based on three.js, essential for home, High efficiency component。
 
-![avatar](https://github.com/JavaScriptam/earth-flyLine/blob/main/markdownImage/earth.gif?raw=true)
 
 ## ✨ Features
 
