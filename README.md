@@ -28,8 +28,10 @@
 
 ## 📄 在线预览及文档
 
+[文档地址(netlify)](https://globestream3d.netlify.app/)
 
-[文档地址](https://earth-flyline-docs.vercel.app/)
+[文档地址(vercel)](https://earth-flyline-docs.vercel.app/)
+
 
 
 ## Issues
