@@ -10,6 +10,12 @@ export const InitConfig = {
   earth: {
     color: "#13162c",
     material: "MeshPhongMaterial",
+    dragConfig: {
+      rotationSpeed: 1,
+      inertiaFactor: 0.95,
+      disableX: false,
+      disableY: false,
+    },
   },
   map: "world",
   stopRotateByHover: true,
@@ -117,7 +123,13 @@ export interface SpriteStyle {
   show?: boolean;
   size?: number;
 }
-interface Earth {
+export interface DragConfig {
+  rotationSpeed: number;
+  inertiaFactor: number;
+  disableX: boolean;
+  disableY: boolean;
+}
+export interface Earth {
   color: Color;
   material?:
     | "MeshPhongMaterial"
@@ -125,6 +137,7 @@ interface Earth {
     | "MeshLambertMaterial"
     | "MeshMatcapMaterial"
     | "MeshNormalMaterial";
+  dragConfig?: Partial<DragConfig>;
 }
 
 interface MapStyle {
