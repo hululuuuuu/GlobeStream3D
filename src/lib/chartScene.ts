@@ -24,8 +24,8 @@ import sprite from "@/lib/figures/Sprite";
 import { update as tweenUpdate } from "@tweenjs/tween.js";
 import Store from "@/lib/store/store";
 import EventStore from "@/lib/store/eventStore";
-import { TransformControls } from "three/examples/jsm/controls/TransformControls";
 import { merge } from "lodash";
+import CustomOrbitControls from "@/lib/utils/controls";
 
 /**
  * ChartScene class is used to create a 3D scene using Three.js.
@@ -47,10 +47,11 @@ export default class ChartScene {
   };
   earthHovered: boolean = false;
   camera: Camera;
-  isPass: Function;
+  notLockFps: Function;
   mainContainer: Object3D;
   scene: Scene;
   renderer: Renderer;
+  controls: CustomOrbitControls;
   _store = new Store();
   _eventStore: EventStore;
   _OperateView = new OperateView(this._store);
@@ -65,7 +66,7 @@ export default class ChartScene {
       config: this._store.getConfig(),
     };
     merge(this.options, this.initOptions, params);
-    this.isPass = this.lockFps(this.options.limitFps);
+    this.notLockFps = this.lockFps(this.options.limitFps);
     this.init();
     this._eventStore = new EventStore(this);
   }
@@ -131,20 +132,25 @@ export default class ChartScene {
       this.createHelper();
     }
     this.renderer = this.createRender();
-    this.animate();
+    const obControl = new OrbitControls(this.camera, this.renderer.domElement);
+
     if (this._store.mode === "2d") {
       this.addFigures2d();
     } else if (this._store.mode === "3d") {
       this.addFigures3d();
-    }
-    const obControl = new OrbitControls(this.camera, this.renderer.domElement);
-    if (this._store.mode === "3d") {
+      this.controls = new CustomOrbitControls(
+        this.mainContainer,
+        this.renderer,
+        this.options.config.earth?.dragConfig!
+      );
       obControl.enableRotate = false;
       obControl.enablePan = false;
     }
     if (!this._store.config.enableZoom) {
       obControl.enableZoom = false;
     }
+    this.animate();
+
     dom.appendChild(this.renderer.domElement);
   }
 
@@ -229,7 +235,6 @@ export default class ChartScene {
     this.mainContainer.add(groupEarth);
 
     this.scene.add(this.mainContainer);
-    this.transformControl();
   }
 
   /**
@@ -317,12 +322,15 @@ export default class ChartScene {
    * Method to animate the scene.
    */
   animate() {
-    if (this.isPass()) {
+    if (this.notLockFps()) {
       tweenUpdate();
       if (this.shouldRotate()) {
         this.mainContainer.rotateY(this.options.rotateSpeed!);
       }
       this.renderer.render(this.scene, this.camera);
+    }
+    if (this.options.mode === "3d") {
+      this.controls.update(); // 确保平滑效果
     }
     requestAnimationFrame(() => {
       this.animate();
@@ -364,23 +372,5 @@ export default class ChartScene {
    */
   remove(type: string, ids: string[] | "removeAll" = "removeAll") {
     this._OperateView.remove(this.mainContainer, type, ids);
-  }
-
-  /**
-   * Method to control the transformation of the scene.
-   */
-  transformControl() {
-    const controls = new TransformControls(
-      this.camera,
-      this.renderer.domElement
-    );
-    controls.attach(this.mainContainer);
-    controls.setMode("rotate");
-    controls.showX = false;
-    controls.axis = null;
-    controls.showZ = false;
-    controls.size = 2;
-    controls.visible = false;
-    this.scene.add(controls);
   }
 }
