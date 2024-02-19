@@ -225,7 +225,7 @@ export default class ChartScene {
    */
   addFigures3d() {
     const groupEarth = new CreateEarth(this._store).create();
-    if (!this.options.config.texture) {
+    if (!this.options.config.texture || this.options.config.texture.mixed) {
       const mapShape = new MapShape(this);
       groupEarth.add(...mapShape.create());
     }
