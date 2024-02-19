@@ -19,7 +19,10 @@ export const InitConfig = {
   },
   map: "world",
   stopRotateByHover: true,
-  texture: "",
+  texture: {
+    path: "",
+    mixed: false,
+  },
   bgStyle: {
     color: "#040D21",
     opacity: 1,
@@ -27,6 +30,7 @@ export const InitConfig = {
   mapStyle: {
     areaColor: "#2e3564",
     lineColor: "#797eff",
+    opacity: 1.0,
   },
   spriteStyle: {
     color: "#797eff",
@@ -143,15 +147,20 @@ export interface Earth {
 interface MapStyle {
   areaColor?: Color;
   lineColor?: Color;
+  opacity?: number | undefined;
 }
 export interface RegionBaseStyle {
   areaColor?: Color;
+  opacity?: number | undefined;
 }
 type RegionsStyle = Record<string, RegionBaseStyle>;
 export interface configType {
   R: number;
   map: string;
-  texture: string;
+  texture?: {
+    path: string,
+    mixed: boolean,
+  };
   enableZoom?: boolean;
   stopRotateByHover: boolean;
   bgStyle: {
