@@ -3,12 +3,11 @@ import {
   Color,
   Group,
   Mesh,
+  MeshBasicMaterial,
   Object3D,
   Raycaster,
   Vector2,
-  MeshBasicMaterial,
 } from "three";
-import { RegionBaseStyle } from "../interface";
 
 class EventStore {
   eventMap: Record<
@@ -32,11 +31,11 @@ class EventStore {
       Object.keys(this._chartScene.options.config?.hoverRegionStyle).length > 0;
     this.registerBuildInEventMap("mousemove", () => {
       if (this.areaColorNeedChange) {
-          if (this.currentMesh) {
-            (this.currentMesh.material as MeshBasicMaterial).color.set(
-              this.currentMesh.userData.backupColor
-            );
-            (this.currentMesh.material as MeshBasicMaterial).opacity = 
+        if (this.currentMesh) {
+          (this.currentMesh.material as MeshBasicMaterial).color.set(
+            this.currentMesh.userData.backupColor
+          );
+          (this.currentMesh.material as MeshBasicMaterial).opacity =
             this.currentMesh.userData.opacity;
         }
       }
@@ -75,8 +74,8 @@ class EventStore {
         (this.currentMesh.material as MeshBasicMaterial).color.set(
           this._chartScene.options.config!.hoverRegionStyle!.areaColor!
         );
-        (this.currentMesh.material as MeshBasicMaterial).opacity = 
-        this._chartScene.options.config!.hoverRegionStyle!.opacity!;
+        (this.currentMesh.material as MeshBasicMaterial).opacity =
+          this._chartScene.options.config!.hoverRegionStyle!.opacity!;
       } else {
         this.currentMesh = null;
       }
