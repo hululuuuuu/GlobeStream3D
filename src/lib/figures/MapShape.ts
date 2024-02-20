@@ -56,6 +56,7 @@ export default class MapShape {
         ...item.properties,
         type: "country",
         backupColor: this.currentStyle.areaColor,
+        opacity: this.currentStyle.opacity,
       };
       arr.push(countryGroup);
     });
@@ -135,6 +136,8 @@ export default class MapShape {
     const material = new MeshPhongMaterial({
       color: this.currentStyle.areaColor,
       side: BackSide,
+      transparent: true,
+      opacity: this.currentStyle.opacity,
     });
     return new Mesh(aggGeometry, material);
   }

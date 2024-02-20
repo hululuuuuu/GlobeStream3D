@@ -59,7 +59,7 @@ class CreateEarth {
     const materialConfig: {
       map: Texture;
     } = {
-      map: new TextureLoader().load(this._config.texture),
+      map: new TextureLoader().load(this._config.texture?.path),
     };
     materialConfig.map.colorSpace = "srgb"; // "" | "srgb" | "srgb-linear" | "display-p3"
     const geometry = new SphereGeometry(this._config.R - 1, 39, 39); //创建一个球体几何对象
@@ -76,7 +76,7 @@ class CreateEarth {
   // 创建一个地球总对象earthGroup
   create() {
     const earthGroup = new Group(); //地球组对象
-    if (this._config.texture) {
+    if (this._config.texture?.path) {
       earthGroup.add(this.createTextureSphereMesh());
     } else {
       earthGroup.add(this.createSphereMesh());
