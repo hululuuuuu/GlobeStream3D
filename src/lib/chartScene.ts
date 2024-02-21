@@ -133,7 +133,6 @@ export default class ChartScene {
     }
     this.renderer = this.createRender();
     const obControl = new OrbitControls(this.camera, this.renderer.domElement);
-
     if (this._store.mode === "2d") {
       this.addFigures2d();
     } else if (this._store.mode === "3d") {
@@ -225,7 +224,12 @@ export default class ChartScene {
    */
   addFigures3d() {
     const groupEarth = new CreateEarth(this._store).create();
-    if (!this.options.config.texture || this.options.config.texture.mixed) {
+    console.log(this.options.config.texture);
+    // 如果是混合纹理或者不使用纹理
+    if (
+      this.options.config.texture?.mixed ||
+      !this.options.config.texture?.path
+    ) {
       const mapShape = new MapShape(this);
       groupEarth.add(...mapShape.create());
     }

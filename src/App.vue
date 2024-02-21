@@ -81,6 +81,7 @@ onMounted(() => {
             disableY: true,
           },
         },
+
         mapStyle: {
           areaColor: "#2e3564",
           lineColor: "#797eff",

@@ -25,6 +25,7 @@ export default class MapShape {
   constructor(chartScene: ChartScene) {
     this._config = chartScene._store.getConfig();
     this._options = chartScene.options;
+
     this.features = MapStore.hashMap[chartScene.options.map];
   }
   create() {
@@ -136,7 +137,6 @@ export default class MapShape {
     const material = new MeshPhongMaterial({
       color: this.currentStyle.areaColor,
       side: BackSide,
-      transparent: true,
       opacity: this.currentStyle.opacity,
     });
     return new Mesh(aggGeometry, material);
