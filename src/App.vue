@@ -5,9 +5,9 @@ import world from "./map/world.json";
 import chart from "@/entry";
 import ChartScene from "@/lib/chartScene";
 
-const chinaData = world.features.find((item) => {
+const chinaData = world.features.find((item: any) => {
   return item.properties.name === "China";
-}).geometry.coordinates;
+})!.geometry.coordinates as any;
 let chartInstance: ChartScene;
 let chartInstance1: ChartScene;
 const geoJson: any = world;
