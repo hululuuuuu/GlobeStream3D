@@ -5,9 +5,11 @@ import world from "./map/world.json";
 import chart from "@/entry";
 import ChartScene from "@/lib/chartScene";
 
+const chinaData = world.features.find((item) => {
+  return item.properties.name === "China";
+}).geometry.coordinates;
 let chartInstance: ChartScene;
 let chartInstance1: ChartScene;
-
 const geoJson: any = world;
 chart.registerMap("world", geoJson);
 onMounted(() => {
@@ -16,12 +18,12 @@ onMounted(() => {
   if (dom && dom1) {
     chartInstance = chart.init({
       dom,
-      helper: false,
+      helper: true,
       map: "world",
       autoRotate: false,
       mode: "2d",
       config: {
-        enableZoom: false,
+        enableZoom: true,
         stopRotateByHover: false,
         R: 140,
         earth: {
@@ -62,6 +64,11 @@ onMounted(() => {
           China: {
             areaColor: "#2e3564",
           },
+        },
+        wallStyle: {
+          color: "#cd79ff",
+          opacity: 0.5,
+          height: 0.5,
         },
       },
     });
@@ -117,6 +124,10 @@ onMounted(() => {
           China: {
             areaColor: "#2e3564",
           },
+        },
+        wallStyle: {
+          color: "#cd79ff",
+          opacity: 0.5,
         },
       },
     });
@@ -196,6 +207,14 @@ onMounted(() => {
     ]);
     chartInstance1.on("click", (event: Event, mesh: any) => {
       // chartInstance1.options.autoRotate = false;
+    });
+    chinaData.forEach((item: any) => {
+      chartInstance.addData("wall", {
+        data: item,
+        style: {
+          opacity: 0.5,
+        },
+      });
     });
   }
 });

@@ -7,6 +7,7 @@ import Scatter from "@/lib/figures/Scatter";
 import Store from "@/lib/store/store";
 import FlyLine2d from "@/lib/figures/FlyLine2d";
 import { Road } from "@/lib/figures/Road";
+import { Wall } from "@/lib/figures/Wall";
 
 export default class OperateView {
   private readonly _store: Store;
@@ -87,6 +88,15 @@ export default class OperateView {
         group.userData.figureType = "road";
         meshList.push(group);
       });
+    } else if (type === "wall") {
+      const group = new Group();
+      group.userData.figureType = "walls";
+      const wall = new Wall(this._store);
+      const wallMesh = wall.create(data);
+      if (wallMesh) {
+        group.add(wallMesh);
+      }
+      meshList.push(group);
     }
     return Promise.resolve(meshList);
   };
@@ -115,7 +125,6 @@ export default class OperateView {
       }
     }
   }
-
   disposeGroup(group: Group) {
     group.traverse((item) => {
       if (!(item instanceof Group)) {

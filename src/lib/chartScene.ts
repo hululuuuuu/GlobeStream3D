@@ -224,7 +224,6 @@ export default class ChartScene {
    */
   addFigures3d() {
     const groupEarth = new CreateEarth(this._store).create();
-    console.log(this.options.config.texture);
     // 如果是混合纹理或者不使用纹理
     if (
       this.options.config.texture?.mixed ||
@@ -262,7 +261,11 @@ export default class ChartScene {
     obj.name = "mainContainer";
     return obj;
   }
-
+  addWall(): Group {
+    const obj = new Group();
+    obj.name = "wall";
+    return obj;
+  }
   /**
    * Method to create a renderer.
    * @returns {WebGLRenderer} The created renderer.

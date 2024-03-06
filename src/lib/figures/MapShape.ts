@@ -18,10 +18,12 @@ import ChartScene from "@/lib/chartScene";
 
 export default class MapShape {
   private readonly _config: StoreConfig;
+  wallPoints: Record<string, any> = {};
   currentStyle: RegionBaseStyle;
   features: Feature[];
   geometryArr: BufferGeometry[] = [];
   _options: Options;
+
   constructor(chartScene: ChartScene) {
     this._config = chartScene._store.getConfig();
     this._options = chartScene.options;
@@ -256,10 +258,10 @@ export default class MapShape {
     return usefulIndexArr;
   }
   getCurrentStyle(name: string) {
+    this.currentStyle = { ...this._config.mapStyle };
     if (this._config.regions?.[name]) {
-      this.currentStyle = this._config.regions[name];
+      Object.assign(this.currentStyle, this._config.regions[name]);
     } else {
-      this.currentStyle = { ...this._config.mapStyle };
     }
   }
 }
