@@ -1,4 +1,5 @@
 import { Group } from "three";
+import { Position } from "geojson";
 
 type RGB = `rgb(${number}, ${number}, ${number})`;
 type RGBA = `rgba(${number}, ${number}, ${number}, ${number})`;
@@ -56,6 +57,12 @@ export const InitConfig = {
     //涟漪
     color: "#cd79ff",
   },
+  wallStyle: {
+    color: "#cd79ff",
+    opacity: 0.5,
+    height: 2,
+    width: 2,
+  },
 };
 export interface Options {
   dom: HTMLElement;
@@ -69,7 +76,7 @@ export interface Options {
   light?: "AmbientLight" | "PointLight" | "DirectionalLight" | "RectAreaLight";
   config: Partial<configType>;
 }
-export type StoreConfig = typeof InitConfig & Partial<configType>;
+export type StoreConfig = typeof InitConfig & configType;
 export interface TweenParams {
   from: {
     size?: number;
@@ -158,8 +165,8 @@ export interface configType {
   R: number;
   map: string;
   texture?: {
-    path: string,
-    mixed: boolean,
+    path: string;
+    mixed: boolean;
   };
   enableZoom?: boolean;
   stopRotateByHover: boolean;
@@ -176,6 +183,7 @@ export interface configType {
   roadStyle: Partial<RoadStyle>;
   regions?: RegionsStyle;
   hoverRegionStyle?: RegionBaseStyle;
+  wallStyle: Partial<WallStyle>;
 }
 export interface Coordinates3D {
   x: number;
@@ -194,10 +202,20 @@ export interface RoadData {
   style?: Partial<RoadStyle>;
   id: string | number;
 }
+export interface WallStyle {
+  color: Color;
+  opacity: number;
+  height: number;
+  width: number;
+}
 export interface SetData {
   flyLine: FlyLineData[];
   point: Coordinates[];
   road: RoadData[];
+  wall: {
+    data: Position[][];
+    style?: Partial<WallStyle>;
+  };
 }
 export type OptDataFunc = (
   type: keyof SetData,
