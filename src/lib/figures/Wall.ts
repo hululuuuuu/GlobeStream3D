@@ -54,7 +54,7 @@ export class Wall {
       data.data.forEach((point: Position[]) => {
         let allPoints: Vector3[] = [];
         point.forEach((item: number[]) => {
-          const { x, y, z } = lon2xyz(this._config.R, item[0], item[1], 1);
+          const { x, y, z } = lon2xyz(this._config.R, item[0], item[1], 1.01);
           allPoints.push(new Vector3(x, y, z));
         });
         currentMesh = this.createShape(allPoints);

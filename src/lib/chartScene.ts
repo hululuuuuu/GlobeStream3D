@@ -52,20 +52,23 @@ export default class ChartScene {
   scene: Scene;
   renderer: Renderer;
   controls: CustomOrbitControls;
-  _store = new Store();
+  _store: Store;
   _eventStore: EventStore;
-  _OperateView = new OperateView(this._store);
+  _OperateView: OperateView;
 
   /**
    * Constructor for the ChartScene class.
    * @param {Partial<Options>} params - The initial options for the scene.
    */
   constructor(params: Partial<Options>) {
+    this._store = new Store();
+    this._OperateView = new OperateView(this._store);
     this.options = {
       ...this.options,
       config: this._store.getConfig(),
     };
-    merge(this.options, this.initOptions, params);
+    this.options = merge({}, this.options, this.initOptions, params);
+
     this.notLockFps = this.lockFps(this.options.limitFps);
     this.init();
     this._eventStore = new EventStore(this);

@@ -4,7 +4,6 @@ import triangle from "./image/triangel.svg";
 import world from "./map/world.json";
 import chart from "@/entry";
 import ChartScene from "@/lib/chartScene";
-import texture from "./image/mixed/Earth_DiffuseMap_2.jpg";
 
 const chinaData = world.features.find((item: any) => {
   return item.properties.name === "China";
@@ -58,13 +57,13 @@ onMounted(() => {
             color: "#cd79ff", //飞线路径配置
           },
         },
+
         hoverRegionStyle: {
           areaColor: "#cd79ff",
         },
         regions: {
           China: {
             areaColor: "#2e3564",
-            opacity: 0,
           },
         },
         wallStyle: {
@@ -82,7 +81,7 @@ onMounted(() => {
       mode: "3d",
       config: {
         enableZoom: true,
-        stopRotateByHover: false,
+        stopRotateByHover: true,
         R: 120,
         earth: {
           color: "#13162c",
@@ -90,10 +89,10 @@ onMounted(() => {
             disableY: true,
           },
         },
-        texture: {
-          path: texture,
-          mixed: true,
-        },
+        // texture: {
+        //   path: texture,
+        //   mixed: true,
+        // },
         mapStyle: {
           areaColor: "#2e3564",
           lineColor: "#797eff",
@@ -125,13 +124,12 @@ onMounted(() => {
         hoverRegionStyle: {
           areaColor: "#cd79ff",
         },
-        regions: {
-          China: {
-            areaColor: "#2e3564",
-            opacity: 1,
-            show: false,
-          },
-        },
+        // regions: {
+        //   China: {
+        //     areaColor: "#2e3564",
+        //     show: false,
+        //   },
+        // },
         wallStyle: {
           color: "#cd79ff",
           opacity: 0.5,
@@ -148,7 +146,7 @@ onMounted(() => {
             color: "#ff0000",
             duration: 2000,
             delay: 0,
-            repeat: 1,
+            repeat: Infinity,
             onComplete: (data: any) => {
               //do something
             },
@@ -216,7 +214,7 @@ onMounted(() => {
       // chartInstance1.options.autoRotate = false;
     });
     chinaData.forEach((item: any) => {
-      chartInstance1.addData("wall", {
+      chartInstance.addData("wall", {
         data: item,
         style: {
           opacity: 0.5,
