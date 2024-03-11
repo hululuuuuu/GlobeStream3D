@@ -10,7 +10,7 @@ class Store {
   flyLineMap: Record<any, true> = {};
   setConfig(options: Partial<Options>) {
     this.mode = options.mode || "3d";
-    merge(this.config, options.config);
+    this.config = merge({}, this.config, options.config);
   }
   getConfig(): StoreConfig {
     return this.config as StoreConfig;

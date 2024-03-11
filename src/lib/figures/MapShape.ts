@@ -140,7 +140,7 @@ export default class MapShape {
     const material = new MeshPhongMaterial({
       color: this.currentStyle.areaColor,
       side: BackSide,
-      transparent: true,
+      // transparent: true,
       opacity: this.currentStyle.opacity,
     });
     return new Mesh(aggGeometry, material);

@@ -77,7 +77,6 @@ class CreateEarth {
   create() {
     const earthGroup = new Group(); //地球组对象
     if (this._config.texture?.path) {
-      console.log(123);
       earthGroup.add(this.createTextureSphereMesh());
     } else {
       earthGroup.add(this.createSphereMesh());

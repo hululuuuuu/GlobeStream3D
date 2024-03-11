@@ -45,8 +45,8 @@ export default class OperateView {
           const flyLine = new FlyLine2d(this._store, item);
           group.add(
             flyLine.create(
-              new Vector3(from.lon, from.lat, 0),
-              new Vector3(to.lon, to.lat, 0)
+              new Vector3(from.lon, from.lat, 1),
+              new Vector3(to.lon, to.lat, 1)
             )
           );
           group.add(scatter.create(from), scatter.create(to));

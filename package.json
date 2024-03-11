@@ -1,6 +1,6 @@
 {
   "name": "earth-flyline",
-  "version": "1.3.8",
+  "version": "1.3.9",
   "description": "earth-flyline是基于threejs开发的可视化3D地球纯js组件，包括迁徙飞线，涟漪,支持react vue angular等前端框架",
   "keywords": [
     "threejs",

@@ -16,7 +16,6 @@ const lon2xyz = (
   let lon = (longitude * Math.PI) / 180; //转弧度值
   let lat = (latitude * Math.PI) / 180; //转弧度值
   lon = -lon; // three.js坐标系z坐标轴对应经度-90度，而不是90度
-
   // 经纬度坐标转球面坐标计算公式
   const x = R * offset * Math.cos(lat) * Math.cos(lon);
   const y = R * offset * Math.sin(lat);
