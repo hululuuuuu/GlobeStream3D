@@ -53,6 +53,10 @@ export const InitConfig = {
       color: "#cd79ff",
     },
   },
+  hoverRegionStyle: {
+    areaColor: "#cd79ff",
+    opacity: 1,
+  },
   scatterStyle: {
     //涟漪
     color: "#cd79ff",
@@ -159,6 +163,7 @@ interface MapStyle {
 export interface RegionBaseStyle {
   areaColor?: Color;
   opacity?: number | undefined;
+  show?: boolean;
 }
 type RegionsStyle = Record<string, RegionBaseStyle>;
 export interface configType {

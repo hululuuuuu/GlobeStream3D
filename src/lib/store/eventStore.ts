@@ -53,7 +53,6 @@ class EventStore {
     }) as EventListener);
   }
   registerBuildInEventMap(eventName: string, cb: () => void) {
-    this.buildInEventMap[eventName] = cb;
     this._chartScene.options.dom.addEventListener(eventName, ((
       event: MouseEvent
     ) => {
@@ -70,10 +69,13 @@ class EventStore {
         eventMesh.userData.type === "country" &&
         this.areaColorNeedChange
       ) {
+        this.buildInEventMap[eventName] = cb;
+
         this.currentMesh = eventMesh;
         (this.currentMesh.material as MeshBasicMaterial).color.set(
           this._chartScene.options.config!.hoverRegionStyle!.areaColor!
         );
+
         (this.currentMesh.material as MeshBasicMaterial).opacity =
           this._chartScene.options.config!.hoverRegionStyle!.opacity!;
       } else {

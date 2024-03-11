@@ -34,10 +34,11 @@ export default class MapShape {
     const arr: Group[] = [];
     // const features = store.hashMap
     this.features.forEach((item: Feature) => {
+      this.getCurrentStyle(item.properties?.name);
+      if (this.currentStyle.show === false) return;
       this.geometryArr = [];
       const countryGroup = new Group();
       countryGroup.name = `countryGroup-${item.properties?.name}`;
-      this.getCurrentStyle(item.properties?.name);
       // //如果一个国家是单个轮廓
       let countryCoordinates: Position[][][] = [];
       if (item.geometry.type === "Polygon") {
@@ -139,6 +140,7 @@ export default class MapShape {
     const material = new MeshPhongMaterial({
       color: this.currentStyle.areaColor,
       side: BackSide,
+      transparent: true,
       opacity: this.currentStyle.opacity,
     });
     return new Mesh(aggGeometry, material);
@@ -261,7 +263,6 @@ export default class MapShape {
     this.currentStyle = { ...this._config.mapStyle };
     if (this._config.regions?.[name]) {
       Object.assign(this.currentStyle, this._config.regions[name]);
-    } else {
     }
   }
 }

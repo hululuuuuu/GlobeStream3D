@@ -4,6 +4,7 @@ import triangle from "./image/triangel.svg";
 import world from "./map/world.json";
 import chart from "@/entry";
 import ChartScene from "@/lib/chartScene";
+import texture from "./image/mixed/Earth_DiffuseMap_2.jpg";
 
 const chinaData = world.features.find((item: any) => {
   return item.properties.name === "China";
@@ -63,6 +64,7 @@ onMounted(() => {
         regions: {
           China: {
             areaColor: "#2e3564",
+            opacity: 0,
           },
         },
         wallStyle: {
@@ -88,7 +90,10 @@ onMounted(() => {
             disableY: true,
           },
         },
-
+        texture: {
+          path: texture,
+          mixed: true,
+        },
         mapStyle: {
           areaColor: "#2e3564",
           lineColor: "#797eff",
@@ -123,6 +128,8 @@ onMounted(() => {
         regions: {
           China: {
             areaColor: "#2e3564",
+            opacity: 1,
+            show: false,
           },
         },
         wallStyle: {
@@ -209,7 +216,7 @@ onMounted(() => {
       // chartInstance1.options.autoRotate = false;
     });
     chinaData.forEach((item: any) => {
-      chartInstance.addData("wall", {
+      chartInstance1.addData("wall", {
         data: item,
         style: {
           opacity: 0.5,
