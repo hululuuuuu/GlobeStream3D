@@ -136,6 +136,7 @@ onMounted(() => {
         },
       },
     });
+    console.log(chartInstance1);
     const initData = [
       {
         from: {
@@ -153,15 +154,6 @@ onMounted(() => {
           },
         },
         to: { id: 2, lon: 26.1223, lat: -7.8756 },
-        style: {
-          pathStyle: {
-            color: "#ff0000", //飞线路径配置
-          },
-          flyLineStyle: {
-            //飞线样式配置
-            color: "#0000ff",
-          },
-        },
       },
     ];
     // chartInstance.setData("flyLine", initData);
