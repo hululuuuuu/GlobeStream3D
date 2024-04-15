@@ -16,6 +16,7 @@ import { setTween } from "@/lib/utils/tween";
 import { FlyLineData, LineStyle, StoreConfig } from "@/lib/interface";
 import Store from "@/lib/store/store";
 import { addUserDataToMesh } from "@/lib/utils";
+import { merge } from "lodash";
 
 export default class FlyLine3d {
   private readonly _config: StoreConfig;
@@ -25,13 +26,14 @@ export default class FlyLine3d {
   constructor(store: Store, currentData: FlyLineData) {
     this._store = store;
     this._config = store.getConfig();
+    console.log(this._config.pathStyle);
     this._currentConfig = {
       flyLineStyle: this._config.flyLineStyle,
       pathStyle: this._config.pathStyle,
     };
     this._currentData = currentData;
     if (currentData.style) {
-      Object.assign(this._currentConfig, currentData.style);
+      merge(this._currentConfig, currentData.style);
     }
   }
   createMesh(positionInfo: [Vector3, Vector3]) {
@@ -84,7 +86,9 @@ export default class FlyLine3d {
     );
 
     group.add(tadpolePointsMesh);
-    group.add(pathLine);
+    if (this._currentConfig.pathStyle.show !== false) {
+      group.add(pathLine);
+    }
     group.name = "flyLine";
     return group;
   }

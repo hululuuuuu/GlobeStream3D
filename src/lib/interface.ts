@@ -39,6 +39,7 @@ export const InitConfig = {
   }, //光圈
   pathStyle: {
     color: "#cd79ff", //飞线路径配置
+    show: true,
   },
   flyLineStyle: {
     //飞线样式配置
@@ -106,6 +107,7 @@ export interface TweenConfig {
 export interface PathStyle {
   color: Color;
   size: number;
+  show: boolean;
 }
 export interface FlyLineStyle extends TweenConfig {
   color: Color;
