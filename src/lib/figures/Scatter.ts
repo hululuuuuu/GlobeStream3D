@@ -12,6 +12,7 @@ import {
   Vector3,
 } from "three";
 import Store from "@/lib/store/store";
+import { cloneDeep } from "lodash-es";
 
 export default class Scatter {
   private readonly _config: StoreConfig;
@@ -151,7 +152,7 @@ export default class Scatter {
   }
   create(data: Coordinates) {
     if (data.style) {
-      this._currentStyle = data.style;
+      this._currentStyle = cloneDeep(data.style);
     }
     const group = new Group();
     if (!this._currentStyle.customFigure?.texture) {

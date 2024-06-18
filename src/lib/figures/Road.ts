@@ -19,6 +19,7 @@ import {
 import { _3Dto2D, radianAOB } from "@/lib/utils/math";
 import { setTween } from "@/lib/utils/tween";
 import { merge } from "lodash";
+import { cloneDeep } from "lodash-es";
 
 export class Road {
   private readonly _config: StoreConfig;
@@ -41,10 +42,10 @@ export class Road {
     this._store = store;
     this._config = store.getConfig();
     this._currentData = currentData;
-    this._currentConfig = {
+    this._currentConfig = cloneDeep({
       flyLineStyle: this._config.roadStyle.flyLineStyle!,
       pathStyle: this._config.roadStyle.pathStyle!,
-    };
+    });
     if (currentData.style) {
       merge(this._currentConfig, currentData.style);
     }

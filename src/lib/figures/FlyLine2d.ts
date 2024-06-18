@@ -15,6 +15,7 @@ import { setTween } from "@/lib/utils/tween";
 import { FlyLineData, LineStyle, StoreConfig } from "@/lib/interface";
 import Store from "@/lib/store/store";
 import { addUserDataToMesh } from "@/lib/utils";
+import { cloneDeep } from "lodash-es";
 
 export default class FlyLine2d {
   private readonly _config: StoreConfig;
@@ -25,10 +26,10 @@ export default class FlyLine2d {
     this._store = store;
     this._config = store.getConfig();
     this._currentData = currentData;
-    this._currentConfig = {
+    this._currentConfig = cloneDeep({
       flyLineStyle: this._config.flyLineStyle,
       pathStyle: this._config.pathStyle,
-    };
+    });
     if (currentData.style) {
       Object.assign(this._currentConfig, currentData.style);
     }
