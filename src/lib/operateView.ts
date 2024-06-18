@@ -8,6 +8,7 @@ import Store from "@/lib/store/store";
 import FlyLine2d from "@/lib/figures/FlyLine2d";
 import { Road } from "@/lib/figures/Road";
 import { Wall } from "@/lib/figures/Wall";
+import MapStreamLine from "@/lib/figures/MapStreamLine";
 
 export default class OperateView {
   private readonly _store: Store;
@@ -95,6 +96,15 @@ export default class OperateView {
       const wallMesh = wall.create(data);
       if (wallMesh) {
         group.add(wallMesh);
+      }
+      meshList.push(group);
+    } else if (type === "mapStreamLine") {
+      const group = new Group();
+      group.userData.figureType = "mapStream";
+      const mapStreamLine = new MapStreamLine(this._store);
+      const mapStreamLineMesh = mapStreamLine.create(data);
+      if (mapStreamLineMesh) {
+        group.add(mapStreamLineMesh);
       }
       meshList.push(group);
     }

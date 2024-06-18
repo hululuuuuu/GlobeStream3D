@@ -89,54 +89,21 @@ onMounted(() => {
             disableY: true,
           },
         },
-        // texture: {
-        //   path: texture,
-        //   mixed: true,
-        // },
-        mapStyle: {
-          areaColor: "#2e3564",
-          lineColor: "#797eff",
+        flyLineStyle: {
+          duration: 5000,
+        },
+        texture: {
+          mixed: false,
+        },
+        bgStyle: {
+          color: "#0e0c15",
         },
         spriteStyle: {
-          color: "#797eff",
+          color: "#272335",
           show: true,
-        }, //光圈
-        pathStyle: {
-          color: "#cd79ff", //飞线路径配置
-        },
-        flyLineStyle: {
-          //飞线样式配置
-          color: "#cd79ff",
-        },
-        scatterStyle: {
-          //涟漪
-          color: "#cd79ff",
-        },
-        roadStyle: {
-          flyLineStyle: {
-            //飞线样式配置
-            color: "#cd79ff",
-          },
-          pathStyle: {
-            color: "#cd79ff", //飞线路径配置
-          },
-        },
-        hoverRegionStyle: {
-          areaColor: "#cd79ff",
-        },
-        // regions: {
-        //   China: {
-        //     areaColor: "#2e3564",
-        //     show: false,
-        //   },
-        // },
-        wallStyle: {
-          color: "#cd79ff",
-          opacity: 0.5,
         },
       },
     });
-    console.log(chartInstance1);
     const initData = [
       {
         from: {
@@ -204,12 +171,13 @@ onMounted(() => {
     ]);
     chartInstance1.on("click", (event: Event, mesh: any) => {
       // chartInstance1.options.autoRotate = false;
+      chartInstance1.remove("mapStreamLine");
     });
     chinaData.forEach((item: any) => {
-      chartInstance.addData("wall", {
+      chartInstance1.addData("mapStreamLine", {
         data: item,
         style: {
-          opacity: 0.5,
+          opacity: 1,
         },
       });
     });
