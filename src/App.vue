@@ -92,9 +92,6 @@ onMounted(() => {
         flyLineStyle: {
           duration: 5000,
         },
-        texture: {
-          mixed: false,
-        },
         bgStyle: {
           color: "#0e0c15",
         },
