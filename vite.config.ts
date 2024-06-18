@@ -4,7 +4,8 @@ import vue from "@vitejs/plugin-vue";
 import vueJsx from "@vitejs/plugin-vue-jsx";
 import dts from "vite-plugin-dts";
 import viteCompression from "vite-plugin-compression";
-// https://vitejs.dev/config/
+import glsl from "vite-plugin-glsl";
+
 export default ({ mode }) => {
   let base = undefined;
   const libConfig = {};
@@ -63,6 +64,7 @@ export default ({ mode }) => {
       vue(),
       vueJsx(),
       viteCompression(),
+      glsl(),
     ],
   });
 };

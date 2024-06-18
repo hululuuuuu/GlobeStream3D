@@ -68,6 +68,12 @@ export const InitConfig = {
     height: 2,
     width: 2,
   },
+  mapStreamStyle: {
+    color: "#f0f0f0",
+    opacity: 0.5,
+    speed: 1,
+    splitLine: 3,
+  },
 };
 export interface Options {
   dom: HTMLElement;
@@ -191,6 +197,7 @@ export interface configType {
   regions?: RegionsStyle;
   hoverRegionStyle?: RegionBaseStyle;
   wallStyle: Partial<WallStyle>;
+  mapStreamStyle: Partial<MapStreamStyle>;
 }
 export interface Coordinates3D {
   x: number;
@@ -215,6 +222,12 @@ export interface WallStyle {
   height: number;
   width: number;
 }
+export interface MapStreamStyle {
+  color: Color;
+  opacity: number;
+  speed: number;
+  splitLine: number;
+}
 export interface SetData {
   flyLine: FlyLineData[];
   point: Coordinates[];
@@ -222,6 +235,10 @@ export interface SetData {
   wall: {
     data: Position[][];
     style?: Partial<WallStyle>;
+  };
+  mapStreamLine: {
+    data: Position[][];
+    style?: Partial<MapStreamStyle>;
   };
 }
 export type OptDataFunc = (
