@@ -17,6 +17,7 @@ import { FlyLineData, LineStyle, StoreConfig } from "@/lib/interface";
 import Store from "@/lib/store/store";
 import { addUserDataToMesh } from "@/lib/utils";
 import { merge } from "lodash";
+import { cloneDeep } from "lodash-es";
 
 export default class FlyLine3d {
   private readonly _config: StoreConfig;
@@ -26,11 +27,10 @@ export default class FlyLine3d {
   constructor(store: Store, currentData: FlyLineData) {
     this._store = store;
     this._config = store.getConfig();
-    console.log(this._config.pathStyle);
-    this._currentConfig = {
+    this._currentConfig = cloneDeep({
       flyLineStyle: this._config.flyLineStyle,
       pathStyle: this._config.pathStyle,
-    };
+    });
     this._currentData = currentData;
     if (currentData.style) {
       merge(this._currentConfig, currentData.style);
