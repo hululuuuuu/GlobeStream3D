@@ -28,6 +28,10 @@ onMounted(() => {
         R: 140,
         earth: {
           color: "#13162c",
+          dragConfig: {
+            disableY: true,
+            disableX: true,
+          },
         },
         mapStyle: {
           lineColor: "#797eff",
