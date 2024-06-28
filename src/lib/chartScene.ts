@@ -136,18 +136,18 @@ export default class ChartScene {
     }
     this.renderer = this.createRender();
     const obControl = new OrbitControls(this.camera, this.renderer.domElement);
+    obControl.enableRotate = false;
+    obControl.enablePan = false;
     if (this._store.mode === "2d") {
       this.addFigures2d();
     } else if (this._store.mode === "3d") {
       this.addFigures3d();
-      this.controls = new CustomOrbitControls(
-        this.mainContainer,
-        this.renderer,
-        this.options.config.earth?.dragConfig!
-      );
-      obControl.enableRotate = false;
-      obControl.enablePan = false;
     }
+    this.controls = new CustomOrbitControls(
+      this.mainContainer,
+      this.renderer,
+      this.options.config.earth?.dragConfig!
+    );
     if (!this._store.config.enableZoom) {
       obControl.enableZoom = false;
     }
