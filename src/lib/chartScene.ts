@@ -103,7 +103,7 @@ export default class ChartScene {
   /**
    * Method to destroy the scene.
    */
-  destory() {
+  destroy() {
     this.clearThree(this.scene);
     this.options.dom.innerHTML = "";
   }
