@@ -1,5 +1,10 @@
-import type { Coordinates, OptDataFunc, RoadData } from "./interface";
-import { FlyLineData, LessCoordinate } from "./interface";
+import {
+  Coordinates,
+  FlyLineData,
+  LessCoordinate,
+  OptDataFunc,
+  RoadData,
+} from "./interface";
 import { Group, Mesh, Object3D, Vector3 } from "three";
 import FlyLine3d from "@/lib/figures/FlyLine3d";
 import { lon2xyz, uuid } from "@/lib/utils/math";
@@ -9,6 +14,7 @@ import FlyLine2d from "@/lib/figures/FlyLine2d";
 import { Road } from "@/lib/figures/Road";
 import { Wall } from "@/lib/figures/Wall";
 import MapStreamLine from "@/lib/figures/MapStreamLine";
+import Bar from "@/lib/figures/Bar";
 
 export default class OperateView {
   private readonly _store: Store;
@@ -106,6 +112,14 @@ export default class OperateView {
       if (mapStreamLineMesh) {
         group.add(mapStreamLineMesh);
       }
+      meshList.push(group);
+    } else if (type === "bar") {
+      const group = new Group();
+      const bar = new Bar(this._store);
+      const barMesh = bar.create(data);
+      group.add(barMesh);
+      group.userData.figureType = "bar";
+      group.name = "bar";
       meshList.push(group);
     }
     return Promise.resolve(meshList);
