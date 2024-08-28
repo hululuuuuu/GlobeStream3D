@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { onMounted } from "vue";
-import triangle from "./image/triangel.svg";
 import world from "./map/world.json";
 import chart from "@/entry";
 import ChartScene from "@/lib/chartScene";
+import barData from "./devData/barData";
+import { getScale } from "@/lib/utils/math";
 
 const chinaData = world.features.find((item: any) => {
   return item.properties.name === "China";
@@ -29,8 +30,8 @@ onMounted(() => {
         earth: {
           color: "#13162c",
           dragConfig: {
-            disableY: true,
-            disableX: true,
+            disableY: false,
+            disableX: false,
           },
         },
         mapStyle: {
@@ -175,29 +176,44 @@ onMounted(() => {
       },
     ];
     // chartInstance.setData("flyLine", initData);
-    chartInstance1.setData("flyLine", initData);
-    chartInstance1.addData("point", [
-      {
-        lon: -43.0075,
-        lat: -40.4296,
-        style: {
-          color: "yellow",
-          duration: 2000,
-          customFigure: {
-            texture: triangle,
-            animate: {
-              from: {
-                size: 11,
-              },
-              to: {
-                size: 22,
-              },
-            },
-          },
+    // chartInstance1.setData("flyLine", initData);
+    // chartInstance1.addData("point", [
+    //   {
+    //     lon: -43.0075,
+    //     lat: -40.4296,
+    //     style: {
+    //       color: "yellow",
+    //       duration: 2000,
+    //       customFigure: {
+    //         texture: triangle,
+    //         animate: {
+    //           from: {
+    //             size: 11,
+    //           },
+    //           to: {
+    //             size: 22,
+    //           },
+    //         },
+    //       },
+    //     },
+    //   },
+    // ]);
+    // chartInstance.setData("flyLine", initData);
+    const maxHeight = getScale(
+      barData.map((item) => item[2]),
+      120
+    );
+    const initBarData = barData.map((item) => {
+      return {
+        position: {
+          lon: item[0],
+          lat: item[1],
         },
-      },
-    ]);
-    chartInstance.setData("flyLine", initData);
+        value: item[2] * maxHeight,
+      };
+    });
+    chartInstance1.addData("bar", initBarData);
+
     let i = 0;
     function polling() {
       setTimeout(() => {
@@ -209,40 +225,40 @@ onMounted(() => {
         }
       }, 1000);
     }
-    polling();
-    chartInstance.addData("point", [
-      {
-        lon: -43.0075,
-        lat: -40.4296,
-        style: {
-          color: "yellow",
-          duration: 2000,
-          customFigure: {
-            texture: triangle,
-            animate: {
-              from: {
-                size: 11,
-              },
-              to: {
-                size: 22,
-              },
-            },
-          },
-        },
-      },
-    ]);
+    // polling();
+    // chartInstance.addData("point", [
+    //   {
+    //     lon: -43.0075,
+    //     lat: -40.4296,
+    //     style: {
+    //       color: "yellow",
+    //       duration: 2000,
+    //       customFigure: {
+    //         texture: triangle,
+    //         animate: {
+    //           from: {
+    //             size: 11,
+    //           },
+    //           to: {
+    //             size: 22,
+    //           },
+    //         },
+    //       },
+    //     },
+    //   },
+    // ]);
     chartInstance1.on("click", (event: Event, mesh: any) => {
       // chartInstance1.options.autoRotate = false;
       chartInstance1.remove("mapStreamLine");
     });
-    chinaData.forEach((item: any) => {
-      chartInstance1.addData("mapStreamLine", {
-        data: item,
-        style: {
-          opacity: 1,
-        },
-      });
-    });
+    // chinaData.forEach((item: any) => {
+    //   chartInstance1.addData("mapStreamLine", {
+    //     data: item,
+    //     style: {
+    //       opacity: 1,
+    //     },
+    //   });
+    // });
   }
 });
 function add() {
@@ -286,7 +302,7 @@ function add() {
   ]);
 }
 function del() {
-  chartInstance.remove("road", ["7-6"]);
+  chartInstance1.remove("bar", "removeAll");
 }
 </script>
 

@@ -354,6 +354,7 @@ export default class ChartScene {
    */
   setData = async <K extends keyof SetData>(type: K, data: SetData[K]) => {
     try {
+      this.remove(type, "removeAll");
       const group = await this._OperateView.setData(type, data);
       this.mainContainer.add(...group);
     } catch (e) {

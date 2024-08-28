@@ -54,6 +54,10 @@ export const InitConfig = {
       color: "#cd79ff",
     },
   },
+  barStyle: {
+    //柱状图样式配置
+    color: "#cd79ff",
+  },
   hoverRegionStyle: {
     areaColor: "#cd79ff",
     opacity: 1,
@@ -146,6 +150,11 @@ export interface SpriteStyle {
   show?: boolean;
   size?: number;
 }
+export interface BarStyle {
+  color: Color;
+  opacity: number;
+}
+
 export interface DragConfig {
   rotationSpeed: number;
   inertiaFactor: number;
@@ -194,6 +203,7 @@ export interface configType {
   flyLineStyle: Partial<FlyLineStyle>;
   scatterStyle: Partial<ScatterStyle>;
   roadStyle: Partial<RoadStyle>;
+  barStyle: Partial<BarStyle>;
   regions?: RegionsStyle;
   hoverRegionStyle?: RegionBaseStyle;
   wallStyle: Partial<WallStyle>;
@@ -215,6 +225,13 @@ export interface RoadData {
   path: LessCoordinate[];
   style?: Partial<RoadStyle>;
   id: string | number;
+}
+
+export interface BarData {
+  position: LessCoordinate;
+  value: number;
+  style?: Partial<BarStyle>;
+  id?: string | number;
 }
 export interface WallStyle {
   color: Color;
@@ -240,6 +257,7 @@ export interface SetData {
     data: Position[][];
     style?: Partial<MapStreamStyle>;
   };
+  bar: BarData[];
 }
 export type OptDataFunc = (
   type: keyof SetData,
