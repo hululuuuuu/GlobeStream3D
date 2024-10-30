@@ -57,6 +57,8 @@ export const InitConfig = {
   barStyle: {
     //柱状图样式配置
     color: "#cd79ff",
+    width: 0.5,
+    height: 0.5,
   },
   hoverRegionStyle: {
     areaColor: "#cd79ff",
@@ -77,6 +79,13 @@ export const InitConfig = {
     opacity: 0.5,
     speed: 1,
     splitLine: 3,
+  },
+  textMark: {
+    style: {
+      fontSize: 20,
+      color: "#fff",
+    },
+    data: [],
   },
 };
 export interface Options {
@@ -152,7 +161,8 @@ export interface SpriteStyle {
 }
 export interface BarStyle {
   color: Color;
-  opacity: number;
+  width?: number;
+  height?: number;
 }
 
 export interface DragConfig {
@@ -182,6 +192,18 @@ export interface RegionBaseStyle {
   opacity?: number | undefined;
   show?: boolean;
 }
+export interface TextStyle {
+  fontSize: number;
+  color: Color;
+}
+export type TextMark = {
+  style?: TextStyle;
+  data: {
+    text: string;
+    position: LessCoordinate;
+    style?: Partial<TextStyle>;
+  }[];
+};
 type RegionsStyle = Record<string, RegionBaseStyle>;
 export interface configType {
   R: number;
@@ -208,6 +230,7 @@ export interface configType {
   hoverRegionStyle?: RegionBaseStyle;
   wallStyle: Partial<WallStyle>;
   mapStreamStyle: Partial<MapStreamStyle>;
+  textMark?: Partial<TextMark>;
 }
 export interface Coordinates3D {
   x: number;
