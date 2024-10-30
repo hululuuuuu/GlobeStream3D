@@ -24,6 +24,21 @@ onMounted(() => {
       autoRotate: false,
       mode: "2d",
       config: {
+        textMark: {
+          style: {
+            color: "#fff",
+            fontSize: 20,
+          },
+          data: [
+            {
+              text: "中国",
+              position: {
+                lon: 104.195397,
+                lat: 35.86166,
+              },
+            },
+          ],
+        },
         enableZoom: true,
         stopRotateByHover: false,
         R: 140,
@@ -62,7 +77,6 @@ onMounted(() => {
             color: "#cd79ff", //飞线路径配置
           },
         },
-
         hoverRegionStyle: {
           areaColor: "#cd79ff",
         },
@@ -80,7 +94,7 @@ onMounted(() => {
     });
     chartInstance1 = chart.init({
       dom: dom1,
-      helper: false,
+      helper: true,
       map: "world",
       autoRotate: true,
       mode: "3d",
@@ -88,6 +102,21 @@ onMounted(() => {
         enableZoom: true,
         stopRotateByHover: true,
         R: 120,
+        textMark: {
+          style: {
+            color: "#fff",
+            fontSize: 20,
+          },
+          data: [
+            {
+              text: "中国",
+              position: {
+                lon: 104.195397,
+                lat: 35.86166,
+              },
+            },
+          ],
+        },
         earth: {
           color: "#13162c",
           dragConfig: {
@@ -212,7 +241,7 @@ onMounted(() => {
         value: item[2] * maxHeight,
       };
     });
-    chartInstance1.addData("bar", initBarData);
+    // chartInstance1.addData("bar", initBarData);
 
     let i = 0;
     function polling() {

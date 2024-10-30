@@ -26,6 +26,7 @@ import Store from "@/lib/store/store";
 import EventStore from "@/lib/store/eventStore";
 import { merge } from "lodash";
 import CustomOrbitControls from "@/lib/utils/controls";
+import CountryNamesText from "@/lib/figures/Text";
 
 /**
  * ChartScene class is used to create a 3D scene using Three.js.
@@ -143,6 +144,7 @@ export default class ChartScene {
     } else if (this._store.mode === "3d") {
       this.addFigures3d();
     }
+    this.createCountryNamesText();
     this.controls = new CustomOrbitControls(
       this.mainContainer,
       this.renderer,
@@ -152,7 +154,6 @@ export default class ChartScene {
       obControl.enableZoom = false;
     }
     this.animate();
-
     dom.appendChild(this.renderer.domElement);
   }
 
@@ -326,6 +327,23 @@ export default class ChartScene {
     } else {
       return false;
     }
+  }
+  /**
+   * Method to create a group for country names.
+   */
+  createCountryNamesText() {
+    const group = new Group();
+    group.name = "countryNames";
+    if (!this.options.config.textMark?.data) {
+      return null;
+    } else {
+      const countryText = new CountryNamesText(this._store);
+      const countryData = countryText.create();
+      if (countryData.length) {
+        group.add(...countryText.create());
+      }
+    }
+    this.mainContainer.add(group);
   }
 
   /**

@@ -24,11 +24,13 @@ export default class Bar {
   }
   createMesh = (data: BarData[]): Mesh => {
     const geometryList: BoxGeometry[] = [];
+    console.log(this._commonStyle);
+    console.log(data);
     data.forEach((item) => {
       const barHeight = item.value;
       const position = item.position;
-      const geometry = new BoxGeometry(0.5, 0.5, barHeight);
       const style = this.getCurrentStyle(item);
+      const geometry = new BoxGeometry(style.width, style.height, barHeight);
       const color = new Color(style.color);
       const colorArr = [];
       const attrPosition = geometry.attributes.position;
