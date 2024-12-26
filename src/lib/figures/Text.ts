@@ -76,6 +76,10 @@ export default class CountryNamesText {
       // 创建一个平面用于显示文字
       const textPlane = new PlaneGeometry(size * 1.3, (size * 1.3) / 2);
       const textMesh = new Mesh(textPlane, textMaterial);
+      textMesh.userData = {
+        ...item,
+        type: "text",
+      };
       const { x, y, z } = item.position;
       // 设定位置并使文字面朝摄像机
       textMesh.position.set(x, y, z * 1.01); //设置mesh位置
