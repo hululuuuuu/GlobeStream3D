@@ -8,6 +8,9 @@ import {
   Points,
   PointsMaterial,
   QuadraticBezierCurve3,
+  Sprite,
+  SpriteMaterial,
+  TextureLoader,
   Vector3,
 } from "three";
 import { getFunctionExpression } from "@/lib/utils/math";
@@ -46,10 +49,10 @@ export default class FlyLine2d {
     );
     const points = curve.getSpacedPoints(200);
     const pathLine = this.createPathLine(points);
-
     const tadpoleSize = 40;
     const tadpolePointsMesh = this.createShader(points, tadpoleSize);
     group.add(pathLine, tadpolePointsMesh);
+
     group.name = "flyLine";
     setTween(
       { index: 0 },
@@ -120,6 +123,32 @@ export default class FlyLine2d {
     tadpolePointsMesh.name = "tadpolePointsMesh";
     return tadpolePointsMesh;
   };
+  createImg(R: number, startAngle: number, endAngle: number) {
+    // 创建曲线（与 createPathLine 中的曲线一致）
+    const group = new Group();
+    // 创建纹理加载器
+    const textureLoader = new TextureLoader();
+    const texture = textureLoader.load(this._currentConfig.flyLineStyle.img!);
+    // 创建精灵材质，使用加载的纹理
+    const spriteMaterial = new SpriteMaterial({
+      map: texture,
+      color: new Color(this._currentConfig.flyLineStyle.color),
+      transparent: true,
+      depthTest: true,
+    });
+
+    // 创建精灵
+    const sprite = new Sprite(spriteMaterial);
+    const x = R * Math.cos(startAngle);
+    const y = R * Math.sin(startAngle);
+    sprite.position.set(x, y, 0);
+    // 设置精灵的缩放（大小）
+    const size = this._currentConfig.flyLineStyle.size || 3;
+    sprite.scale.set(size, size, 1);
+    group.add(sprite);
+    sprite.name = "flyLineSprite";
+    return group;
+  }
   create(src: Vector3, dist: Vector3) {
     //创建线
     const flyLineMesh = this.createMesh([src, dist]);

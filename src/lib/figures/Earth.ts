@@ -42,8 +42,10 @@ class CreateEarth {
     },
   };
   private _config: StoreConfig;
+  private _store: Store;
   constructor(store: Store) {
     this._config = store.getConfig();
+    this._store = store;
   }
   createSphereMesh() {
     const geometry = new SphereGeometry(this._config.R - 1, 39, 39); //创建一个球体几何对象
@@ -53,6 +55,7 @@ class CreateEarth {
     const earthMesh = new Mesh(geometry, material); //网格模型对象Mesh
     earthMesh.castShadow = true;
     earthMesh.name = "earthMesh";
+
     return earthMesh;
   }
   createTextureSphereMesh() {

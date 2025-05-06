@@ -63,6 +63,7 @@ export const InitConfig = {
   hoverRegionStyle: {
     areaColor: "#cd79ff",
     opacity: 1,
+    show: true,
   },
   scatterStyle: {
     //涟漪
@@ -131,6 +132,7 @@ export interface PathStyle {
 export interface FlyLineStyle extends TweenConfig {
   color: Color;
   size: number;
+  img?: string;
 }
 export interface ScatterStyle extends TweenConfig {
   color: Color;

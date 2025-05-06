@@ -6,6 +6,9 @@ import {
   Group,
   Points,
   PointsMaterial,
+  Sprite,
+  SpriteMaterial,
+  TextureLoader,
   Vector3,
 } from "three";
 import { LineGeometry } from "three/examples/jsm/lines/LineGeometry";
@@ -64,34 +67,78 @@ export default class FlyLine3d {
     const endDeg = Math.PI - startDeg; //飞线圆弧结束角度
     const pathLine = this.createPathLine(centerPosition, R, startDeg, endDeg);
     const flyAngle = (endDeg - startDeg) / 7; //飞线圆弧的弧度和轨迹线弧度相关 也可以解释为飞线的长度
+    if (!this._currentConfig.flyLineStyle.img) {
+      const tadpolePointsMesh = this.createShader(
+        R,
+        startDeg,
+        startDeg + flyAngle
+      );
+      //和创建好的路径圆 圆心坐标保持一致
+      tadpolePointsMesh.position.y = centerPosition.y;
+      tadpolePointsMesh.name = "tadpolePointsMesh";
+      setTween(
+        { z: 0 },
+        { z: endDeg - startDeg },
+        (params) => {
+          tadpolePointsMesh.rotation.z = params.z;
+        },
+        {
+          ...this._currentConfig.flyLineStyle,
+          data: this._currentData,
+        }
+      );
+      group.add(tadpolePointsMesh);
+    } else {
+      //有图片则用 img 替换shader
+      const imgMesh = this.createImg(R, startDeg, startDeg + flyAngle);
+      imgMesh.position.y = centerPosition.y;
+      setTween(
+        { z: 0 },
+        { z: endDeg - startDeg },
+        (params) => {
+          imgMesh.rotation.z = params.z;
+        },
+        {
+          ...this._currentConfig.flyLineStyle,
+          data: this._currentData,
+        }
+      );
+      group.add(imgMesh);
+    }
 
-    const tadpolePointsMesh = this.createShader(
-      R,
-      startDeg,
-      startDeg + flyAngle
-    );
-    //和创建好的路径圆 圆心坐标保持一致
-    tadpolePointsMesh.position.y = centerPosition.y;
-    tadpolePointsMesh.name = "tadpolePointsMesh";
-    setTween(
-      { z: 0 },
-      { z: endDeg - startDeg },
-      (params) => {
-        tadpolePointsMesh.rotation.z = params.z;
-      },
-      {
-        ...this._currentConfig.flyLineStyle,
-        data: this._currentData,
-      }
-    );
-
-    group.add(tadpolePointsMesh);
     if (this._currentConfig.pathStyle.show !== false) {
       group.add(pathLine);
     }
     group.name = "flyLine";
     return group;
   }
+  createImg(R: number, startAngle: number, endAngle: number) {
+    // 创建曲线（与 createPathLine 中的曲线一致）
+    const group = new Group();
+    // 创建纹理加载器
+    const textureLoader = new TextureLoader();
+    const texture = textureLoader.load(this._currentConfig.flyLineStyle.img!);
+    // 创建精灵材质，使用加载的纹理
+    const spriteMaterial = new SpriteMaterial({
+      map: texture,
+      color: new Color(this._currentConfig.flyLineStyle.color),
+      transparent: true,
+      depthTest: true,
+    });
+
+    // 创建精灵
+    const sprite = new Sprite(spriteMaterial);
+    const x = R * Math.cos(startAngle);
+    const y = R * Math.sin(startAngle);
+    sprite.position.set(x, y, 0);
+    // 设置精灵的缩放（大小）
+    const size = this._currentConfig.flyLineStyle.size || 3;
+    sprite.scale.set(size, size, 1);
+    group.add(sprite);
+    sprite.name = "flyLineSprite";
+    return group;
+  }
+
   createPathLine = (
     middlePos: Vector3,
     r: number,

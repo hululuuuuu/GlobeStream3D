@@ -8,6 +8,7 @@ import {
   Clock,
   DirectionalLight,
   Group,
+  Light,
   Mesh,
   Object3D,
   OrthographicCamera,
@@ -46,6 +47,7 @@ export default class ChartScene {
     width: 0,
     height: 0,
   };
+  light: Light;
   earthHovered: boolean = false;
   camera: Camera;
   notLockFps: Function;
@@ -131,7 +133,7 @@ export default class ChartScene {
     } else {
       this.camera = this.createCamera();
     }
-    this.createLight(light);
+    this.light = this.createLight(light);
     if (helper) {
       this.createHelper();
     }
@@ -205,13 +207,22 @@ export default class ChartScene {
       light.position.set(2000, 2000, 3000);
       light.castShadow = true;
       this.scene.add(light);
+      return light;
     } else if (lightType === "AmbientLight") {
       const light = new AmbientLight(color, 1);
       this.scene.add(light);
+      return light;
     } else if (lightType == "PointLight") {
       const light = new PointLight(color, 1, 100);
       light.position.set(200, 200, 40);
       this.scene.add(light);
+      return light;
+    } else {
+      const light = new DirectionalLight(color, 1);
+      light.position.set(2000, 2000, 3000);
+      light.castShadow = true;
+      this.scene.add(light);
+      return light;
     }
   }
 
