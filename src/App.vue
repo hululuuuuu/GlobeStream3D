@@ -3,6 +3,7 @@ import { onMounted } from "vue";
 import world from "./map/world.json";
 import chart from "@/entry";
 import ChartScene from "@/lib/chartScene";
+import triangle from "@/image/pipeLine.jpg";
 import barData from "./devData/barData";
 import { getScale } from "@/lib/utils/math";
 
@@ -79,6 +80,7 @@ onMounted(() => {
         },
         hoverRegionStyle: {
           areaColor: "#cd79ff",
+          show: false,
         },
         regions: {
           China: {
@@ -129,12 +131,16 @@ onMounted(() => {
         bgStyle: {
           color: "#0e0c15",
         },
+        hoverRegionStyle: {
+          show: false,
+        },
         spriteStyle: {
           color: "#272335",
           show: true,
         },
       },
     });
+    // chartInstance1.light.color.set('red')
     const initData = [
       {
         from: {
@@ -152,6 +158,11 @@ onMounted(() => {
           },
         },
         to: { id: 2, lon: 26.1223, lat: -7.8756 },
+        style: {
+          flyLineStyle: {
+            img: triangle,
+          },
+        },
       },
     ];
     const initData1 = [
@@ -205,7 +216,7 @@ onMounted(() => {
       },
     ];
     // chartInstance.setData("flyLine", initData);
-    // chartInstance1.setData("flyLine", initData);
+    chartInstance1.setData("flyLine", initData);
     // chartInstance1.addData("point", [
     //   {
     //     lon: -43.0075,
@@ -351,6 +362,7 @@ function del() {
   height: 800px;
   margin-bottom: 40px;
 }
+
 #container1 {
   width: 800px;
   height: 800px;

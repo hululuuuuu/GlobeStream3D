@@ -28,7 +28,7 @@ class EventStore {
     this.areaColorNeedChange =
       this._chartScene.options.config &&
       this._chartScene.options.config.hoverRegionStyle &&
-      Object.keys(this._chartScene.options.config?.hoverRegionStyle).length > 0;
+      this._chartScene.options.config.hoverRegionStyle.show;
     this.registerBuildInEventMap("mousemove", () => {
       if (this.areaColorNeedChange) {
         if (this.currentMesh) {
