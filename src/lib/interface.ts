@@ -122,6 +122,7 @@ export interface TweenConfig {
   customFigure?: {
     texture: string;
     animate?: false | TweenParams;
+    rotate?: false | number;
   };
 }
 export interface PathStyle {
