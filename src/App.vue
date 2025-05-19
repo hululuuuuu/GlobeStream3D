@@ -288,8 +288,8 @@ onMounted(() => {
     //   },
     // ]);
     chartInstance1.on("click", (event: Event, mesh: any) => {
-      // chartInstance1.options.autoRotate = false;
-      chartInstance1.remove("mapStreamLine");
+      chartInstance1.options.autoRotate = false;
+      console.log(mesh);
     });
     // chinaData.forEach((item: any) => {
     //   chartInstance1.addData("mapStreamLine", {
