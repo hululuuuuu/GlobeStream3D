@@ -116,7 +116,6 @@ export default class Scatter {
     const { mesh, size } = this.setMeshAttr(geometry, material, data);
     mesh.name = "scatter";
     if (this._currentStyle.customFigure?.rotate) {
-      console.log(this._currentStyle.customFigure.rotate);
       mesh.rotation.z =
         this._currentStyle.customFigure.rotate * (Math.PI / 180);
     }
