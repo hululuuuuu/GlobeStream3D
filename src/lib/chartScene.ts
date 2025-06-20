@@ -36,13 +36,16 @@ import CountryNamesText from "@/lib/figures/Text";
  */
 export default class ChartScene {
   options: Options;
-  initOptions: Pick<Options, "helper" | "autoRotate" | "rotateSpeed" | "mode"> =
-    {
-      helper: false,
-      autoRotate: true,
-      rotateSpeed: 0.01,
-      mode: "3d",
-    };
+  initOptions: Pick<
+    Options,
+    "helper" | "autoRotate" | "rotateSpeed" | "mode" | "controls"
+  > = {
+    helper: false,
+    autoRotate: true,
+    rotateSpeed: 0.01,
+    mode: "3d",
+    controls: "custom",
+  };
   style = {
     width: 0,
     height: 0,
@@ -54,7 +57,7 @@ export default class ChartScene {
   mainContainer: Object3D;
   scene: Scene;
   renderer: Renderer;
-  controls: CustomOrbitControls;
+  controls: CustomOrbitControls | OrbitControls;
   _store: Store;
   _eventStore: EventStore;
   _OperateView: OperateView;
@@ -138,23 +141,29 @@ export default class ChartScene {
       this.createHelper();
     }
     this.renderer = this.createRender();
+    this.createCountryNamesText();
     const obControl = new OrbitControls(this.camera, this.renderer.domElement);
-    obControl.enableRotate = false;
-    obControl.enablePan = false;
+    if (this.options.controls === "custom") {
+      obControl.enableRotate = false;
+      obControl.enablePan = false;
+      this.controls = new CustomOrbitControls(
+        this.mainContainer,
+        this.renderer,
+        this.options.config.earth?.dragConfig!
+      );
+    } else {
+      this.controls = obControl;
+    }
+    if (!this._store.config.enableZoom) {
+      obControl.enableZoom = false;
+    }
     if (this._store.mode === "2d") {
       this.addFigures2d();
     } else if (this._store.mode === "3d") {
       this.addFigures3d();
     }
-    this.createCountryNamesText();
-    this.controls = new CustomOrbitControls(
-      this.mainContainer,
-      this.renderer,
-      this.options.config.earth?.dragConfig!
-    );
-    if (!this._store.config.enableZoom) {
-      obControl.enableZoom = false;
-    }
+    const zoom = this.options.config.zoom as number;
+    this.mainContainer.scale.set(zoom, zoom, zoom);
     this.animate();
     dom.appendChild(this.renderer.domElement);
   }

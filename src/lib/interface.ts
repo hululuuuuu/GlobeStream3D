@@ -8,6 +8,7 @@ type Color = RGB | RGBA | HEX | string;
 export const InitConfig = {
   R: 160,
   enableZoom: true,
+  zoom: 1,
   earth: {
     color: "#13162c",
     material: "MeshPhongMaterial",
@@ -98,6 +99,7 @@ export interface Options {
   limitFps?: boolean;
   autoRotate?: boolean;
   rotateSpeed?: number;
+  controls?: "custom" | "builtIn";
   light?: "AmbientLight" | "PointLight" | "DirectionalLight" | "RectAreaLight";
   config: Partial<configType>;
 }
@@ -216,6 +218,7 @@ export interface configType {
     mixed: boolean;
   };
   enableZoom?: boolean;
+  zoom?: number;
   stopRotateByHover: boolean;
   bgStyle: {
     color: Color;
