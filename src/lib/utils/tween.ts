@@ -1,5 +1,5 @@
 import * as TWEEN from "@tweenjs/tween.js";
-import { merge } from "lodash";
+import { merge } from "lodash-es";
 export function setTween(
   from: Record<any, any>,
   to: Record<any, any>,

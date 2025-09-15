@@ -18,7 +18,7 @@ import {
 } from "three";
 import { _3Dto2D, radianAOB } from "@/lib/utils/math";
 import { setTween } from "@/lib/utils/tween";
-import { merge } from "lodash";
+import { merge } from "lodash-es";
 import { cloneDeep } from "lodash-es";
 
 export class Road {

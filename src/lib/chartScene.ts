@@ -25,7 +25,7 @@ import sprite from "@/lib/figures/Sprite";
 import { update as tweenUpdate } from "@tweenjs/tween.js";
 import Store from "@/lib/store/store";
 import EventStore from "@/lib/store/eventStore";
-import { merge } from "lodash";
+import { merge } from "lodash-es";
 import CustomOrbitControls from "@/lib/utils/controls";
 import CountryNamesText from "@/lib/figures/Text";
 
