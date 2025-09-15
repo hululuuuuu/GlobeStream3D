@@ -12,3 +12,4 @@ function registerMap(name: string, map: FeatureCollection) {
 }
 
 export default { init, registerMap };
+export type { FeatureCollection };
