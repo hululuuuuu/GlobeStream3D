@@ -19,7 +19,7 @@ import { setTween } from "@/lib/utils/tween";
 import { FlyLineData, LineStyle, StoreConfig } from "@/lib/interface";
 import Store from "@/lib/store/store";
 import { addUserDataToMesh } from "@/lib/utils";
-import { merge } from "lodash";
+import { merge } from "lodash-es";
 import { cloneDeep } from "lodash-es";
 
 export default class FlyLine3d {
