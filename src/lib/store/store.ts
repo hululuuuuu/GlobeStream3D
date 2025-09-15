@@ -1,5 +1,5 @@
 import { InitConfig, Options, StoreConfig } from "@/lib/interface";
-import { merge } from "lodash";
+import { merge } from "lodash-es";
 
 class Store {
   mode: "2d" | "3d" = "3d";
