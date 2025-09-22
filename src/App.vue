@@ -30,15 +30,7 @@ onMounted(() => {
             color: "#fff",
             fontSize: 20,
           },
-          data: [
-            {
-              text: "中国",
-              position: {
-                lon: 104.195397,
-                lat: 35.86166,
-              },
-            },
-          ],
+          data: []
         },
         enableZoom: true,
         stopRotateByHover: false,
@@ -110,13 +102,7 @@ onMounted(() => {
             fontSize: 20,
           },
           data: [
-            {
-              text: "中国",
-              position: {
-                lon: 104.195397,
-                lat: 35.86166,
-              },
-            },
+
           ],
         },
         earth: {
@@ -239,6 +225,24 @@ onMounted(() => {
     //   },
     // ]);
     // chartInstance.setData("flyLine", initData);
+    chartInstance.setData("textMark", [
+      {
+        text: "中国",
+        position: {
+          lon: 104.195397,
+          lat: 35.86166,
+        },
+      },
+    ]);
+    chartInstance1.setData("textMark", [
+      {
+        text: "中国",
+        position: {
+          lon: 104.195397,
+          lat: 35.86166,
+        },
+      },
+    ]);
     const maxHeight = getScale(
       barData.map((item) => item[2]),
       120
