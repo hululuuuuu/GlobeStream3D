@@ -4,6 +4,7 @@ import {
   LessCoordinate,
   OptDataFunc,
   RoadData,
+  TextMarkItem,
 } from "./interface";
 import { Group, Mesh, Object3D, Vector3 } from "three";
 import FlyLine3d from "@/lib/figures/FlyLine3d";
@@ -13,6 +14,7 @@ import Store from "@/lib/store/store";
 import FlyLine2d from "@/lib/figures/FlyLine2d";
 import { Road } from "@/lib/figures/Road";
 import { Wall } from "@/lib/figures/Wall";
+import TextMark from "@/lib/figures/Text";
 import MapStreamLine from "@/lib/figures/MapStreamLine";
 import Bar from "@/lib/figures/Bar";
 
@@ -121,6 +123,13 @@ export default class OperateView {
       group.userData.figureType = "bar";
       group.name = "bar";
       meshList.push(group);
+    } else if (type === "textMark") {
+      const textMark = new TextMark(this._store);
+      (data as TextMarkItem[]).forEach((item: TextMarkItem) => {
+        const group = textMark.create(item);
+        group.userData.figureType = "textMark";
+        meshList.push(group);
+      });
     }
     return Promise.resolve(meshList);
   };

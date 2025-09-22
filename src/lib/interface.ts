@@ -201,13 +201,15 @@ export interface TextStyle {
   fontSize: number;
   color: Color;
 }
-export type TextMark = {
+export interface TextMarkItem {
+  id?: string | number;
+  text: string;
+  position: LessCoordinate;
+  style?: Partial<TextStyle>;
+}
+export type TextMarkConfig = {
   style?: TextStyle;
-  data: {
-    text: string;
-    position: LessCoordinate;
-    style?: Partial<TextStyle>;
-  }[];
+  data: TextMarkItem[];
 };
 type RegionsStyle = Record<string, RegionBaseStyle>;
 export interface configType {
@@ -236,7 +238,7 @@ export interface configType {
   hoverRegionStyle?: RegionBaseStyle;
   wallStyle: Partial<WallStyle>;
   mapStreamStyle: Partial<MapStreamStyle>;
-  textMark?: Partial<TextMark>;
+  textMark?: Partial<TextMarkConfig>;
 }
 export interface Coordinates3D {
   x: number;
@@ -287,6 +289,7 @@ export interface SetData {
     style?: Partial<MapStreamStyle>;
   };
   bar: BarData[];
+  textMark: TextMarkItem[];
 }
 export type OptDataFunc = (
   type: keyof SetData,
