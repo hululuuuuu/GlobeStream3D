@@ -27,6 +27,7 @@ export default class FlyLine3d {
   _store: Store;
   _currentData: FlyLineData;
   _currentConfig: LineStyle;
+  textureLoader = new TextureLoader();
   constructor(store: Store, currentData: FlyLineData) {
     this._store = store;
     this._config = store.getConfig();
@@ -116,8 +117,9 @@ export default class FlyLine3d {
     // 创建曲线（与 createPathLine 中的曲线一致）
     const group = new Group();
     // 创建纹理加载器
-    const textureLoader = new TextureLoader();
-    const texture = textureLoader.load(this._currentConfig.flyLineStyle.img!);
+    const texture = this.textureLoader.load(
+      this._currentConfig.flyLineStyle.img!
+    );
     // 创建精灵材质，使用加载的纹理
     const spriteMaterial = new SpriteMaterial({
       map: texture,

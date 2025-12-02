@@ -38,6 +38,7 @@ export default class OperateView {
         }
         if (this._store.flyLineMap[id]) return;
         const group = new Group();
+        this._store.flyLineMap[id] = true;
         const scatter = new Scatter(this._store);
         if (this._store.mode === "3d") {
           const from_position = lon2xyz(storeConfig.R, from.lon, from.lat);
@@ -69,6 +70,7 @@ export default class OperateView {
         let id: string | number = item.id || `${item.lon}-${item.lat}`;
         if (this._store.flyLineMap[id]) return;
         const group = new Group();
+        this._store.flyLineMap[id] = true;
         const scatter = new Scatter(this._store);
         group.add(scatter.create(item));
         group.name = id.toString();
@@ -146,10 +148,16 @@ export default class OperateView {
           item.userData.figureType === type
         ) {
           if (ids === "removeAll") {
+            if (this._store.flyLineMap[item.name]) {
+              delete this._store.flyLineMap[item.name];
+            }
             this.disposeGroup(item);
             mainContainer.remove(item);
           } else {
             if (ids.includes(item.name)) {
+              if (this._store.flyLineMap[item.name]) {
+                delete this._store.flyLineMap[item.name];
+              }
               this.disposeGroup(item);
               mainContainer.remove(item);
             }

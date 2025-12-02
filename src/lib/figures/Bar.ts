@@ -24,8 +24,6 @@ export default class Bar {
   }
   createMesh = (data: BarData[]): Mesh => {
     const geometryList: BoxGeometry[] = [];
-    console.log(this._commonStyle);
-    console.log(data);
     data.forEach((item) => {
       const barHeight = item.value;
       const position = item.position;
