@@ -1,6 +1,5 @@
 import ChartScene from "@/lib/chartScene";
 import {
-  Color,
   Group,
   Mesh,
   MeshBasicMaterial,
@@ -20,10 +19,12 @@ class EventStore {
   > = {};
   _chartScene: ChartScene;
   currentMesh: Mesh | null;
-  currentColor: Color;
   areaColorNeedChange: boolean | undefined = false;
+  raycaster: Raycaster;
+  listeners: { event: string; handler: EventListener }[] = [];
   constructor(chartScene: ChartScene) {
     this._chartScene = chartScene;
+    this.raycaster = new Raycaster();
     //需要hover事件
     this.areaColorNeedChange =
       this._chartScene.options.config &&
@@ -46,16 +47,14 @@ class EventStore {
     cb: (event: Event, mesh: Object3D | Group | Mesh | undefined) => void
   ) {
     this.eventMap[eventName] = cb;
-    this._chartScene.options.dom.addEventListener(eventName, ((
-      event: MouseEvent
-    ) => {
+    const handler = ((event: MouseEvent) => {
       this.notification(event);
-    }) as EventListener);
+    }) as EventListener;
+    this.listeners.push({ event: eventName, handler });
+    this._chartScene.options.dom.addEventListener(eventName, handler);
   }
   registerBuildInEventMap(eventName: string, cb: () => void) {
-    this._chartScene.options.dom.addEventListener(eventName, ((
-      event: MouseEvent
-    ) => {
+    const handler = ((event: MouseEvent) => {
       const eventMesh = this.handleRaycaster(event);
       //说明hover的是地球
       if (eventMesh && eventMesh.type !== "TransformControlsPlane") {
@@ -81,7 +80,9 @@ class EventStore {
       } else {
         this.currentMesh = null;
       }
-    }) as EventListener);
+    }) as EventListener;
+    this.listeners.push({ event: eventName, handler });
+    this._chartScene.options.dom.addEventListener(eventName, handler);
   }
   notification(event: MouseEvent) {
     const eventMesh = this.handleRaycaster(event);
@@ -101,9 +102,8 @@ class EventStore {
     const Sx = mouse.clientX; //鼠标单击位置横坐标
     const Sy = mouse.clientY; //鼠标单击位置纵坐标
     //屏幕坐标转WebGL标准设备坐标
-    const raycaster = new Raycaster();
-    raycaster.setFromCamera(new Vector2(Sx, Sy), this._chartScene.camera);
-    const intersects = raycaster.intersectObjects(
+    this.raycaster.setFromCamera(new Vector2(Sx, Sy), this._chartScene.camera);
+    const intersects = this.raycaster.intersectObjects(
       this._chartScene.scene.children,
       true
     );
@@ -111,6 +111,15 @@ class EventStore {
       // if(intersects[0].object.isTransformControls)
       return intersects[0].object as Mesh;
     }
+  }
+  destroy() {
+    this.listeners.forEach(({ event, handler }) => {
+      this._chartScene.options.dom.removeEventListener(event, handler);
+    });
+    this.listeners = [];
+    this.eventMap = {};
+    this.buildInEventMap = {};
+    this.currentMesh = null;
   }
 }
 export default EventStore;

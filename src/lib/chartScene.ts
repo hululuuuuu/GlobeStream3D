@@ -28,6 +28,7 @@ import EventStore from "@/lib/store/eventStore";
 import { merge } from "lodash-es";
 import CustomOrbitControls from "@/lib/utils/controls";
 import TextMark from "@/lib/figures/Text";
+import DebugHelper from "@/lib/utils/debugHelper";
 
 /**
  * ChartScene class is used to create a 3D scene using Three.js.
@@ -38,13 +39,14 @@ export default class ChartScene {
   options: Options;
   initOptions: Pick<
     Options,
-    "helper" | "autoRotate" | "rotateSpeed" | "mode" | "controls"
+    "helper" | "autoRotate" | "rotateSpeed" | "mode" | "controls" | "debugHelper"
   > = {
     helper: false,
     autoRotate: true,
     rotateSpeed: 0.01,
     mode: "3d",
     controls: "custom",
+    debugHelper: false,
   };
   style = {
     width: 0,
@@ -61,6 +63,8 @@ export default class ChartScene {
   _store: Store;
   _eventStore: EventStore;
   _OperateView: OperateView;
+  animationFrameId: number | null = null;
+  _debugHelper: DebugHelper | null = null;
 
   /**
    * Constructor for the ChartScene class.
@@ -102,15 +106,33 @@ export default class ChartScene {
       obj.remove(obj.children[0]);
     }
     if (obj.geometry) obj.geometry.dispose();
-    if (obj.material) obj.material.dispose();
-    if (obj.texture) obj.texture.dispose();
+    if (obj.material) {
+      const materials = Array.isArray(obj.material)
+        ? obj.material
+        : [obj.material];
+      materials.forEach((m) => {
+        if (m.dispose) m.dispose();
+      });
+    }
+    if (obj.texture && obj.texture.dispose) obj.texture.dispose();
   }
 
   /**
    * Method to destroy the scene.
    */
   destroy() {
+    if (this.animationFrameId !== null) {
+      cancelAnimationFrame(this.animationFrameId);
+      this.animationFrameId = null;
+    }
     this.clearThree(this.scene);
+    this._eventStore?.destroy?.();
+    this._debugHelper?.destroy();
+    if (this.controls && "dispose" in this.controls) {
+      // OrbitControls 具备 dispose 方法，CustomOrbitControls 没有则跳过
+      (this.controls as OrbitControls).dispose();
+    }
+    this.renderer?.dispose();
     this.options.dom.innerHTML = "";
   }
 
@@ -166,6 +188,7 @@ export default class ChartScene {
     this.mainContainer.scale.set(zoom, zoom, zoom);
     this.animate();
     dom.appendChild(this.renderer.domElement);
+    this.initDebugHelper();
   }
 
   /**
@@ -299,7 +322,9 @@ export default class ChartScene {
       antialias: true,
       alpha: true,
     });
-    renderer.setPixelRatio(window.devicePixelRatio);
+    const pixelRatio =
+      this.options.config.pixelRatio ?? window.devicePixelRatio;
+    renderer.setPixelRatio(pixelRatio);
     renderer.setSize(this.style.width, this.style.height);
     renderer.setClearColor(
       this.options.config.bgStyle?.color!,
@@ -381,9 +406,21 @@ export default class ChartScene {
     if (this.options.mode === "3d") {
       this.controls.update(); // 确保平滑效果
     }
-    requestAnimationFrame(() => {
+    this.animationFrameId = requestAnimationFrame(() => {
       this.animate();
     });
+  }
+
+  initDebugHelper() {
+    if (this.options.debugHelper) {
+      this._debugHelper?.destroy();
+      this._debugHelper = new DebugHelper(this);
+    }
+  }
+
+  setRotateSpeed(speed: number) {
+    if (Number.isNaN(speed)) return;
+    this.options.rotateSpeed = speed;
   }
 
   /**

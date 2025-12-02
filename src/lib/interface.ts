@@ -9,6 +9,7 @@ export const InitConfig = {
   R: 160,
   enableZoom: true,
   zoom: 1,
+  pixelRatio: undefined as number | undefined,
   earth: {
     color: "#13162c",
     material: "MeshPhongMaterial",
@@ -93,6 +94,7 @@ export const InitConfig = {
 export interface Options {
   dom: HTMLElement;
   map: string;
+  debugHelper?: boolean;
   cameraType?: string;
   mode?: "2d" | "3d";
   helper?: boolean;
@@ -219,6 +221,7 @@ export interface configType {
     path: string;
     mixed: boolean;
   };
+  pixelRatio?: number;
   enableZoom?: boolean;
   zoom?: number;
   stopRotateByHover: boolean;

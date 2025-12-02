@@ -14,6 +14,10 @@ import {
 import Store from "@/lib/store/store";
 import { cloneDeep } from "lodash-es";
 
+const textureLoader = new TextureLoader();
+const POINT_TEXTURE = textureLoader.load(pointImg);
+const SCATTER_TEXTURE = textureLoader.load(scatterImg);
+
 export default class Scatter {
   private readonly _config: StoreConfig;
   private readonly _store: Store;
@@ -78,9 +82,8 @@ export default class Scatter {
 
   createScatter() {
     const geometry = new PlaneGeometry(1, 1);
-    const textureLoader = new TextureLoader().load(scatterImg);
     const material = new MeshBasicMaterial({
-      map: textureLoader,
+      map: SCATTER_TEXTURE,
       transparent: true,
       color: this._currentStyle.color,
       opacity: 1.0,
@@ -100,9 +103,8 @@ export default class Scatter {
 
   createPoint() {
     const geometry = new PlaneGeometry(1, 1);
-    const textureLoader = new TextureLoader().load(pointImg);
     const material = new MeshBasicMaterial({
-      map: textureLoader,
+      map: POINT_TEXTURE,
       transparent: true,
       color: this._currentStyle.color,
     });
