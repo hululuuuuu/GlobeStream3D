@@ -14,7 +14,6 @@ import {
   OrthographicCamera,
   PerspectiveCamera,
   PointLight,
-  Renderer,
   Scene,
   Vector3,
   WebGLRenderer,
@@ -58,7 +57,7 @@ export default class ChartScene {
   notLockFps: Function;
   mainContainer: Object3D;
   scene: Scene;
-  renderer: Renderer;
+  renderer: WebGLRenderer;
   controls: CustomOrbitControls | OrbitControls;
   _store: Store;
   _eventStore: EventStore;
@@ -110,7 +109,7 @@ export default class ChartScene {
       const materials = Array.isArray(obj.material)
         ? obj.material
         : [obj.material];
-      materials.forEach((m) => {
+      materials.forEach((m: any) => {
         if (m.dispose) m.dispose();
       });
     }
