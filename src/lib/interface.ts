@@ -5,6 +5,11 @@ type RGB = `rgb(${number}, ${number}, ${number})`;
 type RGBA = `rgba(${number}, ${number}, ${number}, ${number})`;
 type HEX = `#${string}`;
 type Color = RGB | RGBA | HEX | string;
+export type BasicMaterial =
+  | "MeshBasicMaterial"
+  | "MeshLambertMaterial"
+  | "MeshPhongMaterial";
+export type EarthMaterial = BasicMaterial | "MeshMatcapMaterial";
 export const InitConfig = {
   R: 160,
   enableZoom: true,
@@ -34,6 +39,7 @@ export const InitConfig = {
     areaColor: "#2e3564",
     lineColor: "#797eff",
     opacity: 1.0,
+    material: "MeshBasicMaterial" as BasicMaterial,
   },
   spriteStyle: {
     color: "#797eff",
@@ -180,12 +186,7 @@ export interface DragConfig {
 }
 export interface Earth {
   color: Color;
-  material?:
-    | "MeshPhongMaterial"
-    | "MeshBasicMaterial"
-    | "MeshLambertMaterial"
-    | "MeshMatcapMaterial"
-    | "MeshNormalMaterial";
+  material?: EarthMaterial | "MeshNormalMaterial";
   dragConfig?: Partial<DragConfig>;
 }
 
@@ -193,11 +194,13 @@ interface MapStyle {
   areaColor?: Color;
   lineColor?: Color;
   opacity?: number | undefined;
+  material?: BasicMaterial;
 }
 export interface RegionBaseStyle {
   areaColor?: Color;
   opacity?: number | undefined;
   show?: boolean;
+  material?: BasicMaterial;
 }
 export interface TextStyle {
   fontSize: number;

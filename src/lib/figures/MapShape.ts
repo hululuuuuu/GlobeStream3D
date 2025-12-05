@@ -1,4 +1,9 @@
-import { Options, RegionBaseStyle, StoreConfig } from "@/lib/interface";
+import {
+  BasicMaterial,
+  Options,
+  RegionBaseStyle,
+  StoreConfig,
+} from "@/lib/interface";
 import {
   BackSide,
   BufferAttribute,
@@ -7,7 +12,9 @@ import {
   LineBasicMaterial,
   LineLoop,
   Mesh,
+  MeshLambertMaterial,
   MeshPhongMaterial,
+  MeshBasicMaterial,
 } from "three";
 import { Feature, Position } from "geojson";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils";
@@ -136,14 +143,30 @@ export default class MapShape {
       aggGeometry = this.geometryArr[0];
     }
     aggGeometry.computeVertexNormals(); //如果使用受光照影响材质，需要计算生成法线
-    // MeshLambertMaterial  MeshBasicMaterial
-    const material = new MeshPhongMaterial({
+    const material = this.createMaterial();
+    return new Mesh(aggGeometry, material);
+  }
+  createMaterial() {
+    const materialType: BasicMaterial =
+      this.currentStyle.material ||
+      this._config.mapStyle.material ||
+      "MeshBasicMaterial";
+    const transparent =
+      typeof this.currentStyle.opacity === "number" &&
+      this.currentStyle.opacity < 1;
+    const baseConfig = {
       color: this.currentStyle.areaColor,
       side: BackSide,
-      // transparent: true,
       opacity: this.currentStyle.opacity,
-    });
-    return new Mesh(aggGeometry, material);
+      transparent,
+    };
+    if (materialType === "MeshLambertMaterial") {
+      return new MeshLambertMaterial(baseConfig);
+    }
+    if (materialType === "MeshPhongMaterial") {
+      return new MeshPhongMaterial(baseConfig);
+    }
+    return new MeshBasicMaterial(baseConfig);
   }
   gridPoint(polygon: Position[]) {
     //边界线的点位合集 和平面图形的点位合集
