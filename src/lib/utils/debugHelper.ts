@@ -1,5 +1,6 @@
 import type ChartScene from "@/lib/chartScene";
 import {
+  BackSide,
   Color,
   Line,
   LineLoop,
@@ -11,6 +12,7 @@ import {
   MeshPhongMaterial,
   Sprite,
 } from "three";
+import { BasicMaterial } from "@/lib/interface";
 
 type ControlConfig = {
   label: string;
@@ -239,6 +241,21 @@ export default class DebugHelper {
         onChange: (color: string) => {
           cfg.mapStyle.areaColor = color;
           this.updateCountryAreaColor(color);
+          this.syncOptionsConfig();
+        },
+      },
+      {
+        label: "Map Material",
+        type: "select",
+        value: cfg.mapStyle.material || "MeshBasicMaterial",
+        options: [
+          { label: "Basic", value: "MeshBasicMaterial" },
+          { label: "Lambert", value: "MeshLambertMaterial" },
+          { label: "Phong", value: "MeshPhongMaterial" },
+        ],
+        onChange: (val: string) => {
+          cfg.mapStyle.material = val as BasicMaterial;
+          this.updateCountryMaterial(val as BasicMaterial);
           this.syncOptionsConfig();
         },
       },
@@ -499,6 +516,47 @@ export default class DebugHelper {
         material.needsUpdate = true;
       }
     });
+  }
+
+  updateCountryMaterial(materialKey: BasicMaterial) {
+    const cfg = this.chart._store.getConfig();
+    this.chart.scene.traverse((obj) => {
+      if (obj instanceof Mesh && obj.userData.type === "country") {
+        const prevMaterial = obj.material as any;
+        const color = prevMaterial?.color
+          ? prevMaterial.color.clone()
+          : new Color(cfg.mapStyle.areaColor as string);
+        const opacity =
+          typeof prevMaterial?.opacity === "number"
+            ? prevMaterial.opacity
+            : cfg.mapStyle.opacity ?? 1;
+        const material = this.createCountryMaterial(
+          materialKey,
+          color,
+          opacity
+        );
+        if (material) {
+          if (prevMaterial?.dispose) prevMaterial.dispose();
+          obj.material = material;
+        }
+      }
+    });
+  }
+
+  private createCountryMaterial(
+    materialKey: BasicMaterial,
+    color: Color,
+    opacity: number
+  ) {
+    const transparent = opacity < 1;
+    const common = { color, opacity, transparent, side: BackSide };
+    if (materialKey === "MeshLambertMaterial") {
+      return new MeshLambertMaterial(common);
+    }
+    if (materialKey === "MeshPhongMaterial") {
+      return new MeshPhongMaterial(common);
+    }
+    return new MeshBasicMaterial(common);
   }
 
   updateSpriteColor(color: string) {

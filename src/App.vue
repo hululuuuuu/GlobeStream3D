@@ -128,6 +128,8 @@ onMounted(() => {
         },
       },
     });
+    // chartInstance1.scene.remove(chartInstance1.light)
+    chartInstance1.light.visible = false;
     // chartInstance1.light.color.set('red')
     const initData = [
       {
@@ -244,6 +246,7 @@ onMounted(() => {
       },
     ];
     // chartInstance.setData("flyLine", initData);
+
     chartInstance1.setData("flyLine", initData);
     // chartInstance1.addData("point", [
     //   {
