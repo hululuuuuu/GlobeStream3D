@@ -5,6 +5,7 @@ import {
   MeshLambertMaterial,
   MeshMatcapMaterial,
   MeshPhongMaterial,
+  MeshNormalMaterial,
   SphereGeometry,
   TextureLoader,
 } from "three";
@@ -13,20 +14,23 @@ import Store from "@/lib/store/store";
 import { Texture } from "three/src/textures/Texture";
 
 class CreateEarth {
-  materialMap: Record<string, any> = {
-    MeshPhongMaterial: () => {
+  materialMap: Record<string, (map?: Texture) => any> = {
+    MeshPhongMaterial: (map?: Texture) => {
       return new MeshPhongMaterial({
         ...this._config.earth,
+        map,
       });
     },
-    MeshBasicMaterial: () => {
+    MeshBasicMaterial: (map?: Texture) => {
       return new MeshBasicMaterial({
         ...this._config.earth,
+        map,
       });
     },
-    MeshLambertMaterial: () => {
+    MeshLambertMaterial: (map?: Texture) => {
       return new MeshLambertMaterial({
         ...this._config.earth,
+        map,
       });
     },
     MeshMatcapMaterial: () => {
@@ -34,10 +38,13 @@ class CreateEarth {
         ...this._config.earth,
       });
     },
-
-    default: () => {
+    MeshNormalMaterial: () => {
+      return new MeshNormalMaterial();
+    },
+    default: (map?: Texture) => {
       return new MeshPhongMaterial({
         ...this._config.earth,
+        map,
       });
     },
   };
@@ -46,11 +53,27 @@ class CreateEarth {
   constructor(store: Store) {
     this._config = store.getConfig();
     this._store = store;
+    this._config.earth.material = this.normalizeMaterialKey(
+      this._config.earth.material
+    ) as any;
+  }
+  private normalizeMaterialKey(material?: string) {
+    if (!material) return "MeshPhongMaterial";
+    const key = material.toLowerCase();
+    if (key.includes("basic")) return "MeshBasicMaterial";
+    if (key.includes("lambert")) return "MeshLambertMaterial";
+    if (key.includes("matcap")) return "MeshMatcapMaterial";
+    if (key.includes("normal")) return "MeshNormalMaterial";
+    return "MeshPhongMaterial";
   }
   createSphereMesh() {
     const geometry = new SphereGeometry(this._config.R - 1, 39, 39); //创建一个球体几何对象
     //材质对象Material
-    const material = this.materialMap[this._config.earth.material]();
+    const materialKey = this.normalizeMaterialKey(this._config.earth.material);
+    this._config.earth.material = materialKey as any;
+    const materialCreator =
+      this.materialMap[materialKey] || this.materialMap.default;
+    const material = materialCreator();
 
     const earthMesh = new Mesh(geometry, material); //网格模型对象Mesh
     earthMesh.castShadow = true;
@@ -67,9 +90,11 @@ class CreateEarth {
     materialConfig.map.colorSpace = "srgb"; // "" | "srgb" | "srgb-linear" | "display-p3"
     const geometry = new SphereGeometry(this._config.R - 1, 39, 39); //创建一个球体几何对象
     //材质对象Material
-    const material = new MeshPhongMaterial({
-      ...materialConfig,
-    });
+    const materialKey = this.normalizeMaterialKey(this._config.earth.material);
+    this._config.earth.material = materialKey as any;
+    const materialCreator =
+      this.materialMap[materialKey] || this.materialMap.default;
+    const material = materialCreator(materialConfig.map);
 
     const earthMesh = new Mesh(geometry, material); //网格模型对象Mesh
     earthMesh.castShadow = true;
