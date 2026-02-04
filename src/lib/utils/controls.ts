@@ -12,6 +12,7 @@ export default class EarthController {
   options: DragConfig = {
     rotationSpeed: 1,
     inertiaFactor: 0.95,
+    panSpeed: 1,
     disableX: false,
     disableY: false,
   };
@@ -23,7 +24,7 @@ export default class EarthController {
   constructor(
     earth: Object3D,
     renderer: Renderer,
-    options: Partial<DragConfig>
+    options: Partial<DragConfig>,
   ) {
     this.earth = earth;
     this.isDragging = false;
@@ -37,17 +38,17 @@ export default class EarthController {
     renderer.domElement.addEventListener(
       "mousedown",
       this.onMouseDown.bind(this),
-      false
+      false,
     );
     renderer.domElement.addEventListener(
       "mousemove",
       this.onMouseMove.bind(this),
-      false
+      false,
     );
     renderer.domElement.addEventListener(
       "mouseup",
       this.onMouseUp.bind(this),
-      false
+      false,
     );
   }
 
@@ -61,18 +62,26 @@ export default class EarthController {
     if (this.isDragging) {
       const deltaX = event.clientX - this.previousMousePosition.x;
       const deltaY = event.clientY - this.previousMousePosition.y;
-      if (!this.options.disableY) {
-        this.rotationVelocity.x = deltaY * this.options.rotationSpeed * 0.005;
-      }
-      if (!this.options.disableX) {
-        this.rotationVelocity.y = deltaX * this.options.rotationSpeed * -0.005;
-      }
+      if (event.ctrlKey || event.metaKey) {
+        const scale = this.earth.scale?.x || 1;
+        const panScale = this.options.panSpeed / scale;
+        this.earth.position.x += deltaX * panScale;
+        this.earth.position.y -= deltaY * panScale;
+      } else {
+        if (!this.options.disableY) {
+          this.rotationVelocity.x = deltaY * this.options.rotationSpeed * 0.005;
+        }
+        if (!this.options.disableX) {
+          this.rotationVelocity.y =
+            deltaX * this.options.rotationSpeed * -0.005;
+        }
 
-      this.earth.rotateOnWorldAxis(
-        new Vector3(0, 1, 0),
-        -this.rotationVelocity.y
-      );
-      this.earth.rotateX(this.rotationVelocity.x);
+        this.earth.rotateOnWorldAxis(
+          new Vector3(0, 1, 0),
+          -this.rotationVelocity.y,
+        );
+        this.earth.rotateX(this.rotationVelocity.x);
+      }
 
       this.previousMousePosition.x = event.clientX;
       this.previousMousePosition.y = event.clientY;
@@ -99,7 +108,7 @@ export default class EarthController {
     if (!this.isDragging) {
       this.earth.rotateOnWorldAxis(
         new Vector3(0, 1, 0),
-        -this.rotationVelocity.y
+        -this.rotationVelocity.y,
       );
       this.earth.rotateX(this.rotationVelocity.x);
       this.rotationVelocity.x *= this.options.inertiaFactor;

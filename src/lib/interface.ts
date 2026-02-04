@@ -21,6 +21,7 @@ export const InitConfig = {
     dragConfig: {
       rotationSpeed: 1,
       inertiaFactor: 0.95,
+      panSpeed: 0.2,
       disableX: false,
       disableY: false,
     },
@@ -181,6 +182,7 @@ export interface BarStyle {
 export interface DragConfig {
   rotationSpeed: number;
   inertiaFactor: number;
+  panSpeed: number;
   disableX: boolean;
   disableY: boolean;
 }
