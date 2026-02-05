@@ -115,7 +115,9 @@ onMounted(() => {
         },
         flyLineStyle: {
           duration: 5000,
+          color: "rgba(255,0,0,0.1)"
         },
+
         bgStyle: {
           color: "#0e0c15",
         },
@@ -148,11 +150,7 @@ onMounted(() => {
           },
         },
         to: { id: 2, lon: 26.1223, lat: -7.8756 },
-        style: {
-          flyLineStyle: {
-            img: triangle,
-          },
-        },
+
       },
       {
         from: {

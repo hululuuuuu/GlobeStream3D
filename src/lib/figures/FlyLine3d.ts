@@ -22,6 +22,22 @@ import { addUserDataToMesh } from "@/lib/utils";
 import { merge } from "lodash-es";
 import { cloneDeep } from "lodash-es";
 
+const parseColorOpacity = (input: unknown) => {
+  if (typeof input === "string") {
+    const m = input.match(
+      /rgba\s*\(\s*([0-9.]+)\s*,\s*([0-9.]+)\s*,\s*([0-9.]+)\s*,\s*([0-9.]+)\s*\)/i
+    );
+    if (m) {
+      const r = Number(m[1]);
+      const g = Number(m[2]);
+      const b = Number(m[3]);
+      const a = Math.max(0, Math.min(1, Number(m[4])));
+      return { color: new Color(`rgb(${r}, ${g}, ${b})`), opacity: a };
+    }
+  }
+  return { color: new Color(input as any), opacity: 1 };
+};
+
 export default class FlyLine3d {
   private readonly _config: StoreConfig;
   _store: Store;
@@ -122,10 +138,14 @@ export default class FlyLine3d {
       this._currentConfig.flyLineStyle.img!,
     );
     // 创建精灵材质，使用加载的纹理
+    const { color, opacity } = parseColorOpacity(
+      this._currentConfig.flyLineStyle.color
+    );
     const spriteMaterial = new SpriteMaterial({
       map: texture,
-      color: new Color(this._currentConfig.flyLineStyle.color),
-      transparent: true,
+      color,
+      transparent: opacity < 1,
+      opacity,
       depthTest: true,
     });
 
@@ -159,12 +179,17 @@ export default class FlyLine3d {
     const points = curve.getSpacedPoints(200);
     const geometry = new LineGeometry();
     geometry.setPositions(points.map((item) => [item.x, item.y, 0]).flat());
+    const { color, opacity } = parseColorOpacity(
+      this._currentConfig.pathStyle.color
+    );
     const material = new LineMaterial({
-      color: new Color(this._currentConfig.pathStyle.color).getHex(),
+      color: color.getHex(),
       linewidth: (this._currentConfig.pathStyle.size || 1) / 1000,
       vertexColors: false,
       dashed: false,
       alphaToCoverage: false,
+      transparent: opacity < 1,
+      opacity,
     });
     const pathLine = new Line2(geometry, material);
     pathLine.name = "pathLine";
@@ -188,10 +213,14 @@ export default class FlyLine3d {
       percentArr.push(i / newPoints.length);
     }
     const colorArr = [];
-    const color1 = new Color(this._currentConfig.pathStyle.color); //尾拖线颜色
-    const color2 = new Color(this._currentConfig.flyLineStyle.color); //飞线蝌蚪头颜色
+    const { color: color1, opacity: opacity1 } = parseColorOpacity(
+      this._currentConfig.pathStyle.color
+    ); //尾拖线颜色
+    const { color: color2, opacity: opacity2 } = parseColorOpacity(
+      this._currentConfig.flyLineStyle.color
+    ); //飞线蝌蚪头颜色
     for (let i = 0; i < newPoints.length; i++) {
-      const color = color1.lerp(color2, i / newPoints.length);
+      const color = color1.clone().lerp(color2, i / newPoints.length);
       colorArr.push(color.r, color.g, color.b);
     }
     geometry.setFromPoints(newPoints);
@@ -206,6 +235,8 @@ export default class FlyLine3d {
     const material = new PointsMaterial({
       vertexColors: true, //使用顶点颜色渲染
       size: this._currentConfig.flyLineStyle.size || 3.0, //点大小
+      transparent: Math.min(opacity1, opacity2) < 1,
+      opacity: Math.min(opacity1, opacity2),
     });
     const tadpolePointsMesh = new Points(geometry, material);
     material.onBeforeCompile = function (shader) {

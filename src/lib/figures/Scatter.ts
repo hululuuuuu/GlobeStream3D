@@ -33,7 +33,7 @@ export default class Scatter {
   setMeshAttr(
     geometry: PlaneGeometry,
     material: MeshBasicMaterial,
-    { lon, lat, ...rest }: Coordinates
+    { lon, lat, ...rest }: Coordinates,
   ) {
     const mesh = new Mesh(geometry, material);
     const zOffset =
@@ -75,7 +75,7 @@ export default class Scatter {
       {
         ...this._currentStyle,
         data: this._currentData,
-      }
+      },
     );
     return mesh;
   };
@@ -135,7 +135,7 @@ export default class Scatter {
         {
           ...this._currentStyle,
           data: this._currentData,
-        }
+        },
       );
     }
     return mesh;
@@ -143,7 +143,7 @@ export default class Scatter {
   createCustom() {
     const geometry = new PlaneGeometry(1, 1);
     const textureLoader = new TextureLoader().load(
-      this._currentStyle.customFigure?.texture!
+      this._currentStyle.customFigure?.texture!,
     );
     const material = new MeshBasicMaterial({
       map: textureLoader,
@@ -160,7 +160,13 @@ export default class Scatter {
     if (data.style) {
       this._currentStyle = cloneDeep(data.style);
     }
+    const show =
+      this._currentStyle.show ?? this._config.scatterStyle.show ?? true;
     const group = new Group();
+    if (!show) {
+      group.name = "pointScatter";
+      return group;
+    }
     if (!this._currentStyle.customFigure?.texture) {
       const point = this.createPointMesh(data);
       const scatter = this.createScatterMesh(data);

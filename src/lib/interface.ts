@@ -78,6 +78,7 @@ export const InitConfig = {
   scatterStyle: {
     //涟漪
     color: "#cd79ff",
+    show: true,
   },
   wallStyle: {
     color: "#cd79ff",
@@ -150,6 +151,7 @@ export interface FlyLineStyle extends TweenConfig {
 export interface ScatterStyle extends TweenConfig {
   color: Color;
   size?: number;
+  show?: boolean;
 }
 
 export interface LessCoordinate {
