@@ -59,6 +59,7 @@ export default class ChartScene {
   scene: Scene;
   renderer: WebGLRenderer;
   controls: CustomOrbitControls | OrbitControls;
+  _orbitControls?: OrbitControls;
   _store: Store;
   _eventStore: EventStore;
   _OperateView: OperateView;
@@ -127,7 +128,10 @@ export default class ChartScene {
     this.clearThree(this.scene);
     this._eventStore?.destroy?.();
     this._debugHelper?.destroy();
-    if (this.controls && "dispose" in this.controls) {
+    if (this._orbitControls) {
+      this._orbitControls.dispose();
+      this._orbitControls = undefined;
+    } else if (this.controls && "dispose" in this.controls) {
       // OrbitControls 具备 dispose 方法，CustomOrbitControls 没有则跳过
       (this.controls as OrbitControls).dispose();
     }
@@ -163,20 +167,28 @@ export default class ChartScene {
     }
     this.renderer = this.createRender();
     this.createCountryNamesText();
-    const obControl = new OrbitControls(this.camera, this.renderer.domElement);
-    if (this.options.controls === "custom") {
-      obControl.enableRotate = false;
-      obControl.enablePan = false;
+    const useCustomControls = this.options.controls === "custom";
+    const allowZoom = this._store.config.enableZoom !== false;
+    let obControl: OrbitControls | undefined;
+    if (!useCustomControls || allowZoom) {
+      obControl = new OrbitControls(this.camera, this.renderer.domElement);
+      this._orbitControls = obControl;
+      if (useCustomControls) {
+        obControl.enableRotate = false;
+        obControl.enablePan = false;
+        obControl.enableZoom = true;
+      } else if (!allowZoom) {
+        obControl.enableZoom = false;
+      }
+    }
+    if (useCustomControls) {
       this.controls = new CustomOrbitControls(
         this.mainContainer,
         this.renderer,
         this.options.config.earth?.dragConfig!
       );
     } else {
-      this.controls = obControl;
-    }
-    if (!this._store.config.enableZoom) {
-      obControl.enableZoom = false;
+      this.controls = obControl!;
     }
     if (this._store.mode === "2d") {
       this.addFigures2d();

@@ -12,6 +12,7 @@ export type BasicMaterial =
 export type EarthMaterial = BasicMaterial | "MeshMatcapMaterial";
 export const InitConfig = {
   R: 160,
+  flyLineRFactor: 0.2,
   enableZoom: true,
   zoom: 1,
   pixelRatio: undefined as number | undefined,
@@ -221,6 +222,7 @@ export type TextMarkConfig = {
 type RegionsStyle = Record<string, RegionBaseStyle>;
 export interface configType {
   R: number;
+  flyLineRFactor?: number;
   map: string;
   texture?: {
     path: string;

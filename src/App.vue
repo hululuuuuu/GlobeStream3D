@@ -18,75 +18,75 @@ onMounted(() => {
   const dom = document.getElementById("container");
   const dom1 = document.getElementById("container1");
   if (dom && dom1) {
-    chartInstance = chart.init({
-      dom,
-      helper: true,
-      map: "world",
-      autoRotate: false,
-      mode: "2d",
-      debugHelper: true,
-      config: {
-        textMark: {
-          style: {
-            color: "#fff",
-            fontSize: 20,
-          },
-          data: []
-        },
-        enableZoom: true,
-        stopRotateByHover: false,
-        R: 140,
-        earth: {
-          color: "#13162c",
-          dragConfig: {
-            disableY: false,
-            disableX: false,
-          },
-        },
-        mapStyle: {
-          lineColor: "#797eff",
-          areaColor: "#2e3564",
-        },
-        spriteStyle: {
-          color: "#797eff",
-          show: true,
-        }, //光圈
-        pathStyle: {
-          color: "#cd79ff", //飞线路径配置
-        },
-        flyLineStyle: {
-          //飞线样式配置
-          color: "#cd79ff",
-        },
-        scatterStyle: {
-          //涟漪
-          color: "#cd79ff",
-        },
-        roadStyle: {
-          flyLineStyle: {
-            //飞线样式配置
-            color: "#cd79ff",
-          },
-          pathStyle: {
-            color: "#cd79ff", //飞线路径配置
-          },
-        },
-        hoverRegionStyle: {
-          areaColor: "#cd79ff",
-          show: false,
-        },
-        regions: {
-          China: {
-            areaColor: "#2e3564",
-          },
-        },
-        wallStyle: {
-          color: "#cd79ff",
-          opacity: 0.5,
-          height: 0.5,
-        },
-      },
-    });
+    // chartInstance = chart.init({
+    //   dom,
+    //   helper: true,
+    //   map: "world",
+    //   autoRotate: false,
+    //   mode: "2d",
+    //   debugHelper: true,
+    //   config: {
+    //     textMark: {
+    //       style: {
+    //         color: "#fff",
+    //         fontSize: 20,
+    //       },
+    //       data: []
+    //     },
+    //     enableZoom: true,
+    //     stopRotateByHover: false,
+    //     R: 140,
+    //     earth: {
+    //       color: "#13162c",
+    //       dragConfig: {
+    //         disableY: false,
+    //         disableX: false,
+    //       },
+    //     },
+    //     mapStyle: {
+    //       lineColor: "#797eff",
+    //       areaColor: "#2e3564",
+    //     },
+    //     spriteStyle: {
+    //       color: "#797eff",
+    //       show: true,
+    //     }, //光圈
+    //     pathStyle: {
+    //       color: "#cd79ff", //飞线路径配置
+    //     },
+    //     flyLineStyle: {
+    //       //飞线样式配置
+    //       color: "#cd79ff",
+    //     },
+    //     scatterStyle: {
+    //       //涟漪
+    //       color: "#cd79ff",
+    //     },
+    //     roadStyle: {
+    //       flyLineStyle: {
+    //         //飞线样式配置
+    //         color: "#cd79ff",
+    //       },
+    //       pathStyle: {
+    //         color: "#cd79ff", //飞线路径配置
+    //       },
+    //     },
+    //     hoverRegionStyle: {
+    //       areaColor: "#cd79ff",
+    //       show: false,
+    //     },
+    //     regions: {
+    //       China: {
+    //         areaColor: "#2e3564",
+    //       },
+    //     },
+    //     wallStyle: {
+    //       color: "#cd79ff",
+    //       opacity: 0.5,
+    //       height: 0.5,
+    //     },
+    //   },
+    // });
     chartInstance1 = chart.init({
       dom: dom1,
       helper: true,

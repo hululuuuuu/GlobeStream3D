@@ -51,15 +51,16 @@ export default class FlyLine3d {
       .multiplyScalar(0.5);
     //然后计算方向向量
     const dir = middleV3.clone().normalize();
+    const flyLineRFactor = this._config.flyLineRFactor ?? 0.2;
     const s = radianAOB(sourcePoint, targetPoint, new Vector3(0, 0, 0));
     const middlePos = dir.multiplyScalar(
-      this._config.R + s * this._config.R * 0.2
+      this._config.R + s * this._config.R * flyLineRFactor,
     );
     //寻找三个圆心的坐标
     const centerPosition = threePointCenter(
       sourcePoint,
       targetPoint,
-      middlePos
+      middlePos,
     );
     //求得半径
     const R = middlePos.clone().sub(centerPosition).length();
@@ -72,7 +73,7 @@ export default class FlyLine3d {
       const tadpolePointsMesh = this.createShader(
         R,
         startDeg,
-        startDeg + flyAngle
+        startDeg + flyAngle,
       );
       //和创建好的路径圆 圆心坐标保持一致
       tadpolePointsMesh.position.y = centerPosition.y;
@@ -86,7 +87,7 @@ export default class FlyLine3d {
         {
           ...this._currentConfig.flyLineStyle,
           data: this._currentData,
-        }
+        },
       );
       group.add(tadpolePointsMesh);
     } else {
@@ -102,7 +103,7 @@ export default class FlyLine3d {
         {
           ...this._currentConfig.flyLineStyle,
           data: this._currentData,
-        }
+        },
       );
       group.add(imgMesh);
     }
@@ -118,7 +119,7 @@ export default class FlyLine3d {
     const group = new Group();
     // 创建纹理加载器
     const texture = this.textureLoader.load(
-      this._currentConfig.flyLineStyle.img!
+      this._currentConfig.flyLineStyle.img!,
     );
     // 创建精灵材质，使用加载的纹理
     const spriteMaterial = new SpriteMaterial({
@@ -145,7 +146,7 @@ export default class FlyLine3d {
     middlePos: Vector3,
     r: number,
     startDeg: number,
-    endDeg: number
+    endDeg: number,
   ) => {
     const curve = new ArcCurve(
       middlePos.x,
@@ -153,7 +154,7 @@ export default class FlyLine3d {
       r, // xRadius, yRadius
       startDeg,
       endDeg, // aStartAngle, aEndAngle
-      false // aClockwise
+      false, // aClockwise
     );
     const points = curve.getSpacedPoints(200);
     const geometry = new LineGeometry();
@@ -177,7 +178,7 @@ export default class FlyLine3d {
       r, // xRadius, yRadius
       startAngle,
       endAngle, // aStartAngle, aEndAngle
-      false // aClockwise
+      false, // aClockwise
     ).getSpacedPoints(200);
     // Create the final object to add to the scene
     const geometry = new BufferGeometry();
@@ -196,11 +197,11 @@ export default class FlyLine3d {
     geometry.setFromPoints(newPoints);
     geometry.attributes.percent = new BufferAttribute(
       new Float32Array(percentArr),
-      1
+      1,
     );
     geometry.attributes.color = new BufferAttribute(
       new Float32Array(colorArr),
-      3
+      3,
     );
     const material = new PointsMaterial({
       vertexColors: true, //使用顶点颜色渲染
@@ -214,12 +215,12 @@ export default class FlyLine3d {
         [
           "attribute float percent;", //顶点大小百分比变量，控制点渲染大小
           "void main() {",
-        ].join("\n") // .join()把数组元素合成字符串
+        ].join("\n"), // .join()把数组元素合成字符串
       );
       // 调整点渲染大小计算方式
       shader.vertexShader = shader.vertexShader.replace(
         "gl_PointSize = size;",
-        ["gl_PointSize = percent * size;"].join("\n") // .join()把数组元素合成字符串
+        ["gl_PointSize = percent * size;"].join("\n"), // .join()把数组元素合成字符串
       );
     };
     tadpolePointsMesh.name = "tadpolePointsMesh";
