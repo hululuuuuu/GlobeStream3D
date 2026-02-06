@@ -6,7 +6,7 @@ import ChartScene from "@/lib/chartScene";
 import triangle from "@/image/pipeLine.jpg";
 import barData from "./devData/barData";
 import { getScale } from "@/lib/utils/math";
-
+import earthBg from "./image/earth.png";
 const chinaData = world.features.find((item: any) => {
   return item.properties.name === "China";
 })!.geometry.coordinates as any;
@@ -93,40 +93,46 @@ onMounted(() => {
       map: "world",
       autoRotate: true,
       mode: "3d",
-      debugHelper: true,
       config: {
-        enableZoom: true,
-        stopRotateByHover: true,
-        R: 120,
-        textMark: {
-          style: {
-            color: "#fff",
-            fontSize: 20,
-          },
-          data: [
-
-          ],
+        R: 158,
+        flyLineRFactor: 0.06,
+        enableZoom: false,
+        texture: {
+          path: earthBg,
+          mixed: false,
         },
         earth: {
-          color: "#13162c",
+          color: "#ffffff",
+          material: "MeshBasicMaterial", // 材质类型
           dragConfig: {
-            disableY: true,
+            rotationSpeed: 0.5, // 和鼠标的交互速度
+            inertiaFactor: 0, // 惯性系数 0-1之间 0 为无惯性
+            disableX: false, // 是否禁用x轴旋转
+            disableY: true, // 是否禁用y轴旋转
           },
         },
-        flyLineStyle: {
-          duration: 5000,
-          color: "rgba(255,0,0,0.1)"
-        },
-
-        bgStyle: {
-          color: "#0e0c15",
-        },
-        hoverRegionStyle: {
+        scatterStyle: {
           show: false,
         },
+        bgStyle: {
+          color: "#000000",
+          opacity: 0,
+        },
+        pathStyle: {
+          color: "#7aaae9",
+          size: 2,
+        },
+        flyLineStyle: {
+          color: "#02fff6",
+          size: 4,
+        },
         spriteStyle: {
-          color: "#272335",
-          show: true,
+          show: false,
+          color: "#000000",
+        },
+        wallStyle: {
+          color: "#000000",
+          opacity: 0,
         },
       },
     });
