@@ -2,7 +2,9 @@ import {
   BufferGeometry,
   Color,
   Float32BufferAttribute,
+  Group,
   Line,
+  LineBasicMaterial,
   ShaderMaterial,
   Vector3,
 } from "three";
@@ -13,6 +15,7 @@ import Store from "@/lib/store/store";
 import { Position } from "geojson";
 import { lon2xyz } from "@/lib/utils/math";
 import { setTween } from "@/lib/utils/tween";
+import { GeoLineSource, normalizeGeoLineData } from "@/lib/utils/geoLineData";
 
 export default class MapStreamLine {
   private readonly _config: StoreConfig;
@@ -54,33 +57,62 @@ export default class MapStreamLine {
       uniforms: this.singleUniforms,
       transparent: true,
     });
-    this.startAnimation();
     return new Line(geometry, material);
   }
-  create(data: { data: Position[][]; style: MapStreamStyle }) {
-    let currentMesh;
+  createStaticLine(points: Vector3[]) {
+    const geometry = new BufferGeometry().setFromPoints(points);
+    const material = new LineBasicMaterial({
+      color: this._currentStyle.color,
+      transparent: true,
+      opacity: this._currentStyle.opacity,
+    });
+
+    return new Line(geometry, material);
+  }
+  create(data: {
+    data: GeoLineSource;
+    style?: Partial<MapStreamStyle>;
+  }) {
     this.getCurrentStyle(data.style);
+    const useFlowingLine = this._currentStyle.speed > 0;
+    if (useFlowingLine) {
+      this.startAnimation();
+    }
+    const lineGroup = new Group();
+    const lineData = normalizeGeoLineData(data.data);
+
     if (this._store.mode === "3d") {
-      data.data.forEach((point: Position[]) => {
+      lineData.forEach((point: Position[]) => {
+        if (point.length < 2) return;
         let allPoints: Vector3[] = [];
         point.forEach((item: number[]) => {
           const { x, y, z } = lon2xyz(this._config.R, item[0], item[1], 1.001);
           allPoints.push(new Vector3(x, y, z));
         });
-        currentMesh = this.createFlowingLight(allPoints);
+        lineGroup.add(
+          useFlowingLine
+            ? this.createFlowingLight(allPoints)
+            : this.createStaticLine(allPoints)
+        );
       });
     } else {
-      data.data.forEach((point: Position[]) => {
+      lineData.forEach((point: Position[]) => {
+        if (point.length < 2) return;
         let allPoints: Vector3[] = [];
         point.forEach((item: number[]) => {
           allPoints.push(new Vector3(item[0], item[1], 1));
         });
-        currentMesh = this.createFlowingLight(allPoints);
+        lineGroup.add(
+          useFlowingLine
+            ? this.createFlowingLight(allPoints)
+            : this.createStaticLine(allPoints)
+        );
       });
     }
-    return currentMesh;
+
+    return lineGroup.children.length ? lineGroup : undefined;
   }
-  getCurrentStyle(style: MapStreamStyle) {
+  getCurrentStyle(style?: Partial<MapStreamStyle>) {
     if (style) {
       this._currentStyle = {
         ...this._currentStyle,

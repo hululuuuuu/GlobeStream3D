@@ -1,5 +1,6 @@
 import { Group } from "three";
 import { Position } from "geojson";
+import { GeoLineSource } from "@/lib/utils/geoLineData";
 
 type RGB = `rgb(${number}, ${number}, ${number})`;
 type RGBA = `rgba(${number}, ${number}, ${number}, ${number})`;
@@ -293,11 +294,11 @@ export interface SetData {
   point: Coordinates[];
   road: RoadData[];
   wall: {
-    data: Position[][];
+    data: GeoLineSource;
     style?: Partial<WallStyle>;
   };
   mapStreamLine: {
-    data: Position[][];
+    data: GeoLineSource;
     style?: Partial<MapStreamStyle>;
   };
   bar: BarData[];

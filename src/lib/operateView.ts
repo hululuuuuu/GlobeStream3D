@@ -101,7 +101,7 @@ export default class OperateView {
       });
     } else if (type === "wall") {
       const group = new Group();
-      group.userData.figureType = "walls";
+      group.userData.figureType = "wall";
       const wall = new Wall(this._store);
       const wallMesh = wall.create(data);
       if (wallMesh) {
@@ -110,7 +110,7 @@ export default class OperateView {
       meshList.push(group);
     } else if (type === "mapStreamLine") {
       const group = new Group();
-      group.userData.figureType = "mapStream";
+      group.userData.figureType = "mapStreamLine";
       const mapStreamLine = new MapStreamLine(this._store);
       const mapStreamLineMesh = mapStreamLine.create(data);
       if (mapStreamLineMesh) {

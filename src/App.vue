@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import { onMounted } from "vue";
 import world from "./map/world.json";
+import chinaBoundaryRaw from "./map/ChinaAdditionalRouteMap.geojson?raw";
 import chart from "@/entry";
 import ChartScene from "@/lib/chartScene";
 import triangle from "@/image/pipeLine.jpg";
 import barData from "./devData/barData";
 import { getScale } from "@/lib/utils/math";
 import earthBg from "./image/earth.png";
+const chinaBoundaryData = JSON.parse(chinaBoundaryRaw) as any;
+
 const chinaData = world.features.find((item: any) => {
   return item.properties.name === "China";
 })!.geometry.coordinates as any;
@@ -95,15 +98,11 @@ onMounted(() => {
       mode: "3d",
       config: {
         R: 158,
-        flyLineRFactor: 0.06,
         enableZoom: false,
-        texture: {
-          path: earthBg,
-          mixed: false,
-        },
+
         earth: {
-          color: "#ffffff",
-          material: "MeshBasicMaterial", // 材质类型
+          color: "#04051b",
+          material: "MeshPhongMaterial", // 材质类型
           dragConfig: {
             rotationSpeed: 0.5, // 和鼠标的交互速度
             inertiaFactor: 0, // 惯性系数 0-1之间 0 为无惯性
@@ -111,33 +110,32 @@ onMounted(() => {
             disableY: true, // 是否禁用y轴旋转
           },
         },
-        scatterStyle: {
-          show: false,
-        },
+
         bgStyle: {
-          color: "#000000",
+          color: "#040D21",
           opacity: 0,
         },
-        pathStyle: {
-          color: "#7aaae9",
-          size: 2,
-        },
-        flyLineStyle: {
-          color: "#02fff6",
-          size: 4,
+        mapStyle: {
+          areaColor: "#013e87",
+          lineColor: "#516aaf",
         },
         spriteStyle: {
-          show: false,
-          color: "#000000",
+          color: "#003f60", // 光圈配置
+          size: 2.5,
         },
-        wallStyle: {
-          color: "#000000",
-          opacity: 0,
+        pathStyle: {
+          color: "#337ca7", // 飞线路径
+        },
+        flyLineStyle: {
+          color: "#10f9af", //蝌蚪飞线配置
+        },
+        scatterStyle: {
+          color: "#10f9af",
         },
       },
     });
     // chartInstance1.scene.remove(chartInstance1.light)
-    chartInstance1.light.visible = false;
+    // chartInstance1.light.visible = false;
     // chartInstance1.light.color.set('red')
     const initData = [
       {
@@ -292,6 +290,24 @@ onMounted(() => {
         },
       },
     ]);
+    chartInstance1.setData("mapStreamLine", {
+      data: chinaBoundaryData,
+      style: {
+        color: "#6af7ff",
+        opacity: 0.9,
+        speed: 0,
+        splitLine: 4,
+      },
+    });
+    // chartInstance1.setData("wall", {
+    //   data: chinaBoundaryData,
+    //   style: {
+    //     color: "#6af7ff",
+    //     opacity: 0.25,
+    //     height: 0.8,
+    //     width: 0.35,
+    //   },
+    // });
     const maxHeight = getScale(
       barData.map((item) => item[2]),
       120
