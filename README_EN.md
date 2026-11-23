@@ -15,7 +15,7 @@ Building 3D large screen earth visualization based on three.js, essential for ho
 + 📦  **Out of the box:** Simple and fast integration, basically zero cost to get started.
 + 🛡 **Typescript development:** Provide complete type definition files.
 + 🎨 **Highly scalable:** With rich style configuration and API, the function can be extended as you like.
-+ **City radar (development version)** overlays range rings and a rotating sweep at geographic coordinates in 2D and 3D. Run `npm run dev`, select a city in the station list or on the globe, and adjust its scan speed and coverage radius. Use `chart.setData("radar", [{ lon: 121.47, lat: 31.23 }])` to add a station to a chart. Toggle it with `chart.setLayerVisible("radar", false)` and `chart.setLayerVisible("radar", true)` to keep the stations and their scan phase.
++ **City radar (since 1.7.0)** overlays range rings and a rotating sweep at geographic coordinates in 2D and 3D. Run `npm run dev`, select a city in the station list or on the globe, and adjust its scan speed and coverage radius. Use `chart.setData("radar", [{ lon: 121.47, lat: 31.23 }])` to add a station to a chart. Toggle it with `chart.setLayerVisible("radar", false)` and `chart.setLayerVisible("radar", true)` to keep the stations and their scan phase.
 
 
 
