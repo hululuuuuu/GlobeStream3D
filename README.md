@@ -32,11 +32,7 @@ chart.setLayerVisible("radar", true);
 
 ## 📄 在线预览及文档
 
-中文文档首页可切换 3D 地球与 2D 地图预览，并提供城市雷达示例与 API 参考。[文档源码](https://github.com/hululuuuuu/GlobeStream3D-docs)
-
-[文档地址(netlify)](https://globestream3d.netlify.app/)
-
-[文档地址(vercel)](https://earth-flyline-docs.vercel.app/)
+中文文档提供地图预览、安装指南、示例与 API 参考。[打开使用文档](https://globestream3d.netlify.app/)
 
 
 

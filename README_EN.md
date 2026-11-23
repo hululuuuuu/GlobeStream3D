@@ -2,7 +2,7 @@
 
 # GlobeStream3D
 
-The Chinese documentation includes a 3D globe and 2D map preview, a city radar example, and API references. [Documentation repository](https://github.com/hululuuuuu/GlobeStream3D-docs)
+The Chinese documentation includes map previews, an installation guide, examples, and API references. [Open the documentation](https://globestream3d.netlify.app/)
 
 ### Please let us know if you encounter any [issues](https://github.com/hululuuuuu/GlobeStream3D/issues) while using our project. Your feedback is valuable and will help us improve it.If you find our project helpful, please give us a star to support us. Thank you for support！！！
 ## Introduction
