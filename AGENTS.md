@@ -1,6 +1,8 @@
 # 组件发布规范
 
-把组件代码推送并合入 GitHub 的 `main` 后，本次交付还包括在本地构建 `earth-flyline`、发布到公共 npm 仓库，并核对远端包。负责推送的维护者或编码代理负责完成这条流程。
+组件仓库和配套文档仓库默认直接推送 `main`。开始修改前运行 `git switch main` 和 `git pull --ff-only origin main`，验证改动后提交并运行 `git push origin main`。若远端已有新提交，先同步并重新验证，再正常推送。需要协作评审或分支规则要求时才创建 PR。
+
+把组件代码推送到 GitHub 的 `main` 后，本次交付还包括在本地构建 `earth-flyline`、发布到公共 npm 仓库，并核对远端包。负责推送的维护者或编码代理负责完成这条流程。
 
 1. 推送前按改动选择符合语义化版本的新版本号，同时更新 `package.json` 和 `package-lock.json`。修复问题可运行 `npm version patch --no-git-tag-version`，新增向后兼容的功能时使用 `minor`。版本变更随代码合入。
 2. 推送后从与远端 `main` 对应的干净提交，在组件仓库根目录执行下列命令。保存 `npm pack --json` 输出的 `filename` 和 `integrity`，核对文件清单包含 `dist/index.es.js`、`dist/index.umd.js`、`dist/entry.d.ts` 以及入口引用的类型声明。
