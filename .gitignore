@@ -9,6 +9,7 @@ lerna-debug.log*
 pnpm-lock.yaml
 node_modules
 dist
+/earth-flyline-*.tgz
 *.local
 
 # Editor directories and files

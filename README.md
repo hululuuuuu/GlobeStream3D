@@ -36,6 +36,10 @@ chart.setLayerVisible("radar", true);
 
 
 
+## 项目维护
+
+组件代码合入 GitHub 后，使用同一提交在本地构建、打包并同步到 npm。版本号、发布命令和校验方法见[组件发布规范](./AGENTS.md)。
+
 ## Issues
 
 使用过程中的问题或者建议欢迎提 [issue](https://github.com/hululuuuuu/GlobeStream3D/issues) ，如果该项目为您提供了帮助希望来一个star万分感谢。
