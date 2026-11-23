@@ -1,31 +1,54 @@
-import * as TWEEN from "@tweenjs/tween.js";
-import { merge } from "lodash-es";
-export function setTween(
-  from: Record<any, any>,
-  to: Record<any, any>,
-  cb: (params: Record<any, any>) => void,
-  config?: Record<any, any>
-) {
-  const myConfig = {
-    duration: 2000,
-    delay: 0,
-    repeat: Infinity,
-  };
-  merge(myConfig, config);
-  const ro = new TWEEN.Tween(from); //创建tween动画实例
-  ro.to(to, myConfig.duration); //变化后的对象以及动画持续时间
-  ro.delay(myConfig.delay);
-  ro.easing(TWEEN.Easing.Linear.None); //动画缓动函数
-  ro.onUpdate(function (e: Record<any, any>) {
-    cb(e);
-  }); //执行回调
-  ro.start();
-  ro.repeat(myConfig.repeat);
-  if (config && config.onComplete) {
-    ro.onComplete(() => {
-      config.onComplete(config.data);
+import { Group, Tween } from "@tweenjs/tween.js";
+import type { Object3D } from "three";
+import type { TweenConfig } from "@/lib/interface";
+
+type Values = Record<string, any>;
+
+export class SceneAnimations extends Group {
+  private readonly byOwner = new WeakMap<Object3D, Set<Tween<Values>>>();
+  disposed = false;
+
+  setTween(
+    owner: Object3D,
+    from: Values,
+    to: Values,
+    update: (values: Values) => void,
+    config: TweenConfig & { data?: unknown } = {}
+  ) {
+    if (this.disposed) return;
+    const tweens = this.byOwner.get(owner) ?? new Set<Tween<Values>>();
+    const tween = new Tween(from, this)
+      .to(to, config.duration ?? 2000)
+      .delay(config.delay ?? 0)
+      .repeat(config.repeat ?? Infinity)
+      .onUpdate(update);
+    const release = () => {
+      tweens.delete(tween);
+      if (!tweens.size) this.byOwner.delete(owner);
+    };
+    tween.onStop(release).onComplete(() => {
+      release();
+      config.onComplete?.(config.data);
+    });
+    tweens.add(tween);
+    this.byOwner.set(owner, tweens);
+  }
+
+  // A failed or discarded build never enters the instance's update group.
+  startLayer(layer: Object3D) {
+    if (this.disposed) return;
+    layer.traverse(owner => this.byOwner.get(owner)?.forEach(tween => tween.start()));
+  }
+
+  stopLayer(layer: Object3D) {
+    layer.traverse(owner => {
+      this.byOwner.get(owner)?.forEach(tween => tween.stop());
+      this.byOwner.delete(owner);
     });
   }
 
-  return ro;
+  dispose() {
+    this.disposed = true;
+    this.getAll().forEach(tween => tween.stop());
+  }
 }

@@ -8,6 +8,7 @@ import {
   Vector3,
 } from "three";
 import { lon2xyz } from "@/lib/utils/math";
+import { ownTexture } from "@/lib/utils/dispose";
 import { LessCoordinate, TextMarkItem, TextStyle } from "@/lib/interface";
 
 const DEFAULT_TEXT_STYLE: TextStyle = {
@@ -38,6 +39,7 @@ export default class TextMark {
     });
 
     const textMesh = new Mesh(geometry, material);
+    ownTexture(textMesh, texture);
     const position = this.toVector3(config.R, data.position);
     const { x, y, z } = position;
 

@@ -1,0 +1,209 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Point and flyLine ID integration test</title>
+<link rel="icon" href="data:,">
+<div id="first" style="width:200px;height:200px"></div>
+<div id="second" style="width:200px;height:200px"></div>
+<pre id="result">Running…</pre>
+<script type="module">
+  import earth from "../src/entry.ts";
+  import Scatter from "../src/lib/figures/Scatter.ts";
+
+  earth.registerMap("layer-ids", {
+    type: "FeatureCollection",
+    features: [{
+      type: "Feature", properties: { name: "Island" },
+      geometry: { type: "Polygon", coordinates: [[[0, 0], [0, 4], [4, 4], [4, 0], [0, 0]]] },
+    }],
+  });
+  function scene(selector, mode) {
+    return earth.init({
+      dom: document.querySelector(selector), map: "layer-ids", mode, autoRotate: false,
+      config: { spriteStyle: { show: false }, scatterStyle: { show: false } },
+    });
+  }
+  const failures = [];
+  function expectIds(chart, type, expected, label) {
+    const actual = chart.mainContainer.children.filter(g => g.userData.figureType === type).map(g => g.name);
+    if (JSON.stringify(actual) !== JSON.stringify(expected)) {
+      failures.push(`${label} (${type}): expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`);
+    }
+  }
+  const from = { lon: 12, lat: -3, id: "A" };
+  const to = { lon: 45, lat: 6, id: "B" };
+  const line = { from, to };
+  const point = { ...from, id: "A-B" };
+  const rejection = promise => promise.then(() => undefined, error => error);
+
+  async function checkRetry(chart, type, first, second, ids) {
+    chart.remove(type);
+    const cause = new Error("test build failure");
+    const broken = { ...second, get style() { throw cause; } };
+    if (await rejection(chart.addData(type, [first, broken])) !== cause) {
+      failures.push("addData must reject the original " + type + " error");
+    }
+    expectIds(chart, type, [], "failed batch");
+    await chart.addData(type, [first, second]);
+    expectIds(chart, type, ids, "retry entire batch");
+  }
+
+  async function checkIncrementalIndex(chart, type, item, next) {
+    await chart.setData(type, [item]);
+    await chart.setData(type, [item]);
+    const mounted = chart.mainContainer.children.find(g => g.userData.figureType === type);
+    const name = mounted.name;
+    let reads = 0;
+    Object.defineProperty(mounted, "name", { configurable: true, get() { reads++; return name; } });
+    try {
+      await chart.addData(type, [item, next, next]);
+      await chart.addData(type, [next]);
+    } finally {
+      Object.defineProperty(mounted, "name", { configurable: true, writable: true, value: name });
+    }
+    if (reads) failures.push(type + " append read a previously mounted ID " + reads + " times");
+    expectIds(chart, type, [name, "next" + (type === "flyLine" ? "-B" : "")], "incremental index after replacement");
+  }
+
+  async function checkDestroyed(chart) {
+    chart.destroy();
+    if (Object.values(chart._OperateView.layerIds).some(ids => ids.size > 0)) {
+      failures.push("destroyed chart retained layer IDs");
+    }
+    let reads = 0;
+    const late = { ...point, get id() { reads++; return "late"; } };
+    for (const method of ["addData", "setData"]) {
+      const error = await rejection(chart[method]("point", [late]));
+      if (!(error instanceof Error) || !/destroy/i.test(error.message)) failures.push(method + " after destroy must reject");
+    }
+    if (reads || chart.mainContainer.children.length) failures.push("late update built data on a destroyed chart");
+  }
+
+  async function checkReplacement(chart) {
+    const layer = type => chart.mainContainer.children.find(g => g.userData.figureType === type);
+    const stream = { data: [[[0, 0], [1, 1]]], style: { speed: 0 } };
+    await chart.setData("mapStreamLine", stream);
+    const old = layer("mapStreamLine");
+    const geometry = old.children[0].children[0].geometry;
+    let disposed = 0;
+    geometry.addEventListener("dispose", () => disposed++);
+    for (const method of ["addData", "setData"]) {
+      const error = await rejection(chart[method]("mapStreamLine", { data: "{" }));
+      if (!(error instanceof SyntaxError)) failures.push(method + " lost JSON parse error");
+      if (layer("mapStreamLine") !== old || disposed) failures.push(method + " changed the old stream");
+    }
+    await chart.setData("mapStreamLine", stream);
+    if (layer("mapStreamLine") === old || disposed !== 1) failures.push("successful stream replacement");
+    for (const type of ["mapStreamLine", "wall"]) {
+      await chart.setData(type, stream);
+      await chart.setData(type, { data: [] });
+      expectIds(chart, type, [], "empty boundary replacement");
+    }
+
+    await chart.setData("flyLine", [line]);
+    const oldLine = layer("flyLine");
+    // Observe real endpoint resources, including the first endpoint of the unfinished line.
+    const create = Scatter.prototype.create;
+    const tracked = new Map();
+    Scatter.prototype.create = function (item) {
+      const result = create.call(this, item);
+      result.traverse(mesh => {
+        for (const resource of [mesh.geometry, mesh.material].filter(Boolean)) {
+          tracked.set(resource, 0);
+          resource.addEventListener("dispose", () => tracked.set(resource, tracked.get(resource) + 1));
+        }
+      });
+      return result;
+    };
+    const cause = new Error("second endpoint failed");
+    const visible = { ...from, style: { show: true } };
+    const broken = { from: { ...visible, id: "C" }, to: { ...to, get style() { throw cause; } } };
+    try {
+      const error = await rejection(chart.setData("flyLine", [{ from: visible, to }, broken]));
+      if (error !== cause || layer("flyLine") !== oldLine) failures.push("failed same-ID replacement");
+      if (tracked.size === 0 || [...tracked.values()].some(count => count !== 1)) {
+        failures.push("staged endpoint resources must be disposed exactly once");
+      }
+    } finally {
+      Scatter.prototype.create = create;
+    }
+    const update = chart.setData("flyLine", [line]);
+    if (layer("flyLine") === oldLine) failures.push("same-ID replacement must commit synchronously");
+    chart.remove("flyLine");
+    const add = chart.addData("flyLine", [line]);
+    await Promise.all([update, add]);
+    expectIds(chart, "flyLine", ["A-B"], "set/remove/add in call order");
+    await chart.setData("flyLine", []);
+    expectIds(chart, "flyLine", [], "empty replacement");
+  }
+
+  const a = scene("#first", "2d");
+  const b = scene("#second", "3d");
+  try {
+    await a.addData("point", [point, point]);
+    await a.addData("flyLine", [line, line]);
+    await b.addData("flyLine", [line]);
+    await b.addData("point", [point]);
+    for (const chart of [a, b]) {
+      await chart.addData("point", [point]);
+      await chart.addData("flyLine", [line]);
+      expectIds(chart, "point", ["A-B"], "same ID in both layers");
+      expectIds(chart, "flyLine", ["A-B"], "same ID in both layers");
+    }
+    for (const [type, item, other, otherItem] of [
+      ["point", point, "flyLine", line], ["flyLine", line, "point", point],
+    ]) {
+      a.remove(type, ["A-B"]);
+      expectIds(a, type, [], "targeted removal");
+      await a.addData(other, [otherItem]);
+      expectIds(a, other, ["A-B"], "other layer still owns its ID");
+      expectIds(b, type, ["A-B"], "other scene still owns its ID");
+      await a.addData(type, [item]);
+      expectIds(a, type, ["A-B"], "re-add removed ID");
+    }
+
+    const prototypes = ["__proto__", "constructor", "toString"];
+    const specialPoints = prototypes.map(id => ({ ...from, id }));
+    const zero = { ...from, id: 0 };
+    const fallback = { lon: 12, lat: -3 };
+    await a.setData("point", [zero, { ...to, id: "0" }, fallback, ...specialPoints, ...specialPoints]);
+    expectIds(a, "point", ["0", "12--3", ...prototypes], "zero, coordinates and prototype names");
+    a.remove("point", ["0", ...prototypes]);
+    expectIds(a, "point", ["12--3"], "remove by string ID");
+    await a.addData("point", [zero, ...specialPoints]);
+    expectIds(a, "point", ["12--3", "0", ...prototypes], "re-add zero and prototype names");
+
+    const zeroStart = { from: zero, to };
+    const zeroEnd = { from, to: { ...to, id: 0 } };
+    const partial = { from: fallback, to };
+    await a.setData("flyLine", [zeroStart, zeroEnd, partial, { from, to: { lon: 45, lat: 6 } }]);
+    expectIds(a, "flyLine", ["0-B", "A-0", "12-3-456"], "endpoint IDs and legacy coordinate fallback");
+    a.remove("flyLine", ["0-B"]);
+    await a.addData("flyLine", [zeroStart]);
+    expectIds(a, "flyLine", ["A-0", "12-3-456", "0-B"], "re-add zero endpoint");
+
+    await checkRetry(a, "point", point, { ...to, id: "retry" }, ["A-B", "retry"]);
+    await checkRetry(a, "flyLine", line, zeroStart, ["A-B", "0-B"]);
+    await checkReplacement(b);
+    await checkIncrementalIndex(a, "point", point, { ...point, id: "next" });
+    await checkIncrementalIndex(a, "flyLine", line, { from: { ...from, id: "next" }, to });
+    await a.setData("road", [{ id: 0, path: [from, to] }, { path: [from, to] }]);
+    const roads = a.mainContainer.children.filter(g => g.userData.figureType === "road");
+    const generated = roads[1].name;
+    if (roads[0].name !== "0" || !/^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/i.test(generated)) {
+      failures.push("road ID 0 and generated UUID: " + roads.map(g => g.name).join(", "));
+    }
+    a.remove("road", ["0"]);
+    expectIds(a, "road", [generated], "remove road with id zero");
+    // JavaScript callers historically can pass an unrecognized type as a no-op.
+    for (const kind of ["unknown", "constructor"]) await a.addData(kind, [point]);
+    await checkDestroyed(a);
+    if (failures.length) throw new Error(failures.join("\n"));
+    document.querySelector("#result").textContent = "PASS";
+  } catch (error) {
+    document.querySelector("#result").textContent = String(error.stack || error);
+    throw error;
+  } finally {
+    a.destroy();
+    b.destroy();
+  }
+</script>

@@ -1,0 +1,155 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Chart events and lifecycle tests</title>
+<link rel="icon" href="data:,">
+<div id="map" style="width:400px;height:400px"></div>
+<pre id="result">Running…</pre>
+<script type="module">
+  import earth from "../src/entry.ts";
+
+  function assert(ok, message) {
+    if (!ok) throw new Error(message);
+  }
+
+  const dom = document.querySelector("#map");
+  earth.registerMap("events", {
+    type: "FeatureCollection",
+    features: [{
+      type: "Feature", properties: { name: "Island" },
+      geometry: { type: "Polygon", coordinates: [[[-10, -10], [-10, 10], [10, 10], [10, -10], [-10, -10]]] },
+    }],
+  });
+
+  function checkEvents() {
+    const chart = earth.init({
+      dom, map: "events", mode: "2d",
+      config: { hoverRegionStyle: { show: true, areaColor: "#ff0000" } },
+    });
+    const rect = chart.renderer.domElement.getBoundingClientRect();
+    function dispatch(type, x = rect.width / 2) {
+      dom.dispatchEvent(new MouseEvent(type, {
+        clientX: rect.left + x, clientY: rect.top + rect.height / 2,
+      }));
+    }
+
+    const clicks = [0, 0];
+    let moves = 0;
+    let island;
+    try {
+      chart.on("click", () => clicks[0]++);
+      chart.on("mousemove", () => moves++);
+      chart.on("click", (event, mesh) => {
+        clicks[1]++;
+        island = mesh;
+      });
+      dispatch("click");
+      assert(clicks[0] === 0 && clicks[1] === 1, "expected click counts [0,1], got " + JSON.stringify(clicks));
+      assert(island?.name === "Island" && moves === 0, "click hits the island and only runs the click callback");
+
+      const baseColor = island.material.color.clone();
+      let picks = 0;
+      const cameraRay = chart._eventStore.raycaster.setFromCamera.bind(chart._eventStore.raycaster);
+      chart._eventStore.raycaster.setFromCamera = (...args) => { picks++; return cameraRay(...args); };
+      dispatch("mousemove");
+      assert(picks === 1, "one mousemove should pick once, got " + picks);
+      assert(moves === 1 && clicks[1] === 1, "mousemove runs its own callback once");
+      assert(island.material.color.getHex() === 0xff0000, "built-in hover highlights the island");
+      dispatch("mouseleave");
+      assert(!chart.earthHovered && island.material.color.equals(baseColor), "leaving the chart clears hover");
+      dispatch("mousemove");
+      island.parent.visible = false;
+      dispatch("click");
+      assert(clicks[1] === 1, "invisible country must not receive clicks");
+      island.parent.visible = true;
+      dispatch("mousemove", 1);
+      assert(island.material.color.equals(baseColor) && moves === 2, "moving off the island restores its color");
+    } finally {
+      chart.destroy();
+    }
+    dispatch("click");
+    dispatch("mousemove");
+    assert(clicks[1] === 1 && moves === 2, "destroyed chart ignores events on its container");
+  }
+
+  function checkIdlePicking() {
+    const chart = earth.init({ dom, map: "events", mode: "2d",
+      config: { hoverRegionStyle: { show: false }, stopRotateByHover: false } });
+    try {
+      let picks = 0;
+      const ray = chart._eventStore.raycaster;
+      const original = ray.setFromCamera.bind(ray);
+      ray.setFromCamera = (...args) => { picks++; return original(...args); };
+      for (let i = 0; i < 100; i++) dom.dispatchEvent(new MouseEvent("mousemove"));
+      assert(picks === 0, "idle chart performed " + picks + " picks");
+    } finally { chart.destroy(); }
+  }
+
+  function countDisposals(controls) {
+    const dispose = controls.dispose.bind(controls);
+    let count = 0;
+    controls.dispose = () => { count++; dispose(); };
+    return () => count;
+  }
+
+  function checkSharedHost() {
+    const legend = document.createElement("button");
+    legend.textContent = "Legend";
+    dom.append(legend);
+    const options = { dom, map: "events", mode: "2d", debugHelper: true };
+    const first = earth.init({ ...options, controls: "custom", config: { enableZoom: true } });
+    const second = earth.init({ ...options, controls: "builtIn" });
+    const firstCanvas = first.renderer.domElement;
+    const secondCanvas = second.renderer.domElement;
+    const firstPanel = first._debugHelper.panel;
+    const secondPanel = second._debugHelper.panel;
+    const zoomDisposals = countDisposals(first._orbitControls);
+    const builtInDisposals = countDisposals(second.controls);
+    let hits = 0;
+    second.on("click", (event, mesh) => { if (mesh.name === "Island") hits++; });
+
+    first.destroy();
+    try {
+      assert(legend.parentNode === dom && secondCanvas.parentNode === dom, "destroy removed the legend or the second canvas");
+      assert(!firstCanvas.isConnected && !firstPanel.isConnected && secondPanel.isConnected, "each chart owns its canvas and panel");
+      const rect = secondCanvas.getBoundingClientRect();
+      secondCanvas.dispatchEvent(new MouseEvent("click", {
+        bubbles: true, clientX: rect.left + rect.width / 2, clientY: rect.top + rect.height / 2,
+      }));
+      assert(hits === 1, "surviving chart still receives clicks");
+      assert(zoomDisposals() === 1 && builtInDisposals() === 0, "only the first chart's zoom controls are disposed");
+      firstCanvas.dispatchEvent(new MouseEvent("mousedown"));
+      assert(!first.controls.isDragging, "destroyed custom controller responded to mousedown with zoom enabled");
+    } finally {
+      second.destroy();
+    }
+    assert(builtInDisposals() === 1, "builtIn OrbitControls must be disposed exactly once");
+    assert(!secondCanvas.isConnected && !secondPanel.isConnected && legend.parentNode === dom, "final destroy preserves host content");
+    legend.remove();
+  }
+
+  function checkCustomWithoutZoom() {
+    const chart = earth.init({ dom, map: "events", mode: "2d", controls: "custom", config: { enableZoom: false } });
+    const canvas = chart.renderer.domElement;
+    try {
+      canvas.dispatchEvent(new MouseEvent("mousedown"));
+      assert(chart.controls.isDragging, "custom drag starts without zoom");
+      canvas.dispatchEvent(new MouseEvent("mouseup"));
+      assert(!chart.controls.isDragging, "custom drag ends on mouseup");
+    } finally {
+      chart.destroy();
+    }
+    canvas.dispatchEvent(new MouseEvent("mousedown"));
+    assert(!chart.controls.isDragging, "destroyed custom controller responded to mousedown with zoom disabled");
+  }
+
+  try {
+    checkEvents();
+    checkIdlePicking();
+    checkSharedHost();
+    checkCustomWithoutZoom();
+    document.querySelector("#result").textContent = "PASS";
+  } catch (e) {
+    document.querySelector("#result").textContent = String(e.stack || e);
+    throw e;
+  }
+</script>

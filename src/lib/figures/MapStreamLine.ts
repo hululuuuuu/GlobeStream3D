@@ -14,7 +14,6 @@ import { MapStreamStyle, StoreConfig } from "@/lib/interface";
 import Store from "@/lib/store/store";
 import { Position } from "geojson";
 import { lon2xyz } from "@/lib/utils/math";
-import { setTween } from "@/lib/utils/tween";
 import { GeoLineSource, normalizeGeoLineData } from "@/lib/utils/geoLineData";
 
 export default class MapStreamLine {
@@ -75,9 +74,6 @@ export default class MapStreamLine {
   }) {
     this.getCurrentStyle(data.style);
     const useFlowingLine = this._currentStyle.speed > 0;
-    if (useFlowingLine) {
-      this.startAnimation();
-    }
     const lineGroup = new Group();
     const lineData = normalizeGeoLineData(data.data);
 
@@ -110,7 +106,9 @@ export default class MapStreamLine {
       });
     }
 
-    return lineGroup.children.length ? lineGroup : undefined;
+    if (!lineGroup.children.length) return;
+    if (useFlowingLine) this.startAnimation(lineGroup);
+    return lineGroup;
   }
   getCurrentStyle(style?: Partial<MapStreamStyle>) {
     if (style) {
@@ -128,8 +126,9 @@ export default class MapStreamLine {
       color: { type: "v3", value: new Color(this._currentStyle.color) },
     };
   }
-  startAnimation() {
-    setTween(
+  startAnimation(lineGroup: Group) {
+    this._store.animations.setTween(
+      lineGroup,
       { u_time: 0 },
       { u_time: 1 },
       (params) => {

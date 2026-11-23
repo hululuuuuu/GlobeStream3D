@@ -1,7 +1,5 @@
 import {
-  BufferAttribute,
   BufferGeometry,
-  Color,
   Group,
   Line,
   LineBasicMaterial,
@@ -14,27 +12,11 @@ import {
   Vector3,
 } from "three";
 import { getFunctionExpression } from "@/lib/utils/math";
-import { setTween } from "@/lib/utils/tween";
+import { createTrailGeometry, createTrailUpdater } from "@/lib/utils/trail";
+import { ownTexture } from "@/lib/utils/dispose";
 import { FlyLineData, LineStyle, StoreConfig } from "@/lib/interface";
 import Store from "@/lib/store/store";
-import { addUserDataToMesh } from "@/lib/utils";
-import { cloneDeep } from "lodash-es";
-
-const parseColorOpacity = (input: unknown) => {
-  if (typeof input === "string") {
-    const m = input.match(
-      /rgba\s*\(\s*([0-9.]+)\s*,\s*([0-9.]+)\s*,\s*([0-9.]+)\s*,\s*([0-9.]+)\s*\)/i
-    );
-    if (m) {
-      const r = Number(m[1]);
-      const g = Number(m[2]);
-      const b = Number(m[3]);
-      const a = Math.max(0, Math.min(1, Number(m[4])));
-      return { color: new Color(`rgb(${r}, ${g}, ${b})`), opacity: a };
-    }
-  }
-  return { color: new Color(input as any), opacity: 1 };
-};
+import { addUserDataToMesh, mergeFlyLineStyle, parseColorOpacity } from "@/lib/utils";
 
 export default class FlyLine2d {
   private readonly _config: StoreConfig;
@@ -45,13 +27,7 @@ export default class FlyLine2d {
     this._store = store;
     this._config = store.getConfig();
     this._currentData = currentData;
-    this._currentConfig = cloneDeep({
-      flyLineStyle: this._config.flyLineStyle,
-      pathStyle: this._config.pathStyle,
-    });
-    if (currentData.style) {
-      Object.assign(this._currentConfig, currentData.style);
-    }
+    this._currentConfig = mergeFlyLineStyle(this._config, currentData.style);
   }
 
   createMesh(positionInfo: [Vector3, Vector3]) {
@@ -64,20 +40,20 @@ export default class FlyLine2d {
       targetPoint
     );
     const points = curve.getSpacedPoints(200);
-    const pathLine = this.createPathLine(points);
+    if (this._currentConfig.pathStyle.show !== false) {
+      group.add(this.createPathLine(points));
+    }
     const tadpoleSize = 40;
     const tadpolePointsMesh = this.createShader(points, tadpoleSize);
-    group.add(pathLine, tadpolePointsMesh);
+    group.add(tadpolePointsMesh);
 
     group.name = "flyLine";
-    setTween(
+    const updateTrail = createTrailUpdater(tadpolePointsMesh.geometry, points);
+    this._store.animations.setTween(
+      tadpolePointsMesh,
       { index: 0 },
       { index: points.length - tadpoleSize },
-      (params) => {
-        tadpolePointsMesh.geometry.setFromPoints(
-          points.slice(params.index, params.index + tadpoleSize)
-        );
-      },
+      (params) => updateTrail(params.index),
       { ...this._currentConfig.flyLineStyle, data: this._currentData }
     );
     return group;
@@ -98,33 +74,13 @@ export default class FlyLine2d {
     return pathLine;
   };
   createShader = (points: Vector3[], tadpoleSize: number) => {
-    // Create the final object to add to the scene
-    const geometry = new BufferGeometry();
-    const newPoints = points.slice(0, tadpoleSize); //获取更多的点数
-    const percentArr = []; //attributes.percent的数据
-    for (let i = 0; i < newPoints.length; i++) {
-      percentArr.push(i / newPoints.length);
-    }
-    const colorArr = [];
     const { color: color1, opacity: opacity1 } = parseColorOpacity(
       this._currentConfig.pathStyle.color
     ); //尾拖线颜色
     const { color: color2, opacity: opacity2 } = parseColorOpacity(
       this._currentConfig.flyLineStyle.color
     ); //飞线蝌蚪头颜色
-    for (let i = 0; i < newPoints.length; i++) {
-      const color = color1.clone().lerp(color2, i / newPoints.length);
-      colorArr.push(color.r, color.g, color.b);
-    }
-    geometry.setFromPoints(newPoints);
-    geometry.attributes.percent = new BufferAttribute(
-      new Float32Array(percentArr),
-      1
-    );
-    geometry.attributes.color = new BufferAttribute(
-      new Float32Array(colorArr),
-      3
-    );
+    const geometry = createTrailGeometry(points, tadpoleSize, color1, color2);
     const material = new PointsMaterial({
       vertexColors: true, //使用顶点颜色渲染
       size: 3.0, //点大小
@@ -170,6 +126,7 @@ export default class FlyLine2d {
 
     // 创建精灵
     const sprite = new Sprite(spriteMaterial);
+    ownTexture(sprite, texture);
     const x = R * Math.cos(startAngle);
     const y = R * Math.sin(startAngle);
     sprite.position.set(x, y, 0);

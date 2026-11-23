@@ -1,0 +1,177 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Trail buffer regression</title>
+<link rel="icon" href="data:,">
+<div id="map" style="width:400px;height:400px"></div>
+<pre id="result">Running…</pre>
+<pre id="metrics"></pre>
+<script type="module">
+  import earth from "../src/entry.ts";
+  import { Raycaster, Vector3 } from "three";
+
+  earth.registerMap("trails", { type: "FeatureCollection", features: [] });
+  const failures = new Set(), metrics = [];
+  const check = (ok, label) => { if (!ok) failures.add(label); };
+  const frames = 32, duration = 1024, delay = 64;
+  let now = 1000;
+  Object.defineProperty(performance, "now", { configurable: true, value: () => now });
+
+  async function checkRoadVisibility(mode, globalShow) {
+    const chart = earth.init({
+      dom: document.querySelector("#map"), map: "trails", mode, autoRotate: false,
+      config: { roadStyle: { pathStyle: { show: globalShow }, flyLineStyle: { duration } } },
+    });
+    try {
+      const path = [{ lon: -130, lat: 15 }, { lon: -80, lat: -5 }];
+      await chart.setData("road", [
+        { id: "override", path, style: { pathStyle: { show: !globalShow } } },
+        { id: "inherited", path, style: { pathStyle: { color: "red" } } },
+      ]);
+      const overridden = chart.mainContainer.getObjectByName("override");
+      const inherited = chart.mainContainer.getObjectByName("inherited");
+      check(Boolean(overridden.getObjectByName("roadPathLine")) === !globalShow,
+        mode + " per-road show=" + !globalShow);
+      check(Boolean(inherited.getObjectByName("roadPathLine")) === globalShow,
+        mode + " inherited roadStyle.pathStyle.show=" + globalShow);
+
+      const hiddenPathRoad = globalShow ? overridden : inherited;
+      const trail = hiddenPathRoad.getObjectByName("RoadTadpolePointsMesh");
+      const position = trail.geometry.getAttribute("position");
+      const first = new Vector3().fromBufferAttribute(position, 0);
+      now += duration / 2;
+      chart._store.animations.update(now);
+      check(hiddenPathRoad.visible && trail.visible && !first.equals(new Vector3().fromBufferAttribute(position, 0)),
+        mode + " hidden road path keeps its visible moving trail");
+    } finally { chart.destroy(); }
+  }
+
+  async function exercise(mode, type) {
+    const label = mode + " " + type;
+    const chart = earth.init({
+      dom: document.querySelector("#map"), map: "trails", mode, autoRotate: false,
+      config: { scatterStyle: { show: false }, spriteStyle: { show: false }, pixelRatio: 1 },
+    });
+    const road = type === "road";
+    const route = [{ lon: -130, lat: 15 }, { lon: -80, lat: -5 }, { lon: -45, lat: 20 }];
+    let completed = 0;
+    const style = {
+      pathStyle: { color: "red" },
+      flyLineStyle: { color: "blue", repeat: 0, delay, duration, onComplete: () => completed++ },
+    };
+    try {
+      await chart.setData(type, [road ? { id: "r", path: route, style }
+        : { from: route[0], to: route[2], style }]);
+      const path = chart.mainContainer.getObjectByName(road ? "roadPathLine" : "pathLine")
+        .geometry.getAttribute("position");
+      const trail = chart.mainContainer.getObjectByName(road ? "RoadTadpolePointsMesh" : "tadpolePointsMesh");
+      const geometry = trail.geometry;
+      const render = () => chart.renderer.render(chart.scene, chart.camera);
+      render(); // Warm up shaders, lazy bounds, and initial GPU buffers.
+      geometry.computeBoundingBox();
+      const initial = geometry.getAttribute("position");
+      const colors = geometry.getAttribute("color"), percents = geometry.getAttribute("percent");
+      check(path.count === (road ? 402 : 201) && initial.count === 40, label + " sampling");
+      for (let i = 0; i < initial.count; i++) {
+        const t = i / initial.count;
+        check(Math.abs(percents.getX(i) - t) < 1e-6 && colors.getY(i) === 0 &&
+          Math.abs(colors.getX(i) - (road ? 0 : 1 - t)) < 1e-6 &&
+          Math.abs(colors.getZ(i) - (road ? 1 : t)) < 1e-6, label + " gradient");
+      }
+      const p = new Vector3(), expected = new Vector3();
+      function verifyWindow(start) {
+        const attr = geometry.getAttribute("position");
+        for (let i = 0; i < attr.count; i++) {
+          p.fromBufferAttribute(attr, i);
+          expected.fromBufferAttribute(path, start + i);
+          check(p.equals(expected), label + " direction and sample timing");
+          check(geometry.boundingBox.containsPoint(p) &&
+            geometry.boundingSphere.center.distanceTo(p) <= geometry.boundingSphere.radius + 1e-6,
+            label + " bounds contain current trail");
+        }
+      }
+      function hit(sample, threshold = 0.02) {
+        const origin = new Vector3().fromBufferAttribute(path, sample);
+        origin.z += 500;
+        const ray = new Raycaster(origin, new Vector3(0, 0, -1));
+        ray.params.Points.threshold = threshold;
+        return ray.intersectObject(trail).length > 0;
+      }
+      const startTime = now;
+      const tick = time => { now = time; chart._store.animations.update(time); render(); };
+      tick(startTime + delay - 1);
+      verifyWindow(0);
+
+      const sampleDuration = duration / (path.count - initial.count);
+      const tickAtSample = index => tick(startTime + delay + index * sampleDuration);
+      tickAtSample(1.25);
+      verifyWindow(1);
+      const version = geometry.getAttribute("position").version;
+      tickAtSample(1.75);
+      check(geometry.getAttribute("position").version === version, label + " same window keeps position.version");
+      // [1, 40] -> [2, 41]: one sample leaves and one enters.
+      const leaving = 1, entering = leaving + initial.count;
+      // The first two 2D road samples project only 0.008 units apart.
+      const hitBoundary = sample => hit(sample, 0.001);
+      check(hitBoundary(leaving) && !hitBoundary(entering), label + " picks the leaving sample before crossing");
+      tickAtSample(2.25);
+      check(geometry.getAttribute("position").version > version, label + " crossing updates position.version");
+      check(!hitBoundary(leaving) && hitBoundary(entering), label + " picks the entering sample after crossing");
+
+      const gl = chart.renderer.getContext();
+      const createBuffer = gl.createBuffer;
+      const bufferSubData = gl.bufferSubData;
+      let buffers = 0, positionUploads = 0;
+      gl.createBuffer = function () { buffers++; return createBuffer.call(this); };
+      gl.bufferSubData = function (...args) {
+        if (args[2] === initial.array) positionUploads++;
+        return bufferSubData.apply(this, args);
+      };
+      const attributes = new Set([initial]), arrays = new Set([initial.array]);
+      try {
+        for (let frame = 1; frame <= frames; frame++) {
+          tick(startTime + delay + duration * frame / frames);
+          const position = geometry.getAttribute("position");
+          attributes.add(position);
+          arrays.add(position.array);
+          verifyWindow(Math.floor((path.count - initial.count) * frame / frames));
+          check(completed === Number(frame === frames), label + " completion timing");
+        }
+      } finally {
+        delete gl.createBuffer;
+        delete gl.bufferSubData;
+      }
+      metrics.push(label + ": " + frames + " updates, new attributes=" + (attributes.size - 1)
+        + ", arrays=" + (arrays.size - 1) + ", gl.createBuffer=" + buffers
+        + ", position uploads=" + positionUploads);
+      check(attributes.size === 1 && arrays.size === 1 && buffers === 0, label + " stable buffers");
+      check(positionUploads === frames, label + " uploads each changed window into the original buffer");
+
+      check(hit(path.count - 1) && !hit(0), label + " picks the moved trail only");
+      if (road) {
+        for (const n of [0, 1, 2]) {
+          completed = 0;
+          await chart.setData(type, [{ id: "short", path: route.slice(0, n), style }]);
+          tick(now + delay + duration);
+          const short = chart.mainContainer.getObjectByName("RoadTadpolePointsMesh");
+          const positions = short.geometry.getAttribute("position");
+          check(positions.count === (n === 2 ? 40 : 0) && positions.array.every(Number.isFinite)
+            && completed === 1, label + " short path with " + n + " input points");
+        }
+      }
+    } finally { chart.destroy(); }
+  }
+  try {
+    await exercise("2d", "flyLine");
+    await exercise("2d", "road");
+    await exercise("3d", "road");
+    for (const mode of ["2d", "3d"]) {
+      await checkRoadVisibility(mode, false);
+      await checkRoadVisibility(mode, true);
+    }
+  } catch (e) {
+    failures.add(String(e.stack ?? e));
+  } finally { delete performance.now; }
+  document.querySelector("#metrics").textContent = metrics.join("\n");
+  document.querySelector("#result").textContent = failures.size
+    ? [...failures, ...metrics].join("\n") : "PASS";
+</script>

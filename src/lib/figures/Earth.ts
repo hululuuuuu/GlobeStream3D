@@ -11,6 +11,7 @@ import {
 } from "three";
 import { StoreConfig } from "@/lib/interface";
 import Store from "@/lib/store/store";
+import { ownTexture } from "@/lib/utils/dispose";
 import { Texture } from "three/src/textures/Texture";
 
 class CreateEarth {
@@ -97,6 +98,7 @@ class CreateEarth {
     const material = materialCreator(materialConfig.map);
 
     const earthMesh = new Mesh(geometry, material); //网格模型对象Mesh
+    ownTexture(earthMesh, materialConfig.map);
     earthMesh.castShadow = true;
     earthMesh.name = "earthMesh";
     return earthMesh;

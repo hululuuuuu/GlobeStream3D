@@ -5,7 +5,6 @@ import {
   AmbientLight,
   AxesHelper,
   Camera,
-  Clock,
   DirectionalLight,
   Group,
   Light,
@@ -21,13 +20,12 @@ import {
 import CreateEarth from "@/lib/figures/Earth";
 import MapShape from "@/lib/figures/MapShape";
 import sprite from "@/lib/figures/Sprite";
-import { update as tweenUpdate } from "@tweenjs/tween.js";
 import Store from "@/lib/store/store";
 import EventStore from "@/lib/store/eventStore";
 import { merge } from "lodash-es";
 import CustomOrbitControls from "@/lib/utils/controls";
-import TextMark from "@/lib/figures/Text";
 import DebugHelper from "@/lib/utils/debugHelper";
+import { disposeObjectResources } from "@/lib/utils/dispose";
 
 /**
  * ChartScene class is used to create a 3D scene using Three.js.
@@ -54,8 +52,8 @@ export default class ChartScene {
   light: Light;
   earthHovered: boolean = false;
   camera: Camera;
-  notLockFps: Function;
-  mainContainer: Object3D;
+  notLockFps: () => boolean;
+  mainContainer: Group;
   scene: Scene;
   renderer: WebGLRenderer;
   controls: CustomOrbitControls | OrbitControls;
@@ -64,6 +62,7 @@ export default class ChartScene {
   _eventStore: EventStore;
   _OperateView: OperateView;
   animationFrameId: number | null = null;
+  private readonly animateFrame = () => this.animate();
   _debugHelper: DebugHelper | null = null;
 
   /**
@@ -105,15 +104,7 @@ export default class ChartScene {
       this.clearThree(obj.children[0]);
       obj.remove(obj.children[0]);
     }
-    if (obj.geometry) obj.geometry.dispose();
-    if (obj.material) {
-      const materials = Array.isArray(obj.material)
-        ? obj.material
-        : [obj.material];
-      materials.forEach((m: any) => {
-        if (m.dispose) m.dispose();
-      });
-    }
+    disposeObjectResources(obj);
     if (obj.texture && obj.texture.dispose) obj.texture.dispose();
   }
 
@@ -121,6 +112,9 @@ export default class ChartScene {
    * Method to destroy the scene.
    */
   destroy() {
+    if (this._store.animations.disposed) return;
+    this._store.animations.dispose();
+    this._OperateView.clearLayerState();
     if (this.animationFrameId !== null) {
       cancelAnimationFrame(this.animationFrameId);
       this.animationFrameId = null;
@@ -128,15 +122,13 @@ export default class ChartScene {
     this.clearThree(this.scene);
     this._eventStore?.destroy?.();
     this._debugHelper?.destroy();
-    if (this._orbitControls) {
-      this._orbitControls.dispose();
-      this._orbitControls = undefined;
-    } else if (this.controls && "dispose" in this.controls) {
-      // OrbitControls 具备 dispose 方法，CustomOrbitControls 没有则跳过
-      (this.controls as OrbitControls).dispose();
+    if (this.controls instanceof CustomOrbitControls) {
+      this.controls.dispose();
     }
+    this._orbitControls?.dispose();
+    this._orbitControls = undefined;
     this.renderer?.dispose();
-    this.options.dom.innerHTML = "";
+    this.renderer?.domElement.remove();
   }
 
   /**
@@ -148,8 +140,6 @@ export default class ChartScene {
       cameraType = "OrthographicCamera",
       light = "DirectionalLight",
       helper = false,
-      map = "world",
-      config,
     } = this.options;
 
     this._store.setConfig(this.options);
@@ -185,7 +175,8 @@ export default class ChartScene {
       this.controls = new CustomOrbitControls(
         this.mainContainer,
         this.renderer,
-        this.options.config.earth?.dragConfig!
+        this.options.config.earth?.dragConfig!,
+        this.camera
       );
     } else {
       this.controls = obControl!;
@@ -288,7 +279,7 @@ export default class ChartScene {
       !this.options.config.texture?.path
     ) {
       const mapShape = new MapShape(this);
-      groupEarth.add(...mapShape.create());
+      for (const country of mapShape.create()) groupEarth.add(country);
     }
     if (this._store.config.spriteStyle.show) {
       this.mainContainer.add(sprite(this._store.getConfig()));
@@ -305,7 +296,7 @@ export default class ChartScene {
     const mapGroup = new Group();
     mapGroup.name = "mapGroup";
     const mapShape = new MapShape(this);
-    mapGroup.add(...mapShape.create());
+    for (const country of mapShape.create()) mapGroup.add(country);
     this.mainContainer.add(mapGroup);
     this.scene.add(this.mainContainer);
   }
@@ -349,19 +340,18 @@ export default class ChartScene {
    * @param {boolean | undefined} isLimit - Whether to limit the frames per second.
    * @returns {Function} The function to check whether to render the next frame.
    */
-  lockFps(isLimit: boolean = false): Function {
-    const clock = new Clock();
-    const FPS = 30;
-    const renderT = 1 / FPS;
-    let timeS = 0;
-    return function () {
-      if (!isLimit) return true;
-      const T = clock.getDelta();
-      timeS = timeS + T;
-      if (timeS > renderT) {
-        timeS = 0;
-        return true;
-      }
+  lockFps(isLimit: boolean = false): () => boolean {
+    if (!isLimit) return () => true;
+    let start: number | undefined;
+    let lastFrame = 0;
+    return () => {
+      const now = performance.now();
+      start ??= now;
+      // Keep a fixed 30 Hz timeline. Allow for roundoff at an exact frame boundary.
+      const frame = Math.floor((now - start) * 30 / 1000 + 1e-9);
+      if (frame === lastFrame) return false;
+      lastFrame = frame;
+      return true;
     };
   }
 
@@ -392,23 +382,19 @@ export default class ChartScene {
     if (!textConfig?.data?.length) {
       return null;
     }
-    const group = new Group();
-    group.name = "countryNames";
-    group.userData.figureType = "textMark";
-    const textMark = new TextMark(this._store);
-    textConfig.data.forEach((item) => {
-      const textGroup = textMark.create(item);
-      group.add(textGroup);
-    });
-    this.mainContainer.add(group);
+    return this._OperateView.addData("textMark", textConfig.data, this.mainContainer);
   }
 
   /**
    * Method to animate the scene.
    */
   animate() {
+    const animations = this._store.animations;
+    if (animations.disposed) return;
     if (this.notLockFps()) {
-      tweenUpdate();
+      animations.update();
+      // A completion callback can destroy this scene during update.
+      if (animations.disposed) return;
       if (this.shouldRotate()) {
         this.mainContainer.rotateY(this.options.rotateSpeed!);
       }
@@ -417,9 +403,7 @@ export default class ChartScene {
     if (this.options.mode === "3d") {
       this.controls.update(); // 确保平滑效果
     }
-    this.animationFrameId = requestAnimationFrame(() => {
-      this.animate();
-    });
+    this.animationFrameId = requestAnimationFrame(this.animateFrame);
   }
 
   initDebugHelper() {
@@ -440,13 +424,7 @@ export default class ChartScene {
    * @param {SetData[K]} data - The data to be set.
    */
   setData = async <K extends keyof SetData>(type: K, data: SetData[K]) => {
-    try {
-      this.remove(type, "removeAll");
-      const group = await this._OperateView.setData(type, data);
-      this.mainContainer.add(...group);
-    } catch (e) {
-      console.log(e);
-    }
+    await this._OperateView.setData(type, data, this.mainContainer);
   };
 
   /**
@@ -455,13 +433,13 @@ export default class ChartScene {
    * @param {SetData[K]} data - The data to be added.
    */
   addData = async <K extends keyof SetData>(type: K, data: SetData[K]) => {
-    try {
-      const group = await this._OperateView.setData(type, data);
-      this.mainContainer.add(...group);
-    } catch (e) {
-      console.log(e);
-    }
+    await this._OperateView.addData(type, data, this.mainContainer);
   };
+
+  /** Toggle drawing and picking for a data layer while its animation clock keeps running. */
+  setLayerVisible(type: keyof SetData, visible: boolean): void {
+    this._OperateView.setLayerVisible(this.mainContainer, type, visible);
+  }
 
   /**
    * Method to remove data from the scene.

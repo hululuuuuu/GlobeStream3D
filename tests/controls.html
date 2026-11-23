@@ -1,0 +1,163 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Custom controls and frame timing</title>
+<link rel="icon" href="data:,">
+<div id="map" style="width:200px;height:200px"></div>
+<pre id="result">Running…</pre>
+<pre id="metrics"></pre>
+<script type="module">
+  import earth from "../src/entry.ts";
+  import EarthController from "../src/lib/utils/controls.ts";
+
+  const dom = document.querySelector("#map");
+  earth.registerMap("controls", { type: "FeatureCollection", features: [] });
+  function assert(ok, message) {
+    if (!ok) throw new Error(message);
+  }
+  function measure(label, result) {
+    document.querySelector("#metrics").textContent += label + ": " + JSON.stringify(result) + "\n";
+  }
+  function mouse(element, type, x = 0, y = 0) {
+    element.dispatchEvent(new MouseEvent(type, { bubbles: true, clientX: x, clientY: y }));
+  }
+  function withChart(mode, check, cameraType) {
+    const chart = earth.init({ dom, map: "controls", mode, cameraType, autoRotate: false, config: { spriteStyle: { show: false } } });
+    try {
+      check(chart, chart.renderer.domElement);
+    } finally {
+      chart.destroy();
+    }
+  }
+
+  function checkHitTest(chart, canvas) {
+    canvas.style.transform = "translate(150px, 50px) scale(0.75)";
+    const rect = canvas.getBoundingClientRect();
+    const center = new MouseEvent("mousemove", { clientX: rect.left + rect.width / 2, clientY: rect.top + rect.height / 2 });
+    const corner = new MouseEvent("mousemove", { clientX: rect.left + 1, clientY: rect.top + 1 });
+    const hit = event => chart.controls.isDraggingEarth(event);
+    assert(hit(center) === true, chart.camera.type + " should hit the globe at canvas center");
+    assert(hit(corner) === false, chart.camera.type + " should miss at the canvas corner");
+    const standalone = new EarthController(chart.mainContainer, chart.renderer, {});
+    try {
+      assert(standalone.isDraggingEarth(center) === false, "a three-argument controller has no camera for hit testing");
+    } finally {
+      standalone.dispose();
+    }
+    canvas.style.display = "none";
+    assert(hit(center) === false, "an unmeasurable canvas has no hit");
+  }
+
+  function checkIdle(chart, canvas) {
+    const group = chart.mainContainer;
+    let worldY = 0, localX = 0;
+    const axes = new Set();
+    const rotateY = group.rotateOnWorldAxis.bind(group);
+    const rotateX = group.rotateX.bind(group);
+    group.rotateOnWorldAxis = (axis, angle) => { worldY++; axes.add(axis); return rotateY(axis, angle); };
+    group.rotateX = angle => { localX++; return rotateX(angle); };
+    const update = count => { for (let i = 0; i < count; i++) chart.controls.update(); };
+    update(240);
+    measure("240 idle updates [worldY, localX]", [worldY, localX]);
+    assert(worldY === 0 && localX === 0, "idle controller rotates");
+
+    mouse(canvas, "mousedown");
+    mouse(canvas, "mousemove", 4, 2);
+    mouse(canvas, "mouseup");
+    update(1000);
+    assert(axes.size === 1, "drag and inertia allocate multiple Y axes");
+    const before = [worldY, localX];
+    update(240);
+    measure("240 updates after inertia settles", [worldY - before[0], localX - before[1]]);
+    assert(worldY === before[0] && localX === before[1], "settled inertia still rotates");
+  }
+
+  function checkDrag(chart, canvas) {
+    const group = chart.mainContainer;
+    const expected = group.clone(false);
+    const yAxis = group.position.clone().set(0, 1, 0);
+    function rotateExpected(factor) {
+      expected.rotateOnWorldAxis(yAxis, 0.02 * factor);
+      expected.rotateX(0.01 * factor);
+    }
+    const matches = () => group.quaternion.angleTo(expected.quaternion) < 1e-7;
+    mouse(canvas, "mousedown");
+    mouse(canvas, "mousemove", 4, 2);
+    rotateExpected(1);
+    assert(matches(), "drag angle or axis order changed");
+    mouse(document.body, "mouseup", 250, 250);
+    assert(!chart.controls.isDragging, "mouseup outside canvas leaves drag active");
+    mouse(canvas, "mousemove", 7, 5);
+    assert(matches(), "returning to canvas resumes a released drag");
+    for (const factor of [1, 0.95]) {
+      cancelAnimationFrame(chart.animationFrameId);
+      chart.animate();
+      if (chart.options.mode === "3d") rotateExpected(factor);
+      assert(matches(), chart.options.mode + " frame changed inertia");
+    }
+  }
+
+  function checkFrames(chart) {
+    let now = 0;
+    Object.defineProperty(performance, "now", { configurable: true, value: () => now });
+    try {
+      const counts = [30, 60, 144].map(hz => {
+        now = 0;
+        const due = chart.lockFps(true);
+        assert(!due(), "limited clock renders at startup");
+        let frames = 0;
+        for (let i = 1; i <= hz * 10; i++) {
+          now = i * 1000 / hz;
+          if (due()) frames++;
+        }
+        return frames;
+      });
+      measure("10s at 30/60/144 Hz", counts);
+      assert(counts.every(count => count === 300), "30fps limiter loses frames");
+      const due = chart.lockFps(true);
+      due();
+      now += 5000;
+      assert(due() && !due(), "long gap triggers more than one frame");
+      now += 10;
+      assert(!due(), "long gap leaves overdue frames");
+      const unlocked = chart.lockFps(false);
+      assert(unlocked() && unlocked(), "unlimited mode skips frames");
+    } finally {
+      delete performance.now;
+    }
+  }
+
+  function checkRaf(chart) {
+    const raf = window.requestAnimationFrame;
+    const scheduled = [];
+    window.requestAnimationFrame = callback => {
+      scheduled.push(callback);
+      return raf(callback);
+    };
+    try {
+      cancelAnimationFrame(chart.animationFrameId);
+      chart.animate();
+      for (let i = 0; i < 4; i++) {
+        cancelAnimationFrame(chart.animationFrameId);
+        scheduled[i](performance.now());
+      }
+      const unique = new Set(scheduled).size;
+      measure("distinct callbacks in 5 RAF requests", unique);
+      assert(scheduled.length === 5 && unique === 1, "each frame allocates a new callback");
+    } finally {
+      window.requestAnimationFrame = raf;
+    }
+  }
+
+  const failures = [];
+  for (const [mode, check, cameraType] of [
+    ["3d", checkIdle], ["3d", checkDrag], ["2d", checkDrag], ["2d", checkFrames], ["2d", checkRaf],
+    ["3d", checkHitTest, "OrthographicCamera"], ["3d", checkHitTest, "PerspectiveCamera"],
+  ]) {
+    try {
+      withChart(mode, check, cameraType);
+    } catch (error) {
+      failures.push(mode + " " + check.name + ": " + error.message);
+    }
+  }
+  document.querySelector("#result").textContent = failures.length ? "FAIL\n" + failures.join("\n") : "PASS";
+</script>

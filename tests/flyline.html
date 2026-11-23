@@ -1,0 +1,188 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Fly line geometry and style regression test</title>
+<link rel="icon" href="data:,">
+<div id="map" style="width:240px;height:180px"></div>
+<pre id="result">Running…</pre>
+<pre id="geometry-metrics"></pre>
+<script type="module">
+  import earth from "../src/entry.ts";
+  import { Vector3 } from "three";
+  import { _3Dto2D } from "../src/lib/utils/math.ts";
+
+  earth.registerMap("flyline", { type: "FeatureCollection", features: [] });
+  const results = [];
+  function check(ok, label) {
+    results.push((ok ? "PASS " : "FAIL ") + label);
+  }
+  function scene(mode, show, config = {}) {
+    return earth.init({
+      dom: document.querySelector("#map"), map: "flyline", mode, autoRotate: false,
+      config: {
+        pathStyle: { show, color: "rgba(255, 0, 0, 0.4)" },
+        scatterStyle: { show: false }, spriteStyle: { show: false },
+        ...config,
+      },
+    });
+  }
+  function surface([lon, lat], radius) {
+    const phi = lat * Math.PI / 180, theta = lon * Math.PI / 180;
+    return new Vector3(Math.cos(phi) * Math.cos(theta), Math.sin(phi), -Math.cos(phi) * Math.sin(theta)).multiplyScalar(radius);
+  }
+  async function checkGlobeGeometry() {
+    const radius = 160, tolerance = 3e-5;
+    const metrics = [];
+    for (const [factor, routes] of [
+      [0.2, [
+        ["ordinary", [10, 20], [30, 30]], ["reversed", [30, 30], [10, 20]],
+        ["coincident", [41, -33], [41, -33]], ["zero length", [0, 0], [0, 0]],
+        ["nearly coincident", [41,-33], [41.0000001,-33.0000001]],
+        ["antipodes", [15, 28], [-165, -28]], ["antipodes reversed", [-165, -28], [15, 28]],
+        ["nearly antipodal", [15, 28], [-164.9999999, -28.0000001]],
+        ["pole aliases", [0, 90], [132, 90]], ["opposite poles", [0, 90], [90, -90]],
+        ["near north pole", [32, 89.999999], [-142, 89.999998]], ["date line", [179, 65], [-179, 65]],
+      ]],
+      [0, [["surface arc", [12, 23], [118, -41]]]],
+      [0.7, [["high arc", [12, 23], [118, -41]]]],
+      [(Math.SQRT1_2 - 1) / (Math.PI / 2), [["flat chord", [0, 0], [90, 0]]]],
+    ]) {
+      const chart = scene("3d", true, { R: radius, flyLineRFactor: factor });
+      let antipodalMidpoint;
+      try {
+        for (const [name, from, to] of routes) {
+          const start = surface(from, radius), end = surface(to, radius);
+          const angle = 2 * Math.atan2(start.distanceTo(end), start.clone().add(end).length());
+          const path = await setRoute(chart, from, to);
+          const starts = path.geometry.getAttribute("instanceStart"), ends = path.geometry.getAttribute("instanceEnd");
+          function position(mesh, attr, index) {
+            return chart.mainContainer.worldToLocal(mesh.localToWorld(new Vector3().fromBufferAttribute(attr, index)));
+          }
+          const points = Array.from({ length: starts.count }, (_, i) => position(path, starts, i));
+          points.push(position(path, ends, ends.count - 1));
+          const middle = points[(points.length - 1) / 2];
+          const endpoint = Math.max(points[0].distanceTo(start), points.at(-1).distanceTo(end));
+          const height = middle.length() - radius;
+          const invalid = points.filter(p => !Number.isFinite(p.lengthSq())).length;
+          const trail = chart.mainContainer.getObjectByName("tadpolePointsMesh");
+          const trailPositions = trail.geometry.getAttribute("position");
+          const trailError = position(trail, trailPositions, 0).distanceTo(start);
+          metrics.push({ name, invalid, endpoint, height, trailError });
+          check(!invalid && endpoint < tolerance && Math.abs(height - radius * angle * factor) < tolerance
+            && trailPositions.array.every(Number.isFinite) && trailError < tolerance, "3d " + name + " path, apex and trail");
+          if (name === "nearly coincident" || name === "near north pole") {
+            const expected = radius * angle * factor;
+            check(Math.abs(height - expected) < expected * 0.001, "3d " + name + " retains sub-unit arc height");
+          }
+          if (name === "antipodes") antipodalMidpoint = middle;
+          if (name === "antipodes reversed") check(middle.distanceTo(antipodalMidpoint) < tolerance, "antipodes use the same plane in reverse");
+          check(path.userData.from.lon === from[0] && path.userData.to.lat === to[1], "3d " + name + " pick data");
+
+          // Road uses this frame with +X at the start and -X at the end.
+          const { quaternion, startPoint3D: a, endPoint3D: b } = _3Dto2D(start, end);
+          check(a.x >= -1e-10 && Math.abs(a.x + b.x) < 1e-10 && Math.abs(a.y - b.y) < 1e-10
+            && Math.max(Math.abs(a.z), Math.abs(b.z)) < 1e-10
+            && a.applyQuaternion(quaternion).distanceTo(start) < 1e-10
+            && b.applyQuaternion(quaternion).distanceTo(end) < 1e-10, "3d " + name + " shared frame");
+        }
+      } finally {
+        chart.destroy();
+      }
+    }
+    document.querySelector("#geometry-metrics").textContent = JSON.stringify(metrics, (_, v) =>
+      typeof v === "number" && !Number.isFinite(v) ? String(v) : v, 2);
+  }
+  async function checkGlobeAnimation() {
+    const chart = scene("3d", true);
+    Object.defineProperty(performance, "now", { configurable: true, value: () => 1000 });
+    try {
+      for (const image of [false, true]) {
+        const item = {
+          from: { lon: 15, lat: 28 }, to: { lon: -165, lat: -28 },
+          style: { flyLineStyle: { duration: 100, repeat: 0, size: 6, color: "rgba(255,0,0,0.5)",
+            img: image ? new URL("../src/assets/image/point.png", location.href).href : undefined } },
+        };
+        await chart.setData("flyLine", [item]);
+        const path = chart.mainContainer.getObjectByName("pathLine");
+        const marker = chart.mainContainer.getObjectByName(image ? "flyLineSprite" : "tadpolePointsMesh");
+        const markerLocal = image ? new Vector3() : new Vector3().fromBufferAttribute(marker.geometry.attributes.position, 0);
+        if (image) check(marker.material.opacity === 0.5 && marker.scale.x === 6 && marker.material.map, "3d image style");
+        for (const [time, attr, index] of [[1000, "instanceStart", 0], [1050, "instanceStart", 100], [1100, "instanceEnd", 199]]) {
+          chart._store.animations.update(time);
+          const expected = path.localToWorld(new Vector3().fromBufferAttribute(path.geometry.attributes[attr], index));
+          const actual = marker.localToWorld(markerLocal.clone());
+          check(actual.distanceTo(expected) < 3e-5, (image ? "sprite" : "trail") + " follows 3d path at " + time);
+          if (!image && time < 1100) {
+            // Sample 140 of 200 on the one-seventh-length trail advances 20 path segments.
+            const trailPoint = marker.localToWorld(new Vector3().fromBufferAttribute(marker.geometry.attributes.position, 140));
+            const pathPoint = path.localToWorld(new Vector3().fromBufferAttribute(path.geometry.attributes.instanceStart, index + 20));
+            check(trailPoint.distanceTo(pathPoint) < 3e-5, "3d trail orientation and length at " + time);
+          }
+        }
+      }
+    } finally {
+      delete performance.now;
+      chart.destroy();
+    }
+  }
+  async function setRoute(chart, from, to, pathStyle) {
+    await chart.setData("flyLine", [{
+      from: { lon: from[0], lat: from[1] }, to: { lon: to[0], lat: to[1] },
+      style: pathStyle ? { pathStyle } : undefined,
+    }]);
+    const path = chart.mainContainer.getObjectByName("pathLine");
+    const trail = chart.mainContainer.getObjectByName("tadpolePointsMesh");
+    if (!trail) throw new Error("Missing fly line trail");
+    return path;
+  }
+  async function checkGeometry() {
+    const chart = scene("2d", true);
+    try {
+      // For ordinary routes the midpoint locks the original bend and its magnitude.
+      for (const [name, from, to, middle] of [
+        ["east", [10, 20], [30, 20], [20, 22]],
+        ["west", [30, 20], [10, 20], [20, 22]],
+        ["north", [10, 20], [10, 40], [12, 30]],
+        ["rising", [10, 20], [30, 30], [21, 23]],
+        ["rising reversed", [30, 30], [10, 20], [21, 23]],
+        ["falling", [10, 30], [30, 20], [21, 27]],
+        ["coincident", [10, 20], [10, 20], [10, 20]],
+      ]) {
+        const path = await setRoute(chart, from, to);
+        const positions = path.geometry.getAttribute("position");
+        const matches = (i, [x, y]) => Math.abs(positions.getX(i) - x) < 1e-5
+          && Math.abs(positions.getY(i) - y) < 1e-5;
+        check(positions.array.every(Number.isFinite) && matches(0, from)
+          && matches((positions.count - 1) / 2, middle) && matches(positions.count - 1, to),
+          "2d " + name + " has finite vertices and the expected arc");
+      }
+      check(!await setRoute(chart, [10, 20], [30, 30], { show: false }), "2d item hides path");
+    } finally {
+      chart.destroy();
+    }
+  }
+  async function checkStyle(mode) {
+    const chart = scene(mode, false);
+    const route = (style) => setRoute(chart, [10, 20], [30, 30], style);
+    try {
+      check(!await route(), mode + " respects global show: false");
+      check(!await route({ color: "blue" }), mode + " color override inherits show: false");
+      const path = await route({ show: true });
+      check(path?.material.color.getHex() === 0xff0000 && path.material.opacity === 0.4
+        && path.material.transparent, mode + " show override inherits RGBA");
+      check(!await route(), mode + " item override leaves the global style intact");
+    } finally {
+      chart.destroy();
+    }
+  }
+  try {
+    await checkGeometry();
+    await checkGlobeGeometry();
+    await checkGlobeAnimation();
+    await checkStyle("2d");
+    await checkStyle("3d");
+  } catch (error) {
+    results.push("FAIL " + error.stack);
+  }
+  document.querySelector("#result").textContent = results.join("\n");
+  if (results.some(line => line.startsWith("FAIL"))) throw new Error("Fly line regression");
+</script>

@@ -1,4 +1,4 @@
-import { Quaternion, Vector3 } from "three";
+import { MathUtils, Matrix4, Quaternion, Vector3 } from "three";
 import { Coordinates3D } from "@/lib/interface";
 
 /**
@@ -28,51 +28,38 @@ const lon2xyz = (
   };
 };
 const _3Dto2D = (start: Vector3, end: Vector3) => {
-  //球心坐标
-  const origin = new Vector3(0, 0, 0); //球心坐标
-  const startDir = start.clone().sub(origin); //飞线起点与球心构成方向向量
-  const endDir = end.clone().sub(origin); //飞线结束点与球心构成方向向量
-  // startDir和endDir构成一个三角形，.cross()叉乘计算该三角形法线normal
-  const normal = new Vector3().crossVectors(startDir, endDir).normalize();
-  const xoy_quaternion = new Quaternion().setFromUnitVectors(
-    normal,
-    new Vector3(0, 0, 1)
-  );
-  const start_xoy = start.clone().applyQuaternion(xoy_quaternion);
-  const end_xoy = end.clone().applyQuaternion(xoy_quaternion);
-
-  const middle_xoy = new Vector3()
-    .addVectors(start_xoy, end_xoy)
-    .multiplyScalar(0.5)
-    .normalize();
-  const xoy_quaternion_middle = new Quaternion().setFromUnitVectors(
-    middle_xoy,
-    new Vector3(0, 1, 0)
-  );
-  const start_xoy_middle = start_xoy
-    .clone()
-    .applyQuaternion(xoy_quaternion_middle);
-  const end_xoy_middle = end_xoy.clone().applyQuaternion(xoy_quaternion_middle);
-
-  const quaternionInverse = xoy_quaternion
-    .clone()
-    .invert()
-    .multiply(xoy_quaternion_middle.clone().invert());
+  const u = start.clone().normalize();
+  const v = end.clone().normalize();
+  const cosine = u.dot(v);
+  // Crossing the small difference (or sum near antipodes) avoids subtracting
+  // nearly equal products when computing the plane normal.
+  const offset = v.clone().addScaledVector(u, cosine < 0 ? 1 : -1);
+  const normal = new Vector3().crossVectors(u, offset);
+  const sine = normal.length();
+  const halfAngle = Math.atan2(sine, cosine) / 2;
+  if (sine <= 8 * Number.EPSILON) {
+    // Collinear endpoints have no unique plane. Use the northward tangent,
+    // or the +X tangent near a pole, consistently in both travel directions.
+    const reference = Math.abs(u.y) < 0.9 ? new Vector3(0, 1, 0) : new Vector3(1, 0, 0);
+    normal.crossVectors(u, reference);
+  }
+  normal.normalize();
+  const yAxis = u.clone().applyAxisAngle(normal, halfAngle);
+  const xAxis = new Vector3().crossVectors(yAxis, normal);
+  const quaternion = new Quaternion().setFromRotationMatrix(new Matrix4().makeBasis(xAxis, yAxis, normal));
+  const x = Math.sin(halfAngle);
+  const y = Math.cos(halfAngle);
   return {
-    // 返回两次旋转四元数的逆四元数
-    quaternion: quaternionInverse,
-    // 范围两次旋转后在XOY平面上关于y轴对称的圆弧起点和结束点坐标
-    startPoint3D: start_xoy_middle,
-    endPoint3D: end_xoy_middle,
+    quaternion,
+    startPoint3D: new Vector3(x, y, 0).multiplyScalar(start.length()),
+    endPoint3D: new Vector3(-x, y, 0).multiplyScalar(end.length()),
   };
 };
 const radianAOB = (A: Vector3, B: Vector3, O: Vector3) => {
   // dir1、dir2：球面上两个点和球心构成的方向向量
   const dir1 = A.clone().sub(O).normalize();
   const dir2 = B.clone().sub(O).normalize();
-  //点乘.dot()计算夹角余弦值
-  const cosAngle = dir1.clone().dot(dir2);
-  return Math.acos(cosAngle); //余弦值转夹角弧度值,通过余弦值可以计算夹角范围是0~180度
+  return Math.acos(MathUtils.clamp(dir1.dot(dir2), -1, 1));
 };
 //求三个点的外接圆圆心，p1, p2, p3表示三个点的坐标Vector3。
 const threePointCenter = (p1: Vector3, p2: Vector3, p3: Vector3) => {
@@ -91,28 +78,13 @@ const threePointCenter = (p1: Vector3, p2: Vector3, p3: Vector3) => {
   // 三点外接圆圆心坐标
   return new Vector3(x, y, 0);
 };
-//根据两点生成直角坐标系 函数表达式
+// 2D 飞线的控制点沿弦的垂线偏移五分之一弦长。
 function getFunctionExpression(src: Vector3, dist: Vector3) {
-  // 计算斜率
-  const k = (dist.y - src.y) / (dist.x - src.x);
-  // 计算截距
-  const b = src.y - k * src.x;
-
-  // 计算垂直函数的斜率
-  const k_perpendicular = -1 / k;
-
-  // 计算截距
-  const x1 = (dist.x + src.x) / 2,
-    y1 = (dist.y + src.y) / 2;
-  const b_perpendicular = x1 - k_perpendicular * y1;
-  const distance = src.distanceTo(dist);
-  return getPointByDistance(
-    x1,
-    y1,
-    k_perpendicular,
-    b_perpendicular,
-    distance / 5
-  );
+  const midpoint = new Vector3((src.x + dist.x) / 2, (src.y + dist.y) / 2, 0);
+  const normal = new Vector3(dist.y - src.y, src.x - dist.x, 0);
+  // 保留普通路线向东弯曲的方向；同纬度时统一向北，交换端点仍沿同一条弧线。
+  if (normal.x < 0 || (normal.x === 0 && normal.y < 0)) normal.negate();
+  return midpoint.add(normal.setLength(src.distanceTo(dist) / 5));
 }
 //根据已知函数距离求点位
 function getPointByDistance(
@@ -127,21 +99,7 @@ function getPointByDistance(
   const y = (s * k) / Math.sqrt(1 + Math.pow(k, 2));
   return new Vector3(x1 + x, y1 + y, 0);
 }
-function uuid() {
-  let s: any[] = [];
-  const hexDigits = "0123456789abcdef";
-  for (let i = 0; i < 36; i++) {
-    s[i] = hexDigits.substring(Math.floor(Math.random() * 0x10), 1);
-  }
-  // bits 12-15 of the time_hi_and_version field to 0010
-  s[14] = "4";
-  // bits 6-7 of the clock_seq_hi_and_reserved to 01
-  // tslint:disable-next-line:no-bitwise
-  s[19] = hexDigits.substring((s[19] & 0x3) | 0x8, 1);
-  // tslint:disable-next-line:no-bitwise
-  s[8] = s[13] = s[18] = s[23] = "-";
-  return s.join("");
-}
+const uuid = MathUtils.generateUUID;
 //计算比例尺
 function getScale(data: number[], base: number) {
   const maxData = Math.max(...data);

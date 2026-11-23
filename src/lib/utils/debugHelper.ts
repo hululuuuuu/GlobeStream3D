@@ -131,9 +131,6 @@ export default class DebugHelper {
         onChange: (checked: boolean) => {
           cfg.stopRotateByHover = checked;
           this.syncOptionsConfig();
-          if (this.chart._eventStore) {
-            this.chart._eventStore.areaColorNeedChange = checked;
-          }
         },
       },
       {
@@ -350,9 +347,7 @@ export default class DebugHelper {
         value: cfg.hoverRegionStyle?.show ?? true,
         onChange: (checked: boolean) => {
           cfg.hoverRegionStyle = { ...(cfg.hoverRegionStyle || {}), show: checked };
-          if (this.chart._eventStore) {
-            this.chart._eventStore.areaColorNeedChange = checked;
-          }
+          if (!checked) this.chart._eventStore?.clearRegionHover();
           this.syncOptionsConfig();
         },
       },
@@ -486,6 +481,7 @@ export default class DebugHelper {
   updateCountryAreaColor(color: string) {
     this.chart.scene.traverse((obj) => {
       if (obj instanceof Mesh && obj.userData.type === "country") {
+        obj.userData.backupColor = color;
         const material = obj.material as any;
         if (material.color) {
           (material.color as Color).set(color);
@@ -510,6 +506,7 @@ export default class DebugHelper {
   updateCountryOpacity(opacity: number) {
     this.chart.scene.traverse((obj) => {
       if (obj instanceof Mesh && obj.userData.type === "country") {
+        obj.userData.opacity = opacity;
         const material = obj.material as any;
         material.transparent = opacity < 1;
         material.opacity = opacity;

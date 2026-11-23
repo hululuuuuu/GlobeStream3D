@@ -1,0 +1,99 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Radar layer integration test</title>
+<link rel="icon" href="data:,">
+<div id="map" style="width:400px;height:400px"></div>
+<pre id="result">Running…</pre>
+<script type="module">
+  import earth from "../src/entry.ts";
+
+  const assert = (ok, message) => { if (!ok) throw new Error(message); };
+  earth.registerMap("test", {
+    type: "FeatureCollection",
+    features: [{
+      type: "Feature", properties: { name: "Test island" },
+      geometry: { type: "Polygon", coordinates: [[[0, 0], [0, 4], [4, 4], [4, 0], [0, 0]]] },
+    }],
+  });
+  // Sample the visible sweep between rings after exactly one second.
+  async function checkSweep(chart, speed, expectedQuarter) {
+    let now = 1000;
+    Object.defineProperty(performance, "now", { configurable: true, value: () => now });
+    try {
+      await chart.setData("radar", [{ lon: -50, lat: 0, style: { speed, radius: 42 } }]);
+      now += 1000;
+      chart.renderer.render(chart.scene, chart.camera);
+      const gl = chart.renderer.getContext();
+      const pixel = new Uint8Array(4);
+      const brightness = [0, 1, 2, 3].map(quarter => {
+        // Sample just behind the leading edge, so both scan directions cover the probe.
+        const angle = quarter * Math.PI / 2 - (speed < 0 ? -1 : 1) * Math.PI / 12;
+        const x = 150 + Math.round(21 * Math.cos(angle));
+        const y = 200 + Math.round(21 * Math.sin(angle));
+        gl.readPixels(x, y, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixel);
+        return pixel[1];
+      });
+      const brightest = Math.max(...brightness);
+      assert(brightest - Math.min(...brightness) > 30, "visible sweep");
+      assert(brightness.indexOf(brightest) === expectedQuarter, "scan direction at speed " + speed);
+    } finally {
+      delete performance.now;
+    }
+  }
+  async function check(mode) {
+    const chart = earth.init({
+      dom: document.querySelector("#map"), map: "test", mode, autoRotate: false,
+      config: { pixelRatio: 1, spriteStyle: { show: false }, radarStyle: { radius: 20, speed: 0 } },
+    });
+    const stations = () => chart.mainContainer.children.filter(g => g.userData.figureType === "radar");
+    try {
+      const station = { id: 0, lon: -90, lat: 0 };
+      await chart.setData("radar", [station]);
+      assert(stations().length === 1 && stations()[0].name === "0", mode + " creates the station");
+      const mesh = stations()[0].children[0];
+      chart.renderer.render(chart.scene, chart.camera);
+      assert(chart.renderer.info.programs.every(p => p.diagnostics?.runnable !== false), "shader links");
+      const bounds = mesh.geometry.attributes.position;
+      const vertex = mesh.position.clone();
+      let maxRadius = 0;
+      for (let i = 0; i < bounds.count; i++) {
+        mesh.localToWorld(vertex.fromBufferAttribute(bounds, i));
+        if (mode === "3d") {
+          assert(Math.abs(vertex.length() - 160) < 1, "footprint follows the sphere");
+          maxRadius = Math.max(maxRadius, Math.acos(vertex.z / vertex.length()) * 180 / Math.PI);
+        } else {
+          maxRadius = Math.max(maxRadius, Math.hypot(vertex.x + 90, vertex.y));
+        }
+      }
+      assert(Math.abs(maxRadius - 20) < 0.01, "configured angular radius");
+      let disposed = 0;
+      mesh.material.addEventListener("dispose", () => disposed++);
+      mesh.geometry.addEventListener("dispose", () => disposed++);
+      await chart.addData("radar", [{ lon: 20, lat: 80, style: { speed: -1, color: "red" } }]);
+      chart.remove("radar", ["0"]);
+      assert(disposed === 2 && stations().length === 1 && stations()[0].name === "20-80", "targeted disposal");
+      await Promise.all([
+        chart.setData("radar", [station]),
+        chart.setData("radar", [{ id: "last", lon: 179, lat: 90 }]),
+      ]);
+      assert(stations().length === 1 && stations()[0].name === "last", "last replacement wins");
+      chart.remove("radar");
+      assert(stations().length === 0, "remove all");
+      if (mode === "2d") {
+        await checkSweep(chart, 0.25, 1);
+        await checkSweep(chart, -0.25, 3);
+        await checkSweep(chart, 0, 0);
+      }
+    } finally {
+      chart.destroy();
+    }
+  }
+  try {
+    await check("3d");
+    await check("2d");
+    document.querySelector("#result").textContent = "PASS";
+  } catch (e) {
+    document.querySelector("#result").textContent = String(e.stack || e);
+    throw e;
+  }
+</script>

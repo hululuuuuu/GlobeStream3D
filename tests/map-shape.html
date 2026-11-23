@@ -1,0 +1,191 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Map shape geometry and startup regression</title>
+<link rel="icon" href="data:,">
+<pre id="result">Running…</pre>
+<pre id="measurements"></pre>
+<div id="map" style="width:200px;height:160px"></div>
+<script type="module">
+  import earth from "../src/entry.ts";
+  import MapShape from "../src/lib/figures/MapShape.ts";
+  import Store from "../src/lib/store/store.ts";
+  import world from "../src/map/world.json";
+
+  const measurements = [], failures = [];
+  const name = "map-shape-world";
+  earth.registerMap(name, world);
+  function check(ok, message) { if (!ok) failures.push(message); }
+  const config = {
+    R: 174, mapStyle: { areaColor: "#385865", lineColor: "#547481", material: "MeshLambertMaterial" },
+    regions: { China: { areaColor: "#426572" } }, spriteStyle: { show: false },
+  };
+  function shape(mode) {
+    const options = { mode, map: name, config };
+    const store = new Store();
+    store.setConfig(options);
+    return new MapShape({ options, _store: store });
+  }
+  function dispose(groups) {
+    for (const group of groups) group.traverse(node => {
+      node.geometry?.dispose();
+      node.material?.dispose();
+    });
+  }
+
+  // Hash the public scene buffers in draw order outside the timing interval.
+  async function signature(groups) {
+    const chunks = [];
+    const topology = [];
+    let vertices = 0, outlines = 0, indices = 0;
+    const encoder = new TextEncoder();
+    for (const group of groups) {
+      chunks.push(encoder.encode(group.name));
+      for (const node of group.children) {
+        const geo = node.geometry;
+        const meta = [node.type, node.name, node.userData, node.material.type,
+          node.material.color.getHex(), node.material.opacity, node.material.side];
+        chunks.push(encoder.encode(JSON.stringify(meta)));
+        for (const attr of [geo.attributes.position, geo.index, geo.attributes.normal]) {
+          if (attr) chunks.push(new Uint8Array(attr.array.buffer, attr.array.byteOffset, attr.array.byteLength));
+        }
+        if (node.isLineLoop) outlines++;
+        else {
+          vertices += geo.attributes.position.count;
+          indices += geo.index.count;
+          topology.push(geo.index.array);
+        }
+      }
+    }
+    async function digest(parts) {
+      const bytes = await crypto.subtle.digest("SHA-256", await new Blob(parts).arrayBuffer());
+      return Array.from(new Uint8Array(bytes), byte => byte.toString(16).padStart(2, "0")).join("");
+    }
+    return { regions: groups.length, outlines, vertices, indices, hash: await digest(chunks), topology: await digest(topology) };
+  }
+
+  async function checkWorld(mode) {
+    const builder = shape(mode);
+    let sorts = 0, sinCalls = 0, groups;
+    const sort = Array.prototype.sort, sin = Math.sin;
+    try {
+      Array.prototype.sort = function (...args) { sorts++; return sort.apply(this, args); };
+      Math.sin = function (angle) { sinCalls++; return sin(angle); };
+      groups = builder.create();
+    } finally {
+      Array.prototype.sort = sort;
+      Math.sin = sin;
+    }
+    try {
+      const geometry = await signature(groups);
+      measurements.push({ mode, ...geometry, sorts, sinCalls });
+      check(geometry.regions === 217 && geometry.outlines === 1082, mode + " world regions and boundaries");
+      check(geometry.vertices === 30008 && geometry.indices === 92379, mode + " world mesh size");
+      // Topology stays exact across modes. The full signature also records floating-point
+      // normals and positions so before/after builds can be compared on the same browser.
+      check(geometry.topology === "22f165b30e38446e7bd6388ce439edcbd3842782b8e71c2e7a4c9c7c8886bc8a",
+        mode + " world triangle order or winding changed");
+      check(sorts === 0, mode + " sorts coordinates to find bounds");
+      if (mode === "2d") check(sinCalls === 0, "2d projects unused spherical coordinates");
+      else check(sinCalls <= geometry.vertices * 2, "3d projects border and surface vertices twice");
+    } finally { dispose(groups); }
+  }
+
+  function benchmark(measure, warmup, runs, metric) {
+    const samples = { "2d": [], "3d": [] };
+    for (let run = 0; run < warmup + runs; run++) {
+      for (const mode of run % 2 ? ["3d", "2d"] : ["2d", "3d"]) {
+        const elapsed = measure(mode);
+        if (run >= warmup) samples[mode].push(+elapsed.toFixed(2));
+      }
+    }
+    for (const [mode, times] of Object.entries(samples)) {
+      const sorted = [...times].sort((a,b) => a-b);
+      measurements.push({ metric, mode, warmup, medianMs: sorted[Math.floor(runs/2)], samplesMs: times });
+    }
+  }
+
+  const ring = [[0,0],[6,0],[6,4],[0,4],[0,0]];
+  const feature = (name, geometry) => ({ type: "Feature", properties: { name, id: 73 }, geometry });
+  function publicMap(mode, features, verify) {
+    earth.registerMap("map-shape-fixture", { type: "FeatureCollection", features });
+    const chart = earth.init({ dom: document.querySelector("#map"), mode, map: "map-shape-fixture",
+      autoRotate: false, config: { ...config, regions: {
+        Hidden: { show: false }, Island: { areaColor: "#abcdef", opacity: 0.4 },
+      } } });
+    try { verify(chart.mainContainer); } finally { chart.destroy(); }
+  }
+  function checkOrdinary(mode) {
+    const polygon = { type: "Polygon", coordinates: [ring] };
+    publicMap(mode, [feature("Island", polygon), feature("Hidden", polygon)], root => {
+      const group = root.getObjectByName("countryGroup-Island");
+      const outline = group.children[0], mesh = group.getObjectByName("Island");
+      check(!root.getObjectByName("countryGroup-Hidden") && mesh.userData.id === 73
+        && mesh.userData.type === "country", mode + " hidden region and identity");
+      check(mesh.material.color.getHexString() === "abcdef" && mesh.userData.backupColor === "#abcdef"
+        && mesh.material.opacity === 0.4 && mesh.material.transparent && mesh.material.isMeshLambertMaterial,
+        mode + " region material");
+      check(outline.isLineLoop && outline.geometry.attributes.position.count === ring.length
+        && outline.material.color.getHexString() === "547481", mode + " outline");
+      const p = outline.geometry.attributes.position;
+      check(p.array.buffer !== mesh.geometry.attributes.position.array.buffer,
+        mode + " surface and outline have independently mutable buffers");
+      for (let i = 0; i < ring.length; i++) {
+        const [lon, lat] = ring[i];
+        const a = -lon * Math.PI / 180, b = lat * Math.PI / 180, r = config.R + 0.1;
+        const expected = mode === "2d" ? [lon,lat,0] : [r*Math.cos(b)*Math.cos(a), r*Math.sin(b), r*Math.cos(b)*Math.sin(a)];
+        const actual = [p.getX(i), p.getY(i), p.getZ(i)];
+        check(actual.every((v,j) => Math.abs(v-expected[j]) < 0.00002), mode + " boundary coordinate " + i);
+      }
+    });
+  }
+  async function test(label, action) {
+    try { await action(); } catch (error) { failures.push(label + ": " + error); }
+  }
+  for (const mode of ["2d","3d"]) {
+    await test(mode + " world", () => checkWorld(mode));
+    await test(mode + " fixture", () => checkOrdinary(mode));
+  }
+  await test("altitude", () => {
+    const elevated = ring.map(([x,y]) => [x,y,90]);
+    publicMap("2d", [feature("Island", { type: "Polygon", coordinates: [elevated] })], root => {
+      const points = root.getObjectByName("countryGroup-Island").children[0].geometry.attributes.position;
+      check(points.count === ring.length && ring.every(([x,y],i) =>
+        points.getX(i) === x && points.getY(i) === y && points.getZ(i) === 0),
+        "GeoJSON altitude must preserve XY vertex stride");
+    });
+  });
+  await test("empty features", () => {
+    const empty = [null, { type: "Point", coordinates: [1,1] }, { type: "Polygon", coordinates: [] },
+      { type: "MultiPolygon", coordinates: [[[]]] }];
+    publicMap("3d", [...empty.map((g,i) => feature("Empty" + i,g)), feature("Island", { type: "Polygon", coordinates: [ring] })],
+      root => check(root.getObjectByName("Island") && !empty.some((_,i) => root.getObjectByName("countryGroup-Empty" + i)),
+        "empty features leave valid regions intact"));
+  });
+  await test("large indices", () => {
+    // Exercise the index-buffer boundary without running Delaunay on 65K artificial points.
+    const geo = shape("2d").createShapeGeometry([0,1,65536], new Float32Array(65537 * 3));
+    try { check(geo.index.getX(2) === 65536, "triangle vertex 65536 wraps to zero"); }
+    finally { geo.dispose(); }
+  });
+  await test("world geometry benchmark", () => benchmark(mode => {
+    const builder = shape(mode);
+    const start = performance.now();
+    const groups = builder.create();
+    const elapsed = performance.now() - start;
+    dispose(groups);
+    return elapsed;
+  }, 3, 9, "MapShape.create"));
+  if (new URLSearchParams(location.search).has("startup")) {
+    await test("public startup benchmark", () => benchmark(mode => {
+      const dom = document.querySelector("#map");
+      const start = performance.now();
+      const chart = earth.init({ dom, mode, config, map: name, autoRotate: false });
+      const elapsed = performance.now() - start;
+      chart.destroy();
+      chart.renderer.forceContextLoss();
+      return elapsed;
+    }, 2, 7, "earth.init"));
+  }
+  document.querySelector("#measurements").textContent = measurements.map(row => JSON.stringify(row)).join("\n");
+  document.querySelector("#result").textContent = failures.length ? "FAIL\n" + failures.join("\n") : "PASS";
+</script>

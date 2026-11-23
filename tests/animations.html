@@ -1,0 +1,257 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Animation lifecycle integration test</title>
+<link rel="icon" href="data:,">
+<style>.map { width: 180px; height: 120px; }</style>
+<pre id="result">Running…</pre>
+<pre id="measurements"></pre>
+<script type="module">
+  import earth from "../src/entry.ts";
+  import { Group, Tween, getAll } from "@tweenjs/tween.js";
+
+  earth.registerMap("animations", { type: "FeatureCollection", features: [] });
+  const output = [], failures = [];
+  const charts = new Set();
+  const groups = new Set();
+  // Observe membership without advancing time or replacing a chart's render loop.
+  const originalAdd = Group.prototype.add;
+  Group.prototype.add = function (tween) {
+    groups.add(this);
+    return originalAdd.call(this, tween);
+  };
+  const active = () => [...groups].reduce((n, group) => n + group.getAll().length, 0);
+  function check(label, actual, expected) {
+    const ok = JSON.stringify(actual) === JSON.stringify(expected);
+    output.push(label + " = " + JSON.stringify(actual) + (ok ? "" : " (expected " + JSON.stringify(expected) + ")"));
+    if (!ok) failures.push(label);
+  }
+  function chart(mode = "2d", config = {}) {
+    const dom = document.body.appendChild(document.createElement("div"));
+    dom.className = "map";
+    const scene = earth.init({ dom, mode, map: "animations", autoRotate: false,
+      config: { pixelRatio: 1, spriteStyle: { show: false }, ...config } });
+    charts.add(scene);
+    return scene;
+  }
+  function destroy(scene) {
+    scene.destroy();
+    charts.delete(scene);
+    scene.options.dom.remove();
+  }
+  function point(id, style) { return { id, lon: 12, lat: 20, style }; }
+  function route(generation, style) {
+    return { from: point("start"), to: { id: "end", lon: 31, lat: 45 }, generation,
+      style: { flyLineStyle: { color: "white", ...style } } };
+  }
+  const frames = () => new Promise(resolve => requestAnimationFrame(resolve));
+  async function waitFor(predicate) {
+    const until = performance.now() + 3000;
+    while (!predicate() && performance.now() < until) await frames();
+  }
+  async function run(name, test) {
+    try {
+      await test();
+    } catch (error) {
+      failures.push(name);
+      output.push(name + " threw " + error.stack);
+    } finally {
+      for (const scene of charts) destroy(scene);
+      // Isolate subsequent cases when testing a broken build in this dedicated page.
+      for (const group of groups) for (const tween of group.getAll()) tween.stop();
+      groups.clear();
+    }
+  }
+
+  await run("points", async () => {
+    const scene = chart();
+    const counts = [];
+    for (let i = 0; i < 5; i++) {
+      await scene.addData("point", [point("pulse"), point("pulse")]);
+      counts.push(active());
+      scene.remove("point", ["pulse"]);
+      counts.push(active());
+    }
+    check("five add/targeted remove cycles", counts, [1,0,1,0,1,0,1,0,1,0]);
+    check("remaining point groups", scene.mainContainer.children.filter(x => x.userData.figureType === "point").length, 0);
+  });
+
+  for (const mode of ["2d", "3d"]) await run(mode + " flights", async () => {
+    const scene = chart(mode), calls = [], counts = [];
+    for (let generation = 0; generation < 4; generation++) {
+      await scene.setData("flyLine", [route(generation, {
+        duration: 35, delay: 20, repeat: 1, onComplete: data => calls.push(data.generation),
+      })]);
+      counts.push(active());
+    }
+    check(mode + " same-id replacement, two endpoint ripples + flight", counts, [3,3,3,3]);
+    await waitFor(() => calls.includes(3));
+    await frames();
+    check(mode + " finite flight completion generations", calls, [3]);
+    check(mode + " endpoint ripples after natural completion", active(), 2);
+    await scene.setData("flyLine", []);
+    check(mode + " empty replacement", active(), 0);
+  });
+
+  await run("other owners", async () => {
+    const scene = chart("3d");
+    const img = new URL("../src/assets/image/point.png", location.href).href;
+    await scene.addData("flyLine", [route(0, { img })]);
+    await scene.addData("road", [{ id: "road", path: [point("p"), { lon: 25, lat: 40 }] }]);
+    await scene.addData("point", [point("icon", { color: "white", customFigure: {
+      texture: img, animate: { from: { size: 1 }, to: { size: 2 } },
+    } })]);
+    const line = { data: [[[0,0],[1,1]], [[2,2],[3,3]]] };
+    await scene.addData("mapStreamLine", line);
+    const counts = [active()];
+    for (const type of ["flyLine", "road", "point", "mapStreamLine"]) {
+      scene.remove(type);
+      counts.push(active());
+    }
+    check("image flight, road, custom scatter, shared stream uniforms", counts, [6,3,2,1,0]);
+    await scene.setData("mapStreamLine", { ...line, style: { speed: 0 } });
+    await scene.setData("mapStreamLine", { data: [] });
+    await scene.setData("mapStreamLine", { data: [[[1,2]]] });
+    await scene.setData("mapStreamLine", { data: "{" }).catch(() => {});
+    check("static, empty, short and invalid boundary", active(), 0);
+  });
+
+  await run("failed batch", async () => {
+    const scene = chart();
+    await scene.addData("flyLine", [route(0), { from: null, to: null }]).catch(() => {});
+    check("failed batch has no running animations", active(), 0);
+    await scene.addData("flyLine", [route(1)]);
+    check("failed batch permits same-id retry", scene.mainContainer.children.filter(x => x.userData.figureType === "flyLine").length, 1);
+    check("retried flight and ripples", active(), 3);
+  });
+
+  await run("failed mount", async () => {
+    const scene = chart(), calls = [];
+    const pulse = id => point(id, { color: "white", duration: 12, onComplete: () => calls.push(id) });
+    await scene.addData("point", [pulse("old")]);
+    const root = scene.mainContainer;
+    const old = root.getObjectByName("old").getObjectByName("scatter");
+    const add = root.add;
+    const cause = new Error("second staged group could not mount");
+    root.add = function (group) {
+      if (group.name === "second") throw cause;
+      return add.call(this, group);
+    };
+    try {
+      const error = await scene.setData("point", [pulse("first"), pulse("second")])
+        .then(() => undefined, error => error);
+      check("mount failure propagated", error === cause, true);
+    } finally {
+      root.add = add;
+    }
+    const scale = old.scale.x;
+    await waitFor(() => old.scale.x !== scale);
+    await frames();
+    await frames();
+    check("only old animation remains after rollback", active(), 1);
+    check("rollback keeps old ripple running", old.scale.x !== scale, true);
+    check("default repeat survives multiple short cycles", calls, []);
+  });
+
+  await run("finite point", async () => {
+    const scene = chart(), calls = [];
+    await scene.addData("point", [point("payload", { color: "white", duration: 12, repeat: 1,
+      onComplete: data => calls.push(data?.id) })]);
+    await waitFor(() => calls.length);
+    await frames();
+    check("finite point delivers its own data once", calls, ["payload"]);
+    check("naturally completed point released", active(), 0);
+  });
+
+  for (const mode of ["2d", "3d"]) await run(mode + " endpoint styles", async () => {
+    const scene = chart(mode, { scatterStyle: { color: "#123456" } });
+    const calls = [];
+    const line = route(0);
+    line.from.style = { color: "#ff0000", duration: 20, repeat: 0, onComplete: data => calls.push(data.id) };
+    await scene.addData("flyLine", [line]);
+    await waitFor(() => calls.includes("start"));
+    await frames();
+    check(mode + " start-only callback IDs", calls, ["start"]);
+    check(mode + " unstyled end ripple and flight keep looping", active(), 2);
+    const colors = [];
+    scene.mainContainer.traverse(mesh => {
+      if (mesh.name === "scatter") colors.push(mesh.material.color.getHexString());
+    });
+    check(mode + " endpoint colors", colors, ["ff0000", "123456"]);
+  });
+
+  await run("global and per-point animation settings", async () => {
+    const globalIds = [], localIds = [];
+    const scene = chart("2d", { scatterStyle: { color: "#224466", duration: 12, repeat: 0,
+      onComplete: data => globalIds.push(data.id) } });
+    let flightComplete = false;
+    const line = route(0, { duration: 65, repeat: 0, onComplete: () => { flightComplete = true; } });
+    line.from.style = { color: "#ffffff", onComplete: data => localIds.push(data.id) };
+    await scene.addData("flyLine", [line]);
+    await scene.addData("point", [point("color-only", { color: "#778899" })]);
+    await waitFor(() => flightComplete);
+    await frames();
+    check("flight completed after scatter durations", flightComplete, true);
+    check("point override inherits finite settings", localIds, ["start"]);
+    check("default end and color-only point inherit global callback", globalIds.sort(), ["color-only", "end"]);
+    check("all globally finite animations released", active(), 0);
+  });
+
+  await run("independent charts", async () => {
+    const a = chart(), b = chart(), calls = [];
+    for (const scene of [a,b]) await scene.addData("point", [point("shared")]);
+    check("active instance groups", groups.size, 2);
+    check("chart tweens in default group", getAll().length, 0);
+    const hostState = { value: 0 };
+    const host = new Tween(hostState).to({ value: 1 }, 1).start();
+    await frames();
+    await frames();
+    check("host-owned default tween untouched", hostState.value, 0);
+    host.stop();
+    const ripples = [a,b].map(scene => scene.mainContainer.getObjectByName("shared").getObjectByName("scatter"));
+    for (const [name, scene] of [["a",a],["b",b]]) {
+      await scene.addData("point", [point("finite", { color: "white", duration: 50, delay: 30, repeat: 0,
+        onComplete: () => calls.push(name) })]);
+    }
+    destroy(a);
+    const sizes = ripples.map(mesh => mesh.scale.x);
+    await waitFor(() => calls.includes("b"));
+    await frames();
+    check("callback owners after A.destroy", calls, ["b"]);
+    check("ripples updated after A.destroy", ripples.map((mesh,i) => mesh.scale.x !== sizes[i]), [false,true]);
+    check("only B's infinite animation survives", active(), 1);
+    destroy(b);
+    check("after both destroys", active(), 0);
+    const next = chart();
+    await frames();
+    check("new chart starts empty", active(), 0);
+  });
+
+  await run("custom marker fades out", async () => {
+    const scene = chart();
+    const texture = new URL("../src/assets/image/point.png", location.href).href;
+    const style = {
+      color: "white", duration: 0, repeat: 0,
+      customFigure: { texture, animate: { from: { size: 2, opacity: 1 }, to: { size: 0, opacity: 0 } } },
+    };
+    await scene.addData("point", [point("fade", style), point("zero-size", { color: "white", size: 0 })]);
+    scene._store.animations.update(performance.now() + 1);
+    const fade = scene.mainContainer.getObjectByName("fade").getObjectByName("scatter");
+    const zero = scene.mainContainer.getObjectByName("zero-size").getObjectByName("point");
+    check("explicit zero scale and opacity", [fade.scale.x, fade.material.opacity, zero.scale.x], [0, 0, 0]);
+  });
+
+  await run("destroy inside onComplete", async () => {
+    const scene = chart();
+    let completed = 0;
+    await scene.addData("point", [point("self", { color: "white", duration: 10, repeat: 0,
+      onComplete: () => { completed++; scene.destroy(); } })]);
+    await waitFor(() => completed > 0);
+    await frames();
+    check("destroy inside callback fires once", completed, 1);
+    check("destroy inside callback leaves no scheduled frame", scene.animationFrameId, null);
+  });
+
+  Group.prototype.add = originalAdd;
+  document.querySelector("#measurements").textContent = output.join("\n");
+  document.querySelector("#result").textContent = failures.length ? "FAIL: " + failures.join(", ") : "PASS";
+</script>

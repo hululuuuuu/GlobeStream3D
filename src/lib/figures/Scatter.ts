@@ -2,7 +2,6 @@ import pointImg from "@/assets/image/point.png";
 import scatterImg from "@/assets/image/scatter.png";
 import { lon2xyz } from "../utils/math";
 import { Coordinates, ScatterStyle, StoreConfig } from "@/lib/interface";
-import { setTween } from "@/lib/utils/tween";
 import {
   Group,
   Mesh,
@@ -12,7 +11,8 @@ import {
   Vector3,
 } from "three";
 import Store from "@/lib/store/store";
-import { cloneDeep } from "lodash-es";
+import { merge } from "lodash-es";
+import { ownTexture } from "@/lib/utils/dispose";
 
 const textureLoader = new TextureLoader();
 const POINT_TEXTURE = textureLoader.load(pointImg);
@@ -22,7 +22,6 @@ export default class Scatter {
   private readonly _config: StoreConfig;
   private readonly _store: Store;
   _currentStyle: ScatterStyle;
-  _currentData: Coordinates | undefined;
 
   constructor(store: Store) {
     this._config = store.getConfig();
@@ -41,10 +40,7 @@ export default class Scatter {
         ? this._config.R * 1.001
         : this._config.R * 1.002;
 
-    const size =
-      this._currentStyle.size ||
-      this._config.scatterStyle.size ||
-      this._config.R * 0.05;
+    const size = this._currentStyle.size ?? this._config.R * 0.05;
     mesh.scale.set(size * 1.3, size * 1.3, size * 1.3);
     if (this._store.mode === "3d") {
       const { x, y, z } = lon2xyz(zOffset, lon, lat);
@@ -65,7 +61,8 @@ export default class Scatter {
     const { mesh, size } = this.setMeshAttr(geometry, material, data);
     mesh.name = "scatter";
     //设置动画
-    setTween(
+    this._store.animations.setTween(
+      mesh,
       { size: size * 1.5, opacity: 0 },
       { size: [size * 2.8, size * 3.5], opacity: [1, 0.1] },
       function (params) {
@@ -74,7 +71,7 @@ export default class Scatter {
       },
       {
         ...this._currentStyle,
-        data: this._currentData,
+        data,
       },
     );
     return mesh;
@@ -114,27 +111,29 @@ export default class Scatter {
   }
 
   createCustomMesh = (data: Coordinates) => {
-    const { geometry, material } = this.createCustom();
-    const { mesh, size } = this.setMeshAttr(geometry, material, data);
+    const { geometry, material, texture } = this.createCustom();
+    const { mesh } = this.setMeshAttr(geometry, material, data);
+    ownTexture(mesh, texture);
     mesh.name = "scatter";
     if (this._currentStyle.customFigure?.rotate) {
       mesh.rotation.z =
         this._currentStyle.customFigure.rotate * (Math.PI / 180);
     }
-    const aminate = this._currentStyle.customFigure?.animate;
-    if (aminate) {
+    const animation = this._currentStyle.customFigure?.animate;
+    if (animation) {
       //设置动画
-      setTween(
-        aminate.from,
-        aminate.to,
+      this._store.animations.setTween(
+        mesh,
+        animation.from,
+        animation.to,
         function (params) {
           const { size, opacity } = params;
-          size && mesh.scale.set(size, size, size);
-          opacity && (mesh.material.opacity = opacity);
+          if (size !== undefined) mesh.scale.setScalar(size);
+          if (opacity !== undefined) mesh.material.opacity = opacity;
         },
         {
           ...this._currentStyle,
-          data: this._currentData,
+          data,
         },
       );
     }
@@ -142,11 +141,11 @@ export default class Scatter {
   };
   createCustom() {
     const geometry = new PlaneGeometry(1, 1);
-    const textureLoader = new TextureLoader().load(
+    const texture = new TextureLoader().load(
       this._currentStyle.customFigure?.texture!,
     );
     const material = new MeshBasicMaterial({
-      map: textureLoader,
+      map: texture,
       transparent: true,
       color: this._currentStyle.color,
       opacity: 1.0,
@@ -154,12 +153,10 @@ export default class Scatter {
       depthWrite: false, //禁止写入深度缓冲区数据
     });
     material.name = "scatter";
-    return { geometry, material };
+    return { geometry, material, texture };
   }
   create(data: Coordinates) {
-    if (data.style) {
-      this._currentStyle = cloneDeep(data.style);
-    }
+    this._currentStyle = merge({}, this._config.scatterStyle, data.style);
     const show =
       this._currentStyle.show ?? this._config.scatterStyle.show ?? true;
     const group = new Group();

@@ -2,7 +2,7 @@
 
 # GlobeStream3D
 
-2025 年会上一些小功能，例如增加云雾效果，轨道线，有需求可以先提 issue ，Bug 会优先修复。
+云雾效果和轨道线是后续考虑的方向，欢迎在 issue 里分享使用场景。
 
 大功能开发周期长的考虑延后再做，毕竟咱也是码农，要给老板打工，空不出来太多时间。
 
@@ -18,8 +18,21 @@
 + 🛡 Typescript开发：提供完整的类型定义。
 + 🎨 高可扩展：丰富的样式配置和API。
 + 💪 逻辑统一:同时支持3D地球2D地图,一份参数3D和2D的一致的样式和动画。
++ 城市雷达（开发版）支持在经纬度位置绘制距离环和旋转扇面，可按站点设置颜色、覆盖半径和扫描速度。
+
+用 `npm run dev` 打开本地示例。在已有图表实例上可以直接添加站点。
+
+```js
+await chart.setData("radar", [
+  { id: "shanghai", lon: 121.47, lat: 31.23, style: { radius: 8, speed: 0.25 } },
+]);
+chart.setLayerVisible("radar", false); // 暂时隐藏，保留站点和扫描进度
+chart.setLayerVisible("radar", true);
+```
 
 ## 📄 在线预览及文档
+
+中文文档首页可切换 3D 地球与 2D 地图预览，并提供城市雷达示例与 API 参考。[文档源码](https://github.com/hululuuuuu/GlobeStream3D-docs)
 
 [文档地址(netlify)](https://globestream3d.netlify.app/)
 
@@ -29,7 +42,7 @@
 
 ## Issues
 
-使用过程中的问题或者建议欢迎提 [issue](https://github.com/JavaScriptam/GlobeStream3D/issues) ，如果该项目为您提供了帮助希望来一个star万分感谢。
+使用过程中的问题或者建议欢迎提 [issue](https://github.com/hululuuuuu/GlobeStream3D/issues) ，如果该项目为您提供了帮助希望来一个star万分感谢。
 
 
 ## 🤗 感谢

@@ -1,14 +1,7 @@
-import {
-  Coordinates,
-  FlyLineData,
-  LessCoordinate,
-  OptDataFunc,
-  RoadData,
-  TextMarkItem,
-} from "./interface";
-import { Group, Mesh, Object3D, Vector3 } from "three";
+import type { Coordinates, OptDataFunc, SetData } from "./interface";
+import { Group, Object3D, Vector3 } from "three";
 import FlyLine3d from "@/lib/figures/FlyLine3d";
-import { lon2xyz, uuid } from "@/lib/utils/math";
+import { lon2xyz } from "@/lib/utils/math";
 import Scatter from "@/lib/figures/Scatter";
 import Store from "@/lib/store/store";
 import FlyLine2d from "@/lib/figures/FlyLine2d";
@@ -17,160 +10,211 @@ import { Wall } from "@/lib/figures/Wall";
 import TextMark from "@/lib/figures/Text";
 import MapStreamLine from "@/lib/figures/MapStreamLine";
 import Bar from "@/lib/figures/Bar";
+import { createRadar } from "@/lib/figures/Radar";
+import { disposeObjectResources } from "@/lib/utils/dispose";
+
+function layerGroups(container: Object3D | undefined, type: string) {
+  return (container?.children ?? []).filter(
+    (child): child is Group => child instanceof Group && child.userData.figureType === type
+  );
+}
+
+function hasLayerId(id: Coordinates["id"]) {
+  return id === 0 || Boolean(id);
+}
+
+type LayerBuilders = {
+  [K in keyof SetData]: (
+    store: Store, data: SetData[K], groups: Group[], reserveId: (id: string) => boolean
+  ) => void;
+};
+
+const builders: LayerBuilders = {
+  flyLine: (store, data, groups, reserveId) => {
+    data.forEach((item) => {
+      const { from, to } = item;
+      const id = hasLayerId(from.id) && hasLayerId(to.id)
+        ? `${from.id}-${to.id}`
+        : `${from.lon}${from.lat}-${to.lon}${to.lat}`;
+      if (!reserveId(id)) return;
+      const group = new Group();
+      groups.push(group);
+      const scatter = new Scatter(store);
+      if (store.mode === "3d") {
+        const from_position = lon2xyz(store.config.R, from.lon, from.lat);
+        const to_position = lon2xyz(store.config.R, to.lon, to.lat);
+        group.add(scatter.create(from));
+        group.add(scatter.create(to));
+        const flyLine = new FlyLine3d(store, item);
+        group.add(
+          flyLine.create(
+            new Vector3(from_position.x, from_position.y, from_position.z),
+            new Vector3(to_position.x, to_position.y, to_position.z)
+          )
+        );
+      } else {
+        const flyLine = new FlyLine2d(store, item);
+        group.add(
+          flyLine.create(
+            new Vector3(from.lon, from.lat, 1),
+            new Vector3(to.lon, to.lat, 1)
+          )
+        );
+        group.add(scatter.create(from));
+        group.add(scatter.create(to));
+      }
+      group.name = id;
+    });
+  },
+  point: (store, data, groups, reserveId) => {
+    data.forEach((item) => {
+      const id = hasLayerId(item.id) ? String(item.id) : `${item.lon}-${item.lat}`;
+      if (!reserveId(id)) return;
+      const group = new Group();
+      groups.push(group);
+      const scatter = new Scatter(store);
+      group.add(scatter.create(item));
+      group.name = id;
+    });
+  },
+  radar: (store, data, groups) => {
+    data.forEach((station) => {
+      const group = createRadar(store, station);
+      if (group) groups.push(group);
+    });
+  },
+  road: (store, data, groups) => {
+    data.forEach((item) => {
+      const subPoints: Vector3[] = item.path.map(
+        ({ lon, lat }) => {
+          if (store.mode === "2d") {
+            return new Vector3(lon, lat, 0);
+          } else {
+            const position = lon2xyz(store.config.R * 1.1, lon, lat);
+            return new Vector3(position.x, position.y, position.z);
+          }
+        }
+      );
+      const roadMesh = new Road(store, {
+        path: subPoints,
+        style: item.style,
+      });
+      const group = roadMesh.create(subPoints);
+      groups.push(group);
+      group.name = String(hasLayerId(item.id) ? item.id : group.uuid);
+    });
+  },
+  wall: (store, data, groups) => {
+    const wallMesh = new Wall(store).create(data);
+    if (!wallMesh) return;
+    const group = new Group();
+    groups.push(group);
+    group.add(wallMesh);
+  },
+  mapStreamLine: (store, data, groups) => {
+    const mapStreamLineMesh = new MapStreamLine(store).create(data);
+    if (!mapStreamLineMesh) return;
+    const group = new Group();
+    groups.push(group);
+    group.add(mapStreamLineMesh);
+  },
+  bar: (store, data, groups) => {
+    const group = new Group();
+    groups.push(group);
+    const bar = new Bar(store);
+    const barMesh = bar.create(data);
+    group.add(barMesh);
+    group.name = "bar";
+  },
+  textMark: (store, data, groups) => {
+    const textMark = new TextMark(store);
+    data.forEach((item) => {
+      groups.push(textMark.create(item));
+    });
+  },
+};
 
 export default class OperateView {
-  private readonly _store: Store;
-  constructor(store: Store) {
-    this._store = store;
-  }
-  addData: OptDataFunc = (type, data) => {
+  private readonly hiddenLayers = new Set<keyof SetData>();
+  private readonly layerIds: Partial<Record<keyof SetData, Set<string>>> = {
+    point: new Set(),
+    flyLine: new Set(),
+  };
+  constructor(private readonly _store: Store) {}
+  addData: OptDataFunc = async (type, data, mainContainer) => {
+    return this.updateData(type, data, mainContainer, false);
+  };
+  setData: OptDataFunc = async (type, data, mainContainer) => {
+    return this.updateData(type, data, mainContainer, true);
+  };
+  private updateData<K extends keyof SetData>(
+    type: K, data: SetData[K], container: Group | undefined, replace: boolean
+  ) {
+    if (this._store.animations.disposed) throw new Error("Cannot update a destroyed chart");
+    if (!Object.prototype.hasOwnProperty.call(builders, type)) return [];
+    const mountedIds = container ? this.layerIds[type] : undefined;
+    const pendingIds = new Set<string>();
+    const reserveId = (id: string) => {
+      if ((!replace && mountedIds?.has(id)) || pendingIds.has(id)) return false;
+      pendingIds.add(id);
+      return true;
+    };
+    const previous = replace ? layerGroups(container, type) : [];
     const meshList: Group[] = [];
-    const storeConfig = this._store.getConfig();
-    if (type === "flyLine") {
-      (data as FlyLineData[]).forEach((item: FlyLineData) => {
-        const { from, to } = item;
-        //生成一个id 规则是优先取id 否则from和to的经纬度字符串拼接
-        let id: string;
-        if (from.id && to.id) {
-          id = `${from.id}-${to.id}`;
-        } else {
-          id = `${from.lon}${from.lat}-${to.lon}${to.lat}`;
-        }
-        if (this._store.flyLineMap[id]) return;
-        const group = new Group();
-        this._store.flyLineMap[id] = true;
-        const scatter = new Scatter(this._store);
-        if (this._store.mode === "3d") {
-          const from_position = lon2xyz(storeConfig.R, from.lon, from.lat);
-          const to_position = lon2xyz(storeConfig.R, to.lon, to.lat);
-          group.add(scatter.create(from), scatter.create(to));
-          const flyLine = new FlyLine3d(this._store, item);
-          group.add(
-            flyLine.create(
-              new Vector3(from_position.x, from_position.y, from_position.z),
-              new Vector3(to_position.x, to_position.y, to_position.z)
-            )
-          );
-        } else {
-          const flyLine = new FlyLine2d(this._store, item);
-          group.add(
-            flyLine.create(
-              new Vector3(from.lon, from.lat, 1),
-              new Vector3(to.lon, to.lat, 1)
-            )
-          );
-          group.add(scatter.create(from), scatter.create(to));
-        }
-        group.name = id;
-        group.userData.figureType = "flyLine";
-        meshList.push(group);
-      });
-    } else if (type === "point") {
-      (data as Coordinates[]).forEach((item: Coordinates) => {
-        let id: string | number = item.id || `${item.lon}-${item.lat}`;
-        if (this._store.flyLineMap[id]) return;
-        const group = new Group();
-        this._store.flyLineMap[id] = true;
-        const scatter = new Scatter(this._store);
-        group.add(scatter.create(item));
-        group.name = id.toString();
-        group.userData.figureType = "point";
-        meshList.push(group);
-      });
-    } else if (type === "road") {
-      (data as RoadData[]).forEach((item: RoadData) => {
-        let id: string | number = item.id || uuid();
-        const subPoints: Vector3[] = item.path.map(
-          ({ lon, lat }: LessCoordinate, index) => {
-            if (this._store.mode === "2d") {
-              return new Vector3(lon, lat, 0);
-            } else {
-              const position = lon2xyz(storeConfig.R * 1.1, lon, lat);
-              return new Vector3(position.x, position.y, position.z);
-            }
-          }
-        );
-        const roadMesh = new Road(this._store, {
-          path: subPoints,
-          style: item.style,
-        });
-        const group = roadMesh.create(subPoints);
-        group.name = id.toString();
-        group.userData.figureType = "road";
-        meshList.push(group);
-      });
-    } else if (type === "wall") {
-      const group = new Group();
-      group.userData.figureType = "wall";
-      const wall = new Wall(this._store);
-      const wallMesh = wall.create(data);
-      if (wallMesh) {
-        group.add(wallMesh);
+    try {
+      if (!Array.isArray(data) || data.length > 0) {
+        builders[type](this._store, data, meshList, reserveId);
       }
-      meshList.push(group);
-    } else if (type === "mapStreamLine") {
-      const group = new Group();
-      group.userData.figureType = "mapStreamLine";
-      const mapStreamLine = new MapStreamLine(this._store);
-      const mapStreamLineMesh = mapStreamLine.create(data);
-      if (mapStreamLineMesh) {
-        group.add(mapStreamLineMesh);
+      for (const group of meshList) {
+        group.userData.figureType = type;
+        if (this.hiddenLayers.has(type)) group.visible = false;
+        container?.add(group);
       }
-      meshList.push(group);
-    } else if (type === "bar") {
-      const group = new Group();
-      const bar = new Bar(this._store);
-      const barMesh = bar.create(data);
-      group.add(barMesh);
-      group.userData.figureType = "bar";
-      group.name = "bar";
-      meshList.push(group);
-    } else if (type === "textMark") {
-      const textMark = new TextMark(this._store);
-      (data as TextMarkItem[]).forEach((item: TextMarkItem) => {
-        const group = textMark.create(item);
-        group.userData.figureType = "textMark";
-        meshList.push(group);
-      });
+      if (container) {
+        for (const group of meshList) this._store.animations.startLayer(group);
+      }
+    } catch (error) {
+      this.discardGroups(meshList);
+      throw error;
     }
-    return Promise.resolve(meshList);
-  };
-  setData: OptDataFunc = (type, data) => {
-    return this.addData(type, data);
-  };
+    this.discardGroups(previous);
+    if (mountedIds) {
+      if (replace) this.layerIds[type] = pendingIds;
+      else for (const id of pendingIds) mountedIds.add(id);
+    }
+    return meshList;
+  }
+  private discardGroups(groups: Group[]) {
+    for (const group of groups) {
+      group.removeFromParent();
+      this.disposeGroup(group);
+    }
+  }
   remove(mainContainer: Object3D, type: string, ids: string[] | "removeAll") {
-    if (mainContainer.children.length !== 0) {
-      for (let i = mainContainer.children.length - 1; i >= 0; i--) {
-        let item = mainContainer.children[i];
-        if (
-          item instanceof Group &&
-          item.name !== "mapGroup" &&
-          item.userData.figureType === type
-        ) {
-          if (ids === "removeAll") {
-            if (this._store.flyLineMap[item.name]) {
-              delete this._store.flyLineMap[item.name];
-            }
-            this.disposeGroup(item);
-            mainContainer.remove(item);
-          } else {
-            if (ids.includes(item.name)) {
-              if (this._store.flyLineMap[item.name]) {
-                delete this._store.flyLineMap[item.name];
-              }
-              this.disposeGroup(item);
-              mainContainer.remove(item);
-            }
-          }
-        }
-      }
+    const groups = layerGroups(mainContainer, type);
+    const selected = ids === "removeAll" ? undefined : new Set(ids);
+    const removed = selected ? groups.filter(group => selected.has(group.name)) : groups;
+    this.discardGroups(removed);
+    if (type === "point" || type === "flyLine") {
+      for (const group of removed) this.layerIds[type]?.delete(group.name);
     }
+  }
+  setLayerVisible(container: Group, type: keyof SetData, visible: boolean) {
+    if (this._store.animations.disposed || !Object.prototype.hasOwnProperty.call(builders, type)) return;
+    if (visible) {
+      if (!this.hiddenLayers.delete(type)) return;
+    } else {
+      if (this.hiddenLayers.has(type)) return;
+      this.hiddenLayers.add(type);
+    }
+    for (const group of layerGroups(container, type)) group.visible = visible;
+  }
+  clearLayerState() {
+    this.hiddenLayers.clear();
+    for (const ids of Object.values(this.layerIds)) ids.clear();
   }
   disposeGroup(group: Group) {
-    group.traverse((item) => {
-      if (!(item instanceof Group)) {
-        (item as Mesh).geometry.dispose(); // 删除几何体
-      }
-    });
+    this._store.animations.stopLayer(group);
+    group.traverse(disposeObjectResources);
   }
 }

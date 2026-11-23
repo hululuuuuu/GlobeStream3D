@@ -1,9 +1,8 @@
-<h4 align="right"><strong>English</strong> | <a href="https://github.com/JavaScriptam/earth-flyLine/blob/main">简体中文</a></h4>
+<h4 align="right"><strong>English</strong> | <a href="https://github.com/hululuuuuu/GlobeStream3D/blob/main/README.md">简体中文</a></h4>
 
 # GlobeStream3D
 
-## [Online preview]('https://github.com/hululuuuuu/GlobeStream3D')
-https://github.com/hululuuuuu/GlobeStream3D
+The Chinese documentation includes a 3D globe and 2D map preview, a city radar example, and API references. [Documentation repository](https://github.com/hululuuuuu/GlobeStream3D-docs)
 
 ### Please let us know if you encounter any [issues](https://github.com/hululuuuuu/GlobeStream3D/issues) while using our project. Your feedback is valuable and will help us improve it.If you find our project helpful, please give us a star to support us. Thank you for support！！！
 ## Introduction
@@ -16,6 +15,7 @@ Building 3D large screen earth visualization based on three.js, essential for ho
 + 📦  **Out of the box:** Simple and fast integration, basically zero cost to get started.
 + 🛡 **Typescript development:** Provide complete type definition files.
 + 🎨 **Highly scalable:** With rich style configuration and API, the function can be extended as you like.
++ **City radar (development version)** overlays range rings and a rotating sweep at geographic coordinates in 2D and 3D. Run `npm run dev` to explore the demo. Use `chart.setData("radar", [{ lon: 121.47, lat: 31.23 }])` to add a station to a chart. Toggle it with `chart.setLayerVisible("radar", false)` and `chart.setLayerVisible("radar", true)` to keep the stations and their scan phase.
 
 
 

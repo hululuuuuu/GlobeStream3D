@@ -1,0 +1,152 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Bar geometry regression and construction benchmark</title>
+<link rel="icon" href="data:,">
+<pre id="result">Running…</pre>
+<pre id="measurements"></pre>
+<div id="map" style="width:200px;height:200px"></div>
+<script type="module">
+  import { BoxGeometry, BufferGeometry, Color, Mesh, MeshMatcapMaterial, Vector3 } from "three";
+  import earth from "../src/entry.ts";
+  import Bar from "../src/lib/figures/Bar.ts";
+  import Store from "../src/lib/store/store.ts";
+  import { lon2xyz } from "../src/lib/utils/math.ts";
+
+  const config = { R: 143.7, barStyle: { width: 2.3, height: 1.2, color: "#ba784c" },
+    spriteStyle: { show: false } };
+  const fixture = [
+    { position: { lon: 18.25, lat: 67.1 }, value: 3.7 },
+    { position: { lon: -90, lat: 0 }, value: -2.3, style: { color: "#fe0035", width: -2 } },
+    { position: { lon: 180, lat: 90 }, value: 0, style: { width: 0, height: -3 } },
+    { position: { lon: 0, lat: -90 }, value: 1, style: { width: undefined, height: 0 } },
+  ];
+  const failures = [];
+  function check(ok, label) { if (!ok) failures.push(label); }
+  function dispose(mesh) { mesh.geometry.dispose(); mesh.material.dispose(); }
+  function builder(mode) {
+    const store = new Store();
+    store.setConfig({ mode, config });
+    return new Bar(store);
+  }
+
+  function checkGeometry(mode) {
+    // A hole in the public array must not reserve vertices or shift face indices.
+    const mesh = builder(mode).create([fixture[0], , ...fixture.slice(1)]);
+    const g = mesh.geometry;
+    check(mesh.constructor === Mesh && mesh.material.constructor === MeshMatcapMaterial
+      && mesh.material.vertexColors, mode + " mesh and material");
+    check(g.groups.length === 0 && g.index.count === 36 * fixture.length, mode + " draw layout");
+    for (const [name, size] of Object.entries({ position: 3, normal: 3, uv: 2, color: 3 })) {
+      const attr = g.getAttribute(name);
+      check(attr.itemSize === size && attr.count === 24 * fixture.length &&
+        attr.array instanceof Float32Array && !attr.normalized, mode + " attribute " + name);
+    }
+    // Replay the original Three.js operations on each box, then compare its slice in draw order.
+    for (const [i, { position, value, style }] of fixture.entries()) {
+      const { width, height, color } = { ...config.barStyle, ...style };
+      const box = new BoxGeometry(width, height, value);
+      if (mode === "2d") box.translate(position.lon, position.lat, value / 2);
+      else {
+        box.translate(0, 0, config.R + value / 2);
+        const p = lon2xyz(config.R, position.lon, position.lat);
+        box.lookAt(new Vector3(p.x, p.y, p.z));
+      }
+      const label = mode + " bar " + i + " ";
+      for (const name of ["position", "normal", "uv"]) {
+        const expected = box.attributes[name].array;
+        check(expected.every((v, j) => v === g.attributes[name].array[i * expected.length + j]), label + name);
+      }
+      const rgb = new Color(color).toArray().map(Math.fround);
+      check(g.attributes.color.array.subarray(i * 72, (i + 1) * 72).every((v,j) => v === rgb[j % 3]), label + "color");
+      check(box.index.array.every((v,j) => g.index.getX(i * 36 + j) === i * 24 + v), label + "index");
+      box.dispose();
+    }
+    dispose(mesh);
+  }
+
+  function checkIndexWidth() {
+    const bar = builder("2d"), unit = new BoxGeometry();
+    for (const count of [2730, 2731]) {
+      const mesh = bar.create(Array(count).fill(fixture[0]));
+      const index = mesh.geometry.index;
+      check(index.array instanceof (count === 2730 ? Uint16Array : Uint32Array)
+        && index.count === count * 36 && unit.index.array.every((v,j) =>
+          index.getX((count - 1) * 36 + j) === (count - 1) * 24 + v), "index boundary " + count);
+      dispose(mesh);
+    }
+    unit.dispose();
+  }
+
+  async function checkLifecycle(mode) {
+    const dom = document.querySelector("#map");
+    const chart = earth.init({ dom, mode, config, map: "bars-test", autoRotate: false });
+    try {
+      const data = [fixture[0], { position: { lon: mode === "2d" ? 0 : -90, lat: 0 }, value: 12 }];
+      await chart.addData("bar", []);
+      check(!chart.mainContainer.getObjectByName("bar"), mode + " empty batch");
+      for (const action of ["remove", "destroy"]) {
+        await chart.addData("bar", data);
+        const group = chart.mainContainer.getObjectByName("bar"), mesh = group.children[0];
+        check(group.userData.figureType === "bar" && group.children.length === 1, mode + " public layer");
+        let picked, geometries = 0, materials = 0;
+        chart.on("click", (_, hit) => { picked = hit; });
+        chart.scene.updateMatrixWorld(true);
+        const rect = chart.renderer.domElement.getBoundingClientRect();
+        dom.dispatchEvent(new MouseEvent("click", { clientX: rect.left + rect.width / 2,
+          clientY: rect.top + rect.height / 2 }));
+        check(picked === mesh, mode + " click picks the merged mesh");
+        mesh.geometry.addEventListener("dispose", () => geometries++);
+        mesh.material.addEventListener("dispose", () => materials++);
+        if (action === "remove") chart.remove("bar");
+        else chart.destroy();
+        check(geometries === 1 && materials === 1 && !chart.mainContainer.getObjectByName("bar"),
+          mode + " " + action + " releases bar resources");
+      }
+    } finally { chart.destroy(); }
+  }
+
+  function checkAllocations() {
+    const bar = builder("2d");
+    function allocations(count) {
+      const items = Array(count).fill(fixture[0]);
+      const before = new BufferGeometry().id;
+      dispose(bar.create(items));
+      return new BufferGeometry().id - before - 1;
+    }
+    const one = allocations(1), many = allocations(64);
+    check(many <= one, "geometry allocations grow with batch size: " + one + " -> " + many);
+  }
+
+  function benchmark() {
+    const items = Array.from({ length: 3000 }, (_, i) => ({
+      position: { lon: i % 360 - 180, lat: i % 179 - 89 }, value: (i % 37 - 9) / 3,
+      style: i % 2 ? { color: "#36729c" } : undefined,
+    }));
+    const bars = { "2d": builder("2d"), "3d": builder("3d") };
+    const times = { "2d": [], "3d": [] };
+    for (let i = 0; i < 12; i++) {
+      for (const mode of i % 2 ? ["3d", "2d"] : ["2d", "3d"]) {
+        const start = performance.now();
+        const mesh = bars[mode].create(items);
+        const elapsed = performance.now() - start;
+        if (i >= 3) times[mode].push(elapsed);
+        dispose(mesh);
+      }
+    }
+    for (const [mode, samples] of Object.entries(times)) {
+      const median = [...samples].sort((a,b) => a-b)[4];
+      document.querySelector("#measurements").textContent +=
+        mode + " × " + items.length + " median " + median.toFixed(1) + " ms (" +
+        samples.map(n => n.toFixed(1)).join(", ") + ")\n";
+    }
+  }
+
+  try {
+    earth.registerMap("bars-test", { type: "FeatureCollection", features: [] });
+    for (const mode of ["2d", "3d"]) { checkGeometry(mode); await checkLifecycle(mode); }
+    checkIndexWidth();
+    checkAllocations();
+    benchmark();
+  } catch (error) { failures.push(error.stack || String(error)); }
+  document.querySelector("#result").textContent = failures.length ? "FAIL\n" + failures.join("\n") : "PASS";
+</script>

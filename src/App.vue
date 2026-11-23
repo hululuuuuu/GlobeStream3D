@@ -1,439 +1,199 @@
 <script setup lang="ts">
-import { onMounted } from "vue";
-import world from "./map/world.json";
-import chinaBoundaryRaw from "./map/ChinaAdditionalRouteMap.geojson?raw";
+import { onBeforeUnmount, onMounted, reactive, ref } from "vue";
+import { MathUtils, OrthographicCamera } from "three";
+import type { MultiPolygon, Polygon } from "geojson";
 import chart from "@/entry";
-import ChartScene from "@/lib/chartScene";
-import triangle from "@/image/pipeLine.jpg";
-import barData from "./devData/barData";
-import { getScale } from "@/lib/utils/math";
-import earthBg from "./image/earth.png";
-const chinaBoundaryData = JSON.parse(chinaBoundaryRaw) as any;
+import world from "./map/world.json";
+import chinaBoundary from "./map/ChinaAdditionalRouteMap.geojson?raw";
 
-const chinaData = world.features.find((item: any) => {
-  return item.properties.name === "China";
-})!.geometry.coordinates as any;
-let chartInstance: ChartScene;
-let chartInstance1: ChartScene;
-const geoJson: any = world;
-chart.registerMap("world", geoJson);
-onMounted(() => {
-  const dom = document.getElementById("container");
-  const dom1 = document.getElementById("container1");
-  if (dom && dom1) {
-    // chartInstance = chart.init({
-    //   dom,
-    //   helper: true,
-    //   map: "world",
-    //   autoRotate: false,
-    //   mode: "2d",
-    //   debugHelper: true,
-    //   config: {
-    //     textMark: {
-    //       style: {
-    //         color: "#fff",
-    //         fontSize: 20,
-    //       },
-    //       data: []
-    //     },
-    //     enableZoom: true,
-    //     stopRotateByHover: false,
-    //     R: 140,
-    //     earth: {
-    //       color: "#13162c",
-    //       dragConfig: {
-    //         disableY: false,
-    //         disableX: false,
-    //       },
-    //     },
-    //     mapStyle: {
-    //       lineColor: "#797eff",
-    //       areaColor: "#2e3564",
-    //     },
-    //     spriteStyle: {
-    //       color: "#797eff",
-    //       show: true,
-    //     }, //光圈
-    //     pathStyle: {
-    //       color: "#cd79ff", //飞线路径配置
-    //     },
-    //     flyLineStyle: {
-    //       //飞线样式配置
-    //       color: "#cd79ff",
-    //     },
-    //     scatterStyle: {
-    //       //涟漪
-    //       color: "#cd79ff",
-    //     },
-    //     roadStyle: {
-    //       flyLineStyle: {
-    //         //飞线样式配置
-    //         color: "#cd79ff",
-    //       },
-    //       pathStyle: {
-    //         color: "#cd79ff", //飞线路径配置
-    //       },
-    //     },
-    //     hoverRegionStyle: {
-    //       areaColor: "#cd79ff",
-    //       show: false,
-    //     },
-    //     regions: {
-    //       China: {
-    //         areaColor: "#2e3564",
-    //       },
-    //     },
-    //     wallStyle: {
-    //       color: "#cd79ff",
-    //       opacity: 0.5,
-    //       height: 0.5,
-    //     },
-    //   },
-    // });
-    chartInstance1 = chart.init({
-      dom: dom1,
-      helper: true,
-      map: "world",
-      autoRotate: true,
-      mode: "3d",
-      config: {
-        R: 158,
-        enableZoom: false,
+const radarStyle = { color: "#50f5cc", radius: 10, speed: 0.25 };
+const stations = [
+  {
+    name: "上海",
+    point: { id: "shanghai", lon: 121.47, lat: 31.23 },
+  },
+  {
+    name: "东京",
+    point: { id: "tokyo", lon: 139.69, lat: 35.68 },
+    style: { color: "#b6abfa", radius: 6, speed: 0 },
+  },
+  {
+    name: "新加坡",
+    point: { id: "singapore", lon: 103.82, lat: 1.35 },
+    style: { color: "#7bcafa", radius: 8, speed: 0.18 },
+  },
+];
+const routes = stations.slice(1).map(to => ({ from: stations[0], to }));
+const radars = stations.map(({ point, style }) => ({ ...point, style }));
 
-        earth: {
-          color: "#04051b",
-          material: "MeshPhongMaterial", // 材质类型
-          dragConfig: {
-            rotationSpeed: 0.5, // 和鼠标的交互速度
-            inertiaFactor: 0, // 惯性系数 0-1之间 0 为无惯性
-            disableX: false, // 是否禁用x轴旋转
-            disableY: true, // 是否禁用y轴旋转
-          },
-        },
+const globeHost = ref<HTMLDivElement | null>(null);
+const layerVisible = reactive({ radar: true, flyLine: true, mapStreamLine: true });
+const sceneFailed = ref(false);
+let scene: ReturnType<typeof chart.init> | undefined;
+let observer: ResizeObserver | undefined;
 
-        bgStyle: {
-          color: "#040D21",
-          opacity: 0,
-        },
-        mapStyle: {
-          areaColor: "#013e87",
-          lineColor: "#516aaf",
-        },
-        spriteStyle: {
-          color: "#003f60", // 光圈配置
-          size: 2.5,
-        },
-        pathStyle: {
-          color: "#337ca7", // 飞线路径
-        },
-        flyLineStyle: {
-          color: "#10f9af", //蝌蚪飞线配置
-        },
-        scatterStyle: {
-          color: "#10f9af",
-        },
-      },
-    });
-    // chartInstance1.scene.remove(chartInstance1.light)
-    // chartInstance1.light.visible = false;
-    // chartInstance1.light.color.set('red')
-    const initData = [
-      {
-        from: {
-          id: "1",
-          lon: -23.0075,
-          lat: 50.4296,
-          style: {
-            color: "#ff0000",
-            duration: 2000,
-            delay: 0,
-            repeat: Infinity,
-            onComplete: (data: any) => {
-              //do something
-            },
-          },
-        },
-        to: { id: 2, lon: 26.1223, lat: -7.8756 },
-
-      },
-      {
-        from: {
-          lon: 142.8123,
-          lat: -58.9813,
-          style: {
-            color: "yellow",
-          },
-        },
-        to: {
-          lon: 157.0064,
-          lat: 10.7816,
-          style: {
-            color: "yellow",
-          },
-        },
-        style: {
-          pathStyle: {
-            color: "yellow",
-          },
-          flyLineStyle: {
-            color: "yellow",
-          },
-        },
-      },
-      {
-        from: { lon: -175.6286, lat: 72.8359 },
-        to: { lon: -39.071, lat: -35.438 },
-      },
-      {
-        from: { lon: 178.7439, lat: 25.8303 },
-        to: { lon: 137.19, lat: 17.118 },
-      },
-      {
-        from: { lon: -162.6725, lat: 37.277 },
-        to: { lon: -37.1681, lat: 38.5162 },
-      },
-      {
-        from: { lon: -7.5945, lat: 37.2754 },
-        to: { lon: 41.4114, lat: 41.5946 },
-      },
-    ];
-    const initData1 = [
-      {
-        from: {
-          id: "1",
-          lon: -23.0075,
-          lat: 50.4296,
-        },
-        to: { id: 2, lon: 26.1223, lat: -7.8756 },
-      },
-      {
-        from: {
-          lon: 142.8123,
-          lat: -58.9813,
-          style: {
-            color: "yellow",
-          },
-        },
-        to: {
-          lon: 157.0064,
-          lat: 10.7816,
-          style: {
-            color: "yellow",
-          },
-        },
-        style: {
-          pathStyle: {
-            color: "yellow",
-          },
-          flyLineStyle: {
-            color: "yellow",
-          },
-        },
-      },
-      {
-        from: { lon: -175.6286, lat: 72.8359 },
-        to: { lon: -39.071, lat: -35.438 },
-      },
-      {
-        from: { lon: 178.7439, lat: 25.8303 },
-        to: { lon: 137.19, lat: 17.118 },
-      },
-      {
-        from: { lon: -162.6725, lat: 37.277 },
-        to: { lon: -37.1681, lat: 38.5162 },
-      },
-      {
-        from: { lon: -7.5945, lat: 37.2754 },
-        to: { lon: 41.4114, lat: 41.5946 },
-      },
-    ];
-    // chartInstance.setData("flyLine", initData);
-
-    chartInstance1.setData("flyLine", initData);
-    // chartInstance1.addData("point", [
-    //   {
-    //     lon: -43.0075,
-    //     lat: -40.4296,
-    //     style: {
-    //       color: "yellow",
-    //       duration: 2000,
-    //       customFigure: {
-    //         texture: triangle,
-    //         animate: {
-    //           from: {
-    //             size: 11,
-    //           },
-    //           to: {
-    //             size: 22,
-    //           },
-    //         },
-    //       },
-    //     },
-    //   },
-    // ]);
-    // chartInstance.setData("flyLine", initData);
-    // chartInstance.setData("textMark", [
-    //   {
-    //     text: "中国",
-    //     position: {
-    //       lon: 104.195397,
-    //       lat: 35.86166,
-    //     },
-    //   },
-    // ]);
-    chartInstance1.setData("textMark", [
-      {
-        text: "中国",
-        position: {
-          lon: 104.195397,
-          lat: 35.86166,
-        },
-      },
-    ]);
-    chartInstance1.setData("mapStreamLine", {
-      data: chinaBoundaryData,
-      style: {
-        color: "#6af7ff",
-        opacity: 0.9,
-        speed: 0,
-        splitLine: 4,
-      },
-    });
-    // chartInstance1.setData("wall", {
-    //   data: chinaBoundaryData,
-    //   style: {
-    //     color: "#6af7ff",
-    //     opacity: 0.25,
-    //     height: 0.8,
-    //     width: 0.35,
-    //   },
-    // });
-    const maxHeight = getScale(
-      barData.map((item) => item[2]),
-      120
-    );
-    const initBarData = barData.map((item) => {
-      return {
-        position: {
-          lon: item[0],
-          lat: item[1],
-        },
-        value: item[2] * maxHeight,
-      };
-    });
-    // chartInstance1.addData("bar", initBarData);
-
-    let i = 0;
-    function polling() {
-      setTimeout(() => {
-        i++;
-        if (i < initData1.length) {
-          polling();
-          // chartInstance.addData("flyLine", [initData1[i]]);
-          chartInstance1.addData("flyLine", [initData1[i]]);
-        }
-      }, 1000);
-    }
-    // polling();
-    // chartInstance.addData("point", [
-    //   {
-    //     lon: -43.0075,
-    //     lat: -40.4296,
-    //     style: {
-    //       color: "yellow",
-    //       duration: 2000,
-    //       customFigure: {
-    //         texture: triangle,
-    //         animate: {
-    //           from: {
-    //             size: 11,
-    //           },
-    //           to: {
-    //             size: 22,
-    //           },
-    //         },
-    //       },
-    //     },
-    //   },
-    // ]);
-    chartInstance1.on("click", (event: Event, mesh: any) => {
-      chartInstance1.options.autoRotate = false;
-      console.log(mesh);
-    });
-    // chinaData.forEach((item: any) => {
-    //   chartInstance1.addData("mapStreamLine", {
-    //     data: item,
-    //     style: {
-    //       opacity: 1,
-    //     },
-    //   });
-    // });
-  }
-});
-// function add() {
-//   chartInstance.addData("road", [
-//     {
-//       id: "7-6",
-//       path: [
-//         {
-//           lon: -23.0075,
-//           lat: 50.4296,
-//         },
-//         {
-//           lon: -26.1223,
-//           lat: -7.8756,
-//         },
-//         {
-//           lon: -43.0075,
-//           lat: -40.4296,
-//         },
-//         {
-//           lon: -23.0075,
-//           lat: 50.4296,
-//         },
-//       ],
-//       style: {
-//         flyLineStyle: {
-//           //飞线样式配置
-//           color: "red",
-//         },
-//         pathStyle: {
-//           color: "red",
-//         },
-//       },
-//     },
-//   ]);
-//   chartInstance.addData("point", [
-//     {
-//       lon: -23.0075,
-//       lat: 50.4296,
-//     },
-//   ]);
-// }
-function del() {
-  chartInstance1.remove("bar", "removeAll");
+function toggleLayer(type: keyof typeof layerVisible) {
+  if (!scene) return;
+  const visible = !layerVisible[type];
+  scene.setLayerVisible(type, visible);
+  layerVisible[type] = visible;
 }
+
+function resetView() {
+  if (scene && "reset" in scene.controls) scene.controls.reset();
+}
+
+function fitGlobe() {
+  if (!globeHost.value || !scene) return;
+  const { width, height } = globeHost.value.getBoundingClientRect();
+  if (!width || !height) return;
+  const camera = scene.camera;
+  if (!(camera instanceof OrthographicCamera)) return;
+
+  // 以容器短边为基准，竖屏和横屏都能容纳完整球体。
+  const aspect = width / height;
+  const halfHeight = 200 * Math.max(1, 1 / aspect);
+  camera.top = halfHeight;
+  camera.bottom = -halfHeight;
+  camera.right = halfHeight * aspect;
+  camera.left = -camera.right;
+  camera.updateProjectionMatrix();
+  scene.renderer.setSize(width, height);
+}
+
+onMounted(() => {
+  if (!globeHost.value) return;
+  chart.registerMap("world", {
+    type: "FeatureCollection",
+    features: world.features.map(({ geometry, properties }) => ({
+      type: "Feature",
+      geometry: geometry as Polygon | MultiPolygon,
+      properties,
+    })),
+  });
+  try {
+    scene = chart.init({
+      dom: globeHost.value,
+      map: "world",
+      mode: "3d",
+      controls: "builtIn",
+      cameraType: "OrthographicCamera",
+      autoRotate: false,
+      config: {
+        R: 174,
+        enableZoom: false,
+        pixelRatio: Math.min(window.devicePixelRatio, 2),
+        bgStyle: { color: "#0c141b", opacity: 0 },
+        earth: { color: "#182d3d", material: "MeshPhongMaterial" },
+        mapStyle: { areaColor: "#385865", lineColor: "#547481", material: "MeshLambertMaterial" },
+        regions: { China: { areaColor: "#426572" } },
+        hoverRegionStyle: { show: false },
+        spriteStyle: { color: "#335463", size: 2.4 },
+        radarStyle,
+        flyLineRFactor: 0.3,
+        pathStyle: { color: "rgba(227, 175, 104, 0.65)", size: 1.7 },
+        flyLineStyle: { color: "#ffd49b", size: 3, duration: 3000 },
+        scatterStyle: { show: false },
+      },
+    });
+  } catch (error) {
+    sceneFailed.value = true;
+    console.error("地球视图初始化失败", error);
+    return;
+  }
+
+  // 经度 −90° 面向默认相机，将东经 115°、北纬 22° 转到视图中央。
+  scene.mainContainer.rotation.set(MathUtils.degToRad(22), MathUtils.degToRad(-205), 0);
+  fitGlobe();
+  observer = new ResizeObserver(fitGlobe);
+  observer.observe(globeHost.value);
+
+  scene.setData("mapStreamLine", {
+    data: chinaBoundary,
+    style: { color: "#83b6ce", opacity: 0.8, speed: 0 },
+  });
+  scene.setData("flyLine", routes.map(({ from, to }) => ({ from: from.point, to: to.point })));
+  scene.setData("textMark", stations.map(({ name, point, style }) => ({
+    text: name,
+    position: { lon: point.lon, lat: point.lat - (style?.radius ?? radarStyle.radius) - 2 },
+    style: { color: "#e2edf1", fontSize: 25 },
+  })));
+  scene.setData("radar", radars);
+});
+
+onBeforeUnmount(() => {
+  observer?.disconnect();
+  scene?.destroy();
+});
 </script>
 
 <template>
-  <div @click="del">移除</div>
+  <header class="masthead">
+    <div class="page-width masthead-inner">
+      <div class="brand"><span class="radar-mark" aria-hidden="true"></span>地球观测台</div>
+      <span class="wordmark" lang="en">Earth Flyline</span>
+    </div>
+  </header>
 
-  <div style="position: relative">
-    <div id="container1"></div>
-  </div>
+  <main class="page-width">
+    <header class="page-heading">
+      <div>
+        <p class="region">东亚与东南亚</p>
+        <h1>城市雷达</h1>
+      </div>
+      <button class="layer-switch" type="button" role="switch" :aria-checked="layerVisible.radar"
+        :disabled="sceneFailed" aria-controls="globe" @click="toggleLayer('radar')">
+        雷达图层<span class="switch-track" aria-hidden="true"></span>
+      </button>
+    </header>
 
-  <div id="container"></div>
+    <div class="workspace">
+      <figure class="globe-panel">
+        <div class="globe-stage">
+          <div id="globe" ref="globeHost" class="globe-host" role="img"
+            aria-label="以上海、东京和新加坡为站点的三维地球"></div>
+          <p v-if="sceneFailed" class="scene-error" role="status">地球视图加载失败，请检查浏览器的 WebGL 支持。</p>
+          <button v-else class="view-reset" type="button" @click="resetView">
+            <span aria-hidden="true">↺</span> 复位视角
+          </button>
+        </div>
+        <figcaption class="map-caption">
+          <button class="legend-toggle" type="button" :aria-pressed="layerVisible.flyLine"
+            :disabled="sceneFailed" aria-controls="globe" @click="toggleLayer('flyLine')">
+            <i class="key-line key-route" aria-hidden="true"></i>城际飞线
+          </button>
+          <button class="legend-toggle" type="button" :aria-pressed="layerVisible.mapStreamLine"
+            :disabled="sceneFailed" aria-controls="globe" @click="toggleLayer('mapStreamLine')">
+            <i class="key-line key-boundary" aria-hidden="true"></i>中国边界
+          </button>
+          <span class="drag-hint">拖动旋转</span>
+        </figcaption>
+      </figure>
+
+      <aside class="details" aria-label="站点与航线">
+        <section>
+          <header class="section-heading"><h2>观测站点</h2><span>{{ stations.length }} 站</span></header>
+          <ul class="stations">
+            <li v-for="station in stations" :key="station.point.id"
+              :style="{ '--station-color': station.style?.color ?? radarStyle.color }">
+              <i class="station-marker" aria-hidden="true"></i>
+              <div>
+                <h3>{{ station.name }}</h3>
+                <p class="coordinates">{{ station.point.lat.toFixed(2) }}°N · {{ station.point.lon.toFixed(2) }}°E</p>
+              </div>
+              <span class="scan-rate">{{ station.style?.speed === 0 ? '静止' : (station.style?.speed ?? radarStyle.speed) + ' 圈/秒' }}</span>
+            </li>
+          </ul>
+        </section>
+        <section class="routes">
+          <header class="section-heading"><h2>飞线路径</h2><span>{{ routes.length }} 条</span></header>
+          <ul>
+            <li v-for="{ from, to } in routes" :key="to.point.id">
+              {{ from.name }}<span class="route-arrow" aria-hidden="true">→</span>{{ to.name }}
+            </li>
+          </ul>
+        </section>
+      </aside>
+    </div>
+  </main>
 </template>
-
-<style lang="less" scoped>
-#container {
-  width: 800px;
-  height: 800px;
-  margin-bottom: 40px;
-}
-
-#container1 {
-  width: 800px;
-  height: 800px;
-}
-</style>

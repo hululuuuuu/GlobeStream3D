@@ -1,0 +1,55 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Layer texture ownership</title>
+<link rel="icon" href="data:,">
+<div id="map" style="width:320px;height:320px"></div>
+<pre id="result">Running…</pre>
+<script type="module">
+  import earth from "../src/entry.ts";
+  const result = document.querySelector("#result");
+  const assert = (ok, message) => { if (!ok) throw new Error(message); };
+  const island = { type: "Polygon", coordinates: [[[0,0],[0,4],[4,4],[4,0],[0,0]]] };
+  earth.registerMap("island", { type: "FeatureCollection", features: [
+    { type: "Feature", properties: { name: "Island" }, geometry: island },
+  ] });
+  const label = { id: "label", text: "A", position: { lon: 0, lat: 0 } };
+  const chart = earth.init({
+    dom: document.querySelector("#map"), map: "island", mode: "2d",
+    config: { textMark: { data: [label] } },
+  });
+  const draw = () => chart.renderer.render(chart.scene, chart.camera);
+  try {
+    chart.remove("textMark", ["label"]);
+    assert(!chart.mainContainer.getObjectByName("label"), "initial labels must support targeted removal");
+    draw();
+    const baseline = chart.renderer.info.memory.textures;
+    for (let i = 0; i < 6; i++) {
+      await chart.setData("textMark", [label]);
+      draw();
+      assert(chart.renderer.info.memory.textures === baseline + 1, "replacement retained an old label texture");
+    }
+    chart.remove("textMark");
+    draw();
+    assert(chart.renderer.info.memory.textures === baseline, "label texture survived removal");
+
+    await chart.addData("point", [{ id: "a", lon: 0, lat: 0 }, { id: "b", lon: 10, lat: 10 }]);
+    const getPoint = id => chart.mainContainer.getObjectByName(id).getObjectByName("point");
+    const shared = getPoint("a").material.map;
+    assert(shared === getPoint("b").material.map, "test requires a shared marker texture");
+    let sharedDisposals = 0;
+    shared.addEventListener("dispose", () => sharedDisposals++);
+    chart.remove("point", ["a"]);
+    assert(sharedDisposals === 0, "removing a marker disposed another marker's texture");
+    await chart.addData("textMark", [label]);
+    const owned = chart.mainContainer.getObjectByName("label").children[0].material.map;
+    let labelDisposals = 0;
+    owned.addEventListener("dispose", () => labelDisposals++);
+    chart.destroy();
+    assert(labelDisposals === 1 && sharedDisposals === 0, "destroy must respect texture ownership");
+    result.textContent = "PASS";
+  } catch (error) {
+    chart.destroy();
+    result.textContent = String(error.stack || error);
+    throw error;
+  }
+</script>

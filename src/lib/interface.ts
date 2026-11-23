@@ -81,6 +81,12 @@ export const InitConfig = {
     color: "#cd79ff",
     show: true,
   },
+  radarStyle: {
+    color: "#50f5cc",
+    radius: 10,
+    speed: 0.25,
+    opacity: 0.85,
+  },
   wallStyle: {
     color: "#cd79ff",
     opacity: 0.5,
@@ -158,6 +164,18 @@ export interface ScatterStyle extends TweenConfig {
 export interface LessCoordinate {
   lon: number;
   lat: number;
+}
+export interface RadarStyle {
+  color: Color;
+  /** Surface angle in degrees on a globe, map units in 2D. */
+  radius: number;
+  /** Revolutions per second, positive from east towards north. */
+  speed: number;
+  opacity: number;
+}
+export interface RadarStation extends LessCoordinate {
+  id?: string | number;
+  style?: Partial<RadarStyle>;
 }
 export interface Coordinates extends LessCoordinate {
   id?: string | number;
@@ -245,6 +263,7 @@ export interface configType {
   pathStyle: Partial<PathStyle>;
   flyLineStyle: Partial<FlyLineStyle>;
   scatterStyle: Partial<ScatterStyle>;
+  radarStyle?: Partial<RadarStyle>;
   roadStyle: Partial<RoadStyle>;
   barStyle: Partial<BarStyle>;
   regions?: RegionsStyle;
@@ -268,7 +287,7 @@ export interface FlyLineData {
 export interface RoadData {
   path: LessCoordinate[];
   style?: Partial<RoadStyle>;
-  id: string | number;
+  id?: string | number;
 }
 
 export interface BarData {
@@ -290,6 +309,7 @@ export interface MapStreamStyle {
   splitLine: number;
 }
 export interface SetData {
+  radar: RadarStation[];
   flyLine: FlyLineData[];
   point: Coordinates[];
   road: RoadData[];
@@ -304,8 +324,8 @@ export interface SetData {
   bar: BarData[];
   textMark: TextMarkItem[];
 }
-export type OptDataFunc = (
-  type: keyof SetData,
-  data: any,
+export type OptDataFunc = <K extends keyof SetData>(
+  type: K,
+  data: SetData[K],
   mainContainer?: Group
 ) => Promise<Group[]>;

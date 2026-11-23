@@ -2,14 +2,12 @@ import { RoadStyle, StoreConfig } from "@/lib/interface";
 import Store from "@/lib/store/store";
 import {
   ArcCurve,
-  BufferAttribute,
   BufferGeometry,
   CatmullRomCurve3,
   Color,
   Group,
   Line,
   LineBasicMaterial,
-  Mesh,
   Points,
   PointsMaterial,
   Quaternion,
@@ -17,7 +15,7 @@ import {
   Vector3,
 } from "three";
 import { _3Dto2D, radianAOB } from "@/lib/utils/math";
-import { setTween } from "@/lib/utils/tween";
+import { createTrailGeometry, createTrailUpdater } from "@/lib/utils/trail";
 import { merge } from "lodash-es";
 import { cloneDeep } from "lodash-es";
 
@@ -52,17 +50,17 @@ export class Road {
   }
   calculateRoadPath = (points: Vector3[]): Group => {
     const group = new Group();
-    const groupList: Group[] & Mesh[] = [];
-    points.forEach((p, i, array) => {
-      if (i < array.length - 1) {
-        if (this._store.mode === "2d") {
-          this.calculateRoadPath2D([p, array[i + 1]]);
-        } else {
-          this.calculateArcPath([p, array[i + 1]]);
-        }
+    for (let i = 1; i < points.length; i++) {
+      const segment = [points[i - 1], points[i]];
+      if (this._store.mode === "2d") {
+        this.calculateRoadPath2D(segment);
+      } else {
+        this.calculateArcPath(segment);
       }
-    });
-    group.add(this.createPath(this.points));
+    }
+    if (this._currentConfig.pathStyle.show !== false) {
+      group.add(this.createPath(this.points));
+    }
     this.tadpolePointsMesh = this.createShader(this.points);
     group.add(this.tadpolePointsMesh);
     return group;
@@ -70,11 +68,11 @@ export class Road {
   calculateRoadPath2D = (points: Vector3[]) => {
     const path = new CatmullRomCurve3(points);
     const points3D = path.getPoints(200);
-    this.points = [...this.points, ...points3D];
+    this.points.push(...points3D);
   };
   calculateArcPath = (points: Vector3[]) => {
     const [start, end] = points;
-    const { quaternion, startPoint3D, endPoint3D } = _3Dto2D(start, end);
+    const { quaternion, startPoint3D } = _3Dto2D(start, end);
     const centerPosition = new Vector3(0, 0, 0);
     const c = radianAOB(startPoint3D, new Vector3(0, -1, 0), centerPosition);
     const startDeg = -Math.PI / 2 + c;
@@ -85,32 +83,11 @@ export class Road {
       tubeQuaternionPoints,
       quaternion
     );
-    this.points = [...this.points, ...quaternionPoints];
+    this.points.push(...quaternionPoints);
   };
   createShader = (points: Vector3[]) => {
-    // Create the final object to add to the scene
-    const geometry = new BufferGeometry();
-    const slicePoints = points.slice(0, this.tadpoleSize); //获取更多的点数
-    const percentArr = []; //attributes.percent的数据
-    for (let i = 0; i < slicePoints.length; i++) {
-      percentArr.push(i / slicePoints.length);
-    }
-    const colorArr = [];
-    const color1 = new Color(this._currentConfig.flyLineStyle.color); //尾拖线颜色
-    const color2 = new Color(this._currentConfig.flyLineStyle.color); //飞线蝌蚪头颜色
-    for (let i = 0; i < slicePoints.length; i++) {
-      const color = color1.lerp(color2, i / slicePoints.length);
-      colorArr.push(color.r, color.g, color.b);
-    }
-    geometry.setFromPoints(slicePoints);
-    geometry.attributes.percent = new BufferAttribute(
-      new Float32Array(percentArr),
-      1
-    );
-    geometry.attributes.color = new BufferAttribute(
-      new Float32Array(colorArr),
-      3
-    );
+    const color = new Color(this._currentConfig.flyLineStyle.color);
+    const geometry = createTrailGeometry(points, this.tadpoleSize, color, color);
     const material = new PointsMaterial({
       vertexColors: true, //使用顶点颜色渲染
       size: 3.0, //点大小
@@ -132,21 +109,14 @@ export class Road {
   };
 
   createMesh(points: Vector3[]) {
-    let roadPathGroup: Group;
-    if (this._store.mode === "2d") {
-      roadPathGroup = this.calculateRoadPath(points);
-    } else {
-      roadPathGroup = this.calculateRoadPath(points);
-    }
+    const roadPathGroup = this.calculateRoadPath(points);
     roadPathGroup.name = "roadLine";
-    setTween(
+    const updateTrail = createTrailUpdater(this.tadpolePointsMesh.geometry, this.points);
+    this._store.animations.setTween(
+      this.tadpolePointsMesh,
       { index: 0 },
-      { index: this.points.length - this.tadpoleSize },
-      (params) => {
-        this.tadpolePointsMesh.geometry.setFromPoints(
-          this.points.slice(params.index, params.index + this.tadpoleSize)
-        );
-      },
+      { index: Math.max(0, this.points.length - this.tadpoleSize) },
+      (params) => updateTrail(params.index),
       {
         ...this._currentConfig.flyLineStyle,
         data: this._currentData,

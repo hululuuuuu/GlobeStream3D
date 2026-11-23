@@ -1,0 +1,319 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Layer visibility integration tests</title>
+<link rel="icon" href="data:,">
+<style>.map { width: 400px; height: 400px; }</style>
+<pre id="result">Running…</pre>
+<pre id="metrics"></pre>
+<script type="module">
+  import earth from "../src/entry.ts";
+
+  earth.registerMap("visibility", {
+    type: "FeatureCollection",
+    features: [{
+      type: "Feature", properties: { name: "Island" },
+      geometry: { type: "Polygon", coordinates: [[[-20,-20], [-20,20], [20,20], [20,-20], [-20,-20]]] },
+    }],
+  });
+  const result = document.querySelector("#result");
+  const metrics = document.querySelector("#metrics");
+  const types = ["radar", "point", "flyLine", "road", "bar", "wall", "mapStreamLine", "textMark"];
+
+  function assert(ok, message) {
+    if (!ok) throw new Error(message);
+  }
+  function chartFor(mode, config = {}) {
+    const dom = document.createElement("div");
+    dom.className = "map";
+    document.body.append(dom);
+    const chart = earth.init({
+      dom, map: "visibility", mode, autoRotate: false,
+      config: { pixelRatio: 1, spriteStyle: { show: false }, ...config },
+    });
+    return chart;
+  }
+  function close(chart) {
+    chart.destroy();
+    chart.options.dom.remove();
+  }
+  function groups(chart, type) {
+    return chart.mainContainer.children.filter(group => group.userData.figureType === type);
+  }
+  function expectGroups(chart, type, count, visible, stage) {
+    const found = groups(chart, type);
+    const label = chart.options.mode + " " + type + " " + stage;
+    assert(found.length === count, label + ": expected " + count + " groups, got " + found.length);
+    assert(found.every(group => group.visible === visible), label + ": expected visible=" + visible);
+    return found;
+  }
+  function dataFor(type, n) {
+    const from = { id: "from-" + n, lon: n, lat: 3 };
+    const to = { id: "to-" + n, lon: n + 5, lat: 5 };
+    switch (type) {
+      case "point": case "radar": return [from];
+      case "flyLine": return [{ from, to }];
+      case "road": return [{ id: n, path: [from, to] }];
+      case "bar": return [{ position: from, value: 4 }];
+      case "wall": case "mapStreamLine": return { data: [[[n, 3], [n + 5, 5]]] };
+      case "textMark": return [{ id: n, text: "Site " + n, position: from }];
+    }
+  }
+  function render(chart) {
+    chart.renderer.render(chart.scene, chart.camera);
+    return chart.renderer.info.render.calls;
+  }
+
+  async function checkLifecycle(mode) {
+    const chart = chartFor(mode, { textMark: { data: dataFor("textMark", 0) } });
+    try {
+      if (typeof chart.setLayerVisible !== "function") {
+        throw new Error("Expected chart.setLayerVisible to be a function, got " + typeof chart.setLayerVisible);
+      }
+      const [label] = expectGroups(chart, "textMark", 1, true, "initial config");
+      chart.setLayerVisible("textMark", false);
+      assert(!label.visible, mode + " initialized text stays mounted and hides");
+      chart.setLayerVisible("textMark", true);
+      assert(groups(chart, "textMark")[0] === label && label.visible, mode + " initialized text restored");
+      chart.remove("textMark");
+
+      const backgroundCalls = mode === "2d" ? render(chart) : 0;
+      for (const type of types) {
+        const data = dataFor(type, 1);
+        chart.setLayerVisible(type, false);
+        await chart.addData(type, data);
+        const [first] = expectGroups(chart, type, 1, false, "first add to hidden type");
+        await chart.addData(type, dataFor(type, 2));
+        expectGroups(chart, type, 2, false, "second add");
+        if (mode === "2d") assert(render(chart) === backgroundCalls, type + " drew on its first hidden frame");
+        chart.setLayerVisible(type, true);
+        chart.setLayerVisible(type, true);
+        expectGroups(chart, type, 2, true, "show all groups");
+        if (mode === "2d") assert(render(chart) > backgroundCalls, type + " should submit draws when shown");
+        chart.setLayerVisible(type, false);
+        chart.setLayerVisible(type, false);
+        expectGroups(chart, type, 2, false, "hide all groups");
+        if (mode === "2d") assert(render(chart) === backgroundCalls, type + " should submit no draws when hidden");
+
+        await chart.setData(type, data);
+        const [replacement] = expectGroups(chart, type, 1, false, "same-data replacement");
+        assert(replacement !== first && !first.parent, mode + " " + type + " replaced old group");
+        chart.remove(type, [replacement.name]);
+        expectGroups(chart, type, 0, false, "targeted removal");
+        await chart.addData(type, data);
+        expectGroups(chart, type, 1, false, "re-add removed ID");
+
+        await chart.setData(type, type === "wall" || type === "mapStreamLine" ? { data: [] } : []);
+        expectGroups(chart, type, 0, false, "empty replacement");
+        await chart.setData(type, data);
+        expectGroups(chart, type, 1, false, "replace after clear");
+        chart.remove(type);
+        await chart.addData(type, data);
+        expectGroups(chart, type, 1, false, "add after removeAll");
+        chart.remove(type);
+        chart.setLayerVisible(type, true);
+        await chart.addData(type, data);
+        expectGroups(chart, type, 1, true, "show while empty");
+        chart.remove(type);
+      }
+    } finally { close(chart); }
+  }
+
+  async function checkRadar() {
+    const chart = chartFor("2d");
+    try {
+      const station = { lon: 0, lat: 0, style: { speed: 0.25, radius: 12 } };
+      const start = now;
+      await chart.addData("radar", [station]);
+      const [group] = expectGroups(chart, "radar", 1, true, "initial station");
+      const mesh = group.children[0], { geometry, material } = mesh;
+      const country = chart.mainContainer.getObjectByName("Island");
+      assert(country?.userData.type === "country", "country behind radar exists");
+
+      let draws = 0, disposals = 0, detachments = 0;
+      const beforeRender = mesh.onBeforeRender;
+      mesh.onBeforeRender = function (...args) {
+        draws++;
+        beforeRender.apply(this, args);
+      };
+      geometry.addEventListener("dispose", () => disposals++);
+      material.addEventListener("dispose", () => disposals++);
+      group.addEventListener("removed", () => detachments++);
+
+      const picked = [];
+      let radarRays = 0;
+      const raycast = mesh.raycast;
+      mesh.raycast = function (...args) {
+        radarRays++;
+        return raycast.apply(this, args);
+      };
+      chart.on("click", (_event, hit) => picked.push(hit));
+      const canvas = chart.renderer.domElement;
+      const rect = canvas.getBoundingClientRect();
+      const pointer = { bubbles: true, clientX: rect.left + rect.width / 2 + 3, clientY: rect.top + rect.height / 2 + 2 };
+      function click(expected) {
+        const count = picked.length;
+        const previousRays = radarRays;
+        canvas.dispatchEvent(new MouseEvent("click", pointer));
+        assert(picked.length === count + 1 && picked[count] === expected,
+          "same pointer should hit " + expected.userData.type + ", got " + picked[count]?.userData.type);
+        if (expected === country) assert(radarRays === previousRays, "hidden radar was raycast");
+      }
+
+      const visibleCalls = render(chart);
+      assert(draws === 1, "visible radar draws once after warmup");
+      click(mesh);
+      const info = chart.renderer.info;
+      const geometries = info.memory.geometries, textures = info.memory.textures, programs = info.programs.length;
+      let hiddenCalls;
+      for (let i = 0; i < 100; i++) {
+        const visible = i % 2 === 1;
+        now += 31;
+        chart.setLayerVisible("radar", visible);
+        const [mounted] = expectGroups(chart, "radar", 1, visible, "toggle " + i);
+        assert(mounted === group && mounted.children[0] === mesh && mesh.geometry === geometry && mesh.material === material,
+          "toggle " + i + " replaced a radar object or resource");
+        const before = draws;
+        const calls = render(chart);
+        assert(draws === before + Number(visible), "radar draw count at toggle " + i);
+        if (visible) {
+          assert(calls === visibleCalls, "restoring radar restores draw count");
+          const phase = ((now - start) * station.style.speed / 1000) % 1;
+          assert(Math.abs(material.uniforms.phase.value - phase) < 1e-6, "radar lost hidden time at toggle " + i);
+        } else {
+          hiddenCalls = calls;
+          assert(calls === visibleCalls - 1, "hidden radar submitted a draw or hid the country");
+        }
+        assert(info.memory.geometries === geometries && info.memory.textures === textures && info.programs.length === programs,
+          "renderer resource counts changed at toggle " + i);
+        assert(disposals === 0 && detachments === 0, "visibility disposed or detached the original station");
+        if (i < 2) click(visible ? mesh : country);
+      }
+      assert(draws === 51, "100 toggles should submit 50 radar draws after warmup");
+      metrics.textContent += "Radar: 100 toggles, draws visible/hidden " + visibleCalls + "/" + hiddenCalls
+        + ", radar draws after warmup " + (draws - 1) + ", disposals " + disposals
+        + ", final phase " + material.uniforms.phase.value + "\n";
+      chart.remove("radar");
+      assert(disposals === 2 && detachments === 1, "real removal must release the monitored resources");
+    } finally { close(chart); }
+  }
+
+  async function checkHiddenTween() {
+    const chart = chartFor("2d", { scatterStyle: { show: false } });
+    try {
+      const completed = [];
+      const flight = dataFor("flyLine", 7)[0];
+      flight.style = { flyLineStyle: { delay: 20, duration: 100, repeat: 0, onComplete: data => completed.push(data) } };
+      chart.setLayerVisible("flyLine", false);
+      await chart.addData("flyLine", [flight]);
+      const [group] = expectGroups(chart, "flyLine", 1, false, "finite flight");
+      function advance(ms) {
+        now += ms;
+        // Drive the production frame, including its tween update and render, on the test clock.
+        cancelAnimationFrame(chart.animationFrameId);
+        chart.animate();
+      }
+      advance(119);
+      assert(completed.length === 0 && !group.visible, "hidden flight completed early");
+      advance(1);
+      assert(completed.length === 1 && completed[0] === flight && !group.visible, "hidden flight missed its deadline or payload");
+      chart.setLayerVisible("flyLine", true);
+      advance(200);
+      assert(completed.length === 1 && group.visible, "show replayed the completed flight");
+    } finally { close(chart); }
+  }
+
+  async function checkIsolation() {
+    const a = chartFor("2d"), b = chartFor("3d");
+    try {
+      const point = dataFor("point", 1);
+      await a.addData("point", point);
+      await b.addData("point", point);
+      await a.addData("flyLine", dataFor("flyLine", 1));
+      const [flight] = groups(a, "flyLine");
+      const path = flight.getObjectByName("pathLine"), endpoint = flight.getObjectByName("point");
+      assert(path && endpoint, "flight fixture has both a path and an endpoint");
+      path.visible = false;
+      a.setLayerVisible("point", false);
+      expectGroups(a, "point", 1, false, "local hide");
+      expectGroups(b, "point", 1, true, "other instance");
+      assert(flight.visible && endpoint.visible, "hiding points hid the flight endpoint");
+      a.setLayerVisible("flyLine", false);
+      a.setLayerVisible("flyLine", true);
+      assert(flight.visible && endpoint.visible && !path.visible, "restoring flight overwrote child visibility");
+      await b.addData("point", dataFor("point", 2));
+      expectGroups(b, "point", 2, true, "independent append");
+      b.setLayerVisible("road", false);
+      a.destroy();
+      for (const type of types) {
+        a.setLayerVisible(type, true);
+        a.setLayerVisible(type, false);
+      }
+      assert(a.mainContainer.children.length === 0 && !a.renderer.domElement.isConnected,
+        "visibility after destroy recreated chart content");
+      expectGroups(b, "point", 2, true, "surviving chart");
+      await b.addData("road", dataFor("road", 1));
+      expectGroups(b, "road", 1, false, "hidden preference survives peer destruction");
+      await b.addData("point", dataFor("point", 3));
+      expectGroups(b, "point", 3, true, "append after peer destruction");
+    } finally { close(a); close(b); }
+  }
+
+  async function checkRollback() {
+    const chart = chartFor("2d");
+    try {
+      const oldData = dataFor("point", 1), newData = dataFor("point", 2);
+      await chart.addData("point", oldData);
+      chart.setLayerVisible("point", false);
+      const [old] = expectGroups(chart, "point", 1, false, "before failing replacement");
+      const originalTween = chart._store.animations.getAll()[0];
+      assert(originalTween, "old point has a running ripple");
+      let oldDisposals = 0;
+      old.getObjectByName("scatter").geometry.addEventListener("dispose", () => oldDisposals++);
+
+      const root = chart.mainContainer, add = root.add, staged = [];
+      const cause = new Error("injected failure mounting the second point");
+      let propagated;
+      root.add = function (group) {
+        const resource = { group, visibleAtMount: group.visible, disposals: 0 };
+        staged.push(resource);
+        group.getObjectByName("scatter").geometry.addEventListener("dispose", () => resource.disposals++);
+        if (staged.length === 2) throw cause;
+        return add.call(this, group);
+      };
+      try {
+        await chart.setData("point", [...oldData, ...newData]);
+      } catch (error) {
+        propagated = error;
+      } finally { root.add = add; }
+
+      assert(propagated === cause && staged.length === 2, "failed replacement must propagate the original mount error");
+      assert(staged.every(item => !item.visibleAtMount && !item.group.parent && item.disposals === 1),
+        "staged groups must inherit visibility before mounting and be released on failure");
+      const [survivor] = expectGroups(chart, "point", 1, false, "after failed replacement");
+      assert(survivor === old && oldDisposals === 0, "rollback lost the original point or its resources");
+      const tweens = chart._store.animations.getAll();
+      assert(tweens.length === 1 && tweens[0] === originalTween, "rollback changed the original running tween");
+      await chart.addData("point", [...oldData, ...newData]);
+      const retried = expectGroups(chart, "point", 2, false, "hidden retry after rollback");
+      assert(retried[0] === old && retried[1].name === newData[0].id, "rollback corrupted the point ID index");
+    } finally { close(chart); }
+  }
+
+  let now = 1000;
+  const originalNow = Object.getOwnPropertyDescriptor(performance, "now");
+  Object.defineProperty(performance, "now", { configurable: true, value: () => now });
+  try {
+    for (const mode of ["2d", "3d"]) await checkLifecycle(mode);
+    await checkRadar();
+    await checkHiddenTween();
+    await checkIsolation();
+    await checkRollback();
+    result.textContent = "PASS";
+  } catch (error) {
+    result.textContent = "FAIL: " + (error.stack ?? error);
+    throw error;
+  } finally {
+    if (originalNow) Object.defineProperty(performance, "now", originalNow);
+    else delete performance.now;
+  }
+</script>
