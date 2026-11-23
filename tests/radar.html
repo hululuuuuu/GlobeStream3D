@@ -40,6 +40,62 @@
       delete performance.now;
     }
   }
+  async function checkLiveStyle(chart, mode) {
+    let now = 0;
+    Object.defineProperty(performance, "now", { configurable: true, value: () => now });
+    try {
+      const station = { id: 0, lon: -90, lat: 0, style: { radius: 12, speed: 0.25 } };
+      const other = { lon: 5, lat: 8 };
+      await chart.setData("radar", [station, other, { ...station, lon: -10 }]);
+      const [first, second, duplicate] = chart.mainContainer.children.filter(g => g.userData.figureType === "radar");
+      const mesh = first.children[0];
+      const material = mesh.material;
+      const geometry = mesh.geometry;
+      let disposed = 0;
+      geometry.addEventListener("dispose", () => disposed++);
+      const phase = () => {
+        mesh.onBeforeRender();
+        return material.uniforms.phase.value;
+      };
+      now = 1000;
+      assert(phase() === 0.25, "station reached a quarter turn before editing");
+      assert(typeof chart.updateRadarStyle === "function", "chart exposes live radar style updates");
+      assert(chart.updateRadarStyle("0", { speed: -0.5, color: "#ff0000", opacity: 0.4 }), "edit by stringified numeric ID");
+      assert(first.children[0] === mesh && mesh.material === material && mesh.geometry === geometry, "reuse mesh, material and geometry for speed and color");
+      assert(phase() === 0.25 && material.uniforms.direction.value === -1, "reverse from current bearing");
+      assert(material.uniforms.tint.value.getHex() === 0xff0000 && material.uniforms.opacity.value === 0.4, "new color and opacity");
+      assert(duplicate.children[0].material.uniforms.opacity.value === 0.4 && second.children[0].material.uniforms.opacity.value !== 0.4, "only matching IDs change");
+      now += 250;
+      chart.setLayerVisible("radar", false);
+      assert(chart.updateRadarStyle(0, { speed: 0, radius: 36 }), "pause and resize while hidden");
+      now += 2000;
+      chart.setLayerVisible("radar", true);
+      assert(disposed === (mode === "3d" ? 1 : 0), "only release an outgrown globe buffer");
+      const largerGeometry = mesh.geometry;
+      assert(phase() === 0.125 && material.uniforms.direction.value === -1, "paused bearing and sweep direction survive hide and show");
+      assert(station.style.radius === 12 && mesh.userData.style.radius === 36, "copy style into event data without changing input");
+      const rim = mesh.position.clone();
+      let maxRadius = 0;
+      for (let i = 0; i < mesh.geometry.attributes.position.count; i++) {
+        mesh.localToWorld(rim.fromBufferAttribute(mesh.geometry.attributes.position, i));
+        const radius = mode === "3d" ? Math.acos(Math.min(1, rim.z / rim.length())) * 180 / Math.PI : Math.hypot(rim.x + 90, rim.y);
+        maxRadius = Math.max(maxRadius, radius);
+      }
+      assert(Math.abs(maxRadius - 36) < 0.01, "updated footprint in " + mode);
+      assert(!chart.updateRadarStyle(0, { speed: 1, radius: 46 }) && !chart.updateRadarStyle(0, { speed: NaN }), "reject invalid edits atomically");
+      assert(chart.updateRadarStyle(0, { radius: 8 }) && mesh.geometry === largerGeometry, "reuse buffers when shrinking");
+      now += 500;
+      assert(phase() === 0.125, "invalid patch leaves station paused");
+      assert(chart.updateRadarStyle(0, { speed: 0.5 }), "resume");
+      now += 250;
+      assert(phase() === 0.25, "resume from paused bearing");
+      assert(chart.updateRadarStyle("5-8", { opacity: 3 }) && second.children[0].material.uniforms.opacity.value === 1, "coordinate fallback ID and opacity clamp");
+      chart.remove("radar", ["0"]);
+      assert(!chart.updateRadarStyle(0, { speed: 1 }), "removed station no longer editable");
+    } finally {
+      delete performance.now;
+    }
+  }
   async function check(mode) {
     const chart = earth.init({
       dom: document.querySelector("#map"), map: "test", mode, autoRotate: false,
@@ -79,6 +135,7 @@
       assert(stations().length === 1 && stations()[0].name === "last", "last replacement wins");
       chart.remove("radar");
       assert(stations().length === 0, "remove all");
+      await checkLiveStyle(chart, mode);
       if (mode === "2d") {
         await checkSweep(chart, 0.25, 1);
         await checkSweep(chart, -0.25, 3);
@@ -87,6 +144,7 @@
     } finally {
       chart.destroy();
     }
+    assert(!chart.updateRadarStyle(0, { speed: 1 }), "destroyed charts reject style edits");
   }
   try {
     await check("3d");

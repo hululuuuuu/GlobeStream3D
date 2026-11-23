@@ -2,7 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from "vue";
 import { MathUtils, OrthographicCamera, Raycaster, Vector2 } from "three";
 import type { MultiPolygon, Polygon } from "geojson";
-import chart from "@/entry";
+import chart, { type RadarStyle } from "@/entry";
 import world from "./map/world.json";
 import chinaBoundary from "./map/ChinaAdditionalRouteMap.geojson?raw";
 
@@ -24,21 +24,25 @@ const stations = [
     point: { id: "singapore", lon: 103.82, lat: 1.35 },
     style: { color: "#7bcafa", radius: 8, speed: 0.18 },
   },
-].map(station => ({ ...station, settings: reactive({ ...station.style }) }));
+].map(station => reactive({
+  ...station,
+  settings: { ...station.style },
+  resumeSpeed: station.style.speed || radarStyle.speed,
+}));
 type Station = typeof stations[number];
 const routes = stations.slice(1).map(to => ({ from: stations[0], to }));
 const selected = ref(stations[0].point.id);
 const station = computed(() => stations.find(item => item.point.id === selected.value)!);
 const isDefault = computed(() => station.value.settings.speed === station.value.style.speed &&
-  station.value.settings.radius === station.value.style.radius);
+  station.value.settings.radius === station.value.style.radius &&
+  station.value.resumeSpeed === (station.value.style.speed || radarStyle.speed));
 
 const globeHost = ref<HTMLDivElement | null>(null);
 const layerVisible = reactive({ radar: true, flyLine: true, mapStreamLine: true, bar: false });
 const sceneFailed = ref(false);
 let scene: ReturnType<typeof chart.init> | undefined;
 let observer: ResizeObserver | undefined;
-let editFrame: number | undefined;
-const pending = new Set<Station>();
+let barFrame: number | undefined;
 let barsDirty = true;
 
 function radarData({ point, settings }: Station) {
@@ -55,36 +59,40 @@ function refreshBars() {
   barsDirty = false;
 }
 
-function queueEdit(item: Station) {
-  pending.add(item);
-  if (editFrame !== undefined) return;
-  editFrame = requestAnimationFrame(() => {
-    editFrame = undefined;
-    if (scene) {
-      for (const edited of pending) {
-        scene.remove("radar", [edited.point.id]);
-        void scene.addData("radar", [radarData(edited)]);
-      }
-      refreshBars();
+function updateSettings(patch: Partial<Pick<RadarStyle, "speed" | "radius">>) {
+  const item = station.value;
+  if (!scene || !layerVisible.radar || !scene.updateRadarStyle(item.point.id, patch)) return false;
+  const radiusChanged = patch.radius !== undefined && patch.radius !== item.settings.radius;
+  Object.assign(item.settings, patch);
+  if (patch.speed) item.resumeSpeed = patch.speed;
+  if (radiusChanged) {
+    barsDirty = true;
+    if (layerVisible.bar && barFrame === undefined) {
+      barFrame = requestAnimationFrame(() => {
+        barFrame = undefined;
+        refreshBars();
+      });
     }
-    pending.clear();
-  });
+  }
+  return true;
 }
 
 function editSetting(key: "speed" | "radius", event: Event) {
-  if (!scene || !layerVisible.radar) return;
-  const value = (event.currentTarget as HTMLInputElement).valueAsNumber;
+  const input = event.currentTarget as HTMLInputElement;
+  const value = input.valueAsNumber;
   if (!Number.isFinite(value) || value === station.value.settings[key]) return;
-  station.value.settings[key] = value;
-  if (key === "radius") barsDirty = true;
-  queueEdit(station.value);
+  if (!updateSettings({ [key]: value })) input.valueAsNumber = station.value.settings[key];
+}
+
+function toggleScan() {
+  const item = station.value;
+  updateSettings({ speed: item.settings.speed === 0 ? item.resumeSpeed : 0 });
 }
 
 function resetSettings() {
-  if (!scene || !layerVisible.radar) return;
-  if (station.value.settings.radius !== station.value.style.radius) barsDirty = true;
-  Object.assign(station.value.settings, station.value.style);
-  queueEdit(station.value);
+  const item = station.value;
+  const { speed, radius } = item.style;
+  if (updateSettings({ speed, radius })) item.resumeSpeed = speed || radarStyle.speed;
 }
 
 function formatSpeed(value: number) {
@@ -217,8 +225,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   observer?.disconnect();
-  if (editFrame !== undefined) cancelAnimationFrame(editFrame);
-  pending.clear();
+  if (barFrame !== undefined) cancelAnimationFrame(barFrame);
   scene?.destroy();
   scene = undefined;
 });
@@ -302,7 +309,14 @@ onBeforeUnmount(() => {
           </header>
           <p v-if="!layerVisible.radar" class="edit-status">开启雷达图层后可调整参数</p>
           <fieldset :disabled="!layerVisible.radar || sceneFailed" aria-labelledby="inspector-title">
-            <div class="control-label"><label for="scan-speed">扫描速度</label><output for="scan-speed">{{ formatSpeed(station.settings.speed) }} 圈/秒</output></div>
+            <div class="control-label scan-control">
+              <label for="scan-speed">扫描速度</label>
+              <output for="scan-speed">{{ formatSpeed(station.settings.speed) }} 圈/秒</output>
+              <button class="scan-toggle" type="button" aria-controls="scan-speed globe" @click="toggleScan"
+                :aria-label="(station.settings.speed === 0 ? '继续' : '暂停') + station.name + '扫描'">
+                {{ station.settings.speed === 0 ? '继续扫描' : '暂停扫描' }}
+              </button>
+            </div>
             <input id="scan-speed" type="range" min="-1" max="1" step="0.01" :value="station.settings.speed"
               :aria-valuetext="formatSpeed(station.settings.speed) + ' 圈/秒'" @input="editSetting('speed', $event)">
             <div class="speed-scale" aria-hidden="true"><span>反向</span><span>0</span><span>正向</span></div>

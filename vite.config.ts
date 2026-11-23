@@ -58,7 +58,7 @@ export default ({ mode }) => {
       },
     },
     plugins: [
-      dts({
+      mode === "lib" && dts({
         outputDir: ["dist"],
       }),
       vue(),

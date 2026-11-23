@@ -20,15 +20,20 @@
 + 💪 逻辑统一:同时支持3D地球2D地图,一份参数3D和2D的一致的样式和动画。
 + 城市雷达（1.7.0 起）支持在经纬度位置绘制距离环和旋转扇面，可按站点设置颜色、覆盖半径和扫描速度。
 
-用 `npm run dev` 打开本地城市雷达。点击站点列表或地球上的雷达可以选中城市，单独调整扫描速度与覆盖半径。在已有图表实例上可以这样添加站点。
+用 `npm run dev` 打开城市雷达演示，在列表或地球上选中上海，点击「暂停扫描」。调整覆盖半径后点击「继续扫描」，扇面从暂停角度按原速度继续。负速度可使扇面反向扫描。
 
 ```js
 await chart.setData("radar", [
   { id: "shanghai", lon: 121.47, lat: 31.23, style: { radius: 8, speed: 0.25 } },
 ]);
-chart.setLayerVisible("radar", false); // 暂时隐藏，保留站点和扫描进度
-chart.setLayerVisible("radar", true);
+const selectedId = "shanghai";
+chart.updateRadarStyle(selectedId, { speed: 0 });    // 暂停时调用
+chart.updateRadarStyle(selectedId, { speed: 0.25 }); // 继续时调用，每 4 秒一圈
 ```
+
+v1.8.0 新增同步方法 `chart.updateRadarStyle(id: string | number, patch: Partial<RadarStyle>): boolean`。它更新所有标识匹配的站点，显式 ID 按字符串比较，省略 ID 时使用 `${lon}-${lat}`。可传入颜色字符串 `color`、半径 `radius`（大于 0 且不超过 45）、有符号的每秒圈数 `speed` 或不透明度 `opacity`（自动限制在 0 到 1）。每次调整都保留当前扫描角度。
+
+成功返回 `true`。站点不存在、图表已销毁或任一数值无效时，返回 `false`。要临时隐藏整层并保持扫描时间推进，可调用 `chart.setLayerVisible("radar", false)`。见[实例方法](https://globestream3d.netlify.app/reference/methods/#updateradarstyle)。
 
 ## 📄 在线预览及文档
 

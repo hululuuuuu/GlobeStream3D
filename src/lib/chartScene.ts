@@ -1,5 +1,5 @@
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
-import { Options, SetData } from "@/lib/interface";
+import { Options, RadarStyle, SetData } from "@/lib/interface";
 import OperateView from "@/lib/operateView";
 import {
   AmbientLight,
@@ -17,6 +17,7 @@ import {
   Vector3,
   WebGLRenderer,
 } from "three";
+import { updateRadarStyle } from "@/lib/figures/Radar";
 import CreateEarth from "@/lib/figures/Earth";
 import MapShape from "@/lib/figures/MapShape";
 import sprite from "@/lib/figures/Sprite";
@@ -435,6 +436,11 @@ export default class ChartScene {
   addData = async <K extends keyof SetData>(type: K, data: SetData[K]) => {
     await this._OperateView.addData(type, data, this.mainContainer);
   };
+
+  /** Change matching radar stations in place, preserving their current sweep angle. */
+  updateRadarStyle(id: string | number, patch: Partial<RadarStyle>): boolean {
+    return !this._store.animations.disposed && updateRadarStyle(this.mainContainer, id, patch);
+  }
 
   /** Toggle drawing and picking for a data layer while its animation clock keeps running. */
   setLayerVisible(type: keyof SetData, visible: boolean): void {

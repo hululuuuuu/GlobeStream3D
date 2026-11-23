@@ -225,6 +225,16 @@ h2 { font-size: 16px; font-weight: 600; letter-spacing: .04em; }
 .inspector fieldset:disabled { opacity: .5; }
 .control-label, .edit-status { color: #c4d0d6; font-size: 13px; }
 .control-label output { color: var(--station-color); font: 12px var(--mono); }
+.scan-control { flex-wrap: wrap; gap: 4px 8px; }
+.scan-control output { margin-inline-start: auto; }
+.scan-toggle {
+  padding: 4px 8px;
+  border: 1px solid #374851;
+  border-radius: 5px;
+  background: transparent;
+  font-size: 12px;
+}
+.scan-toggle:enabled:hover { border-color: #738b93; }
 .inspector input[type="range"] { display: block; width: 100%; height: 24px; margin: 0; accent-color: var(--station-color); cursor: pointer; }
 .inspector input:disabled { cursor: default; }
 .speed-scale { margin: -2px 0 12px; color: var(--muted); font: 11px var(--mono); }

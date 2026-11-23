@@ -15,7 +15,22 @@ Building 3D large screen earth visualization based on three.js, essential for ho
 + 📦  **Out of the box:** Simple and fast integration, basically zero cost to get started.
 + 🛡 **Typescript development:** Provide complete type definition files.
 + 🎨 **Highly scalable:** With rich style configuration and API, the function can be extended as you like.
-+ **City radar (since 1.7.0)** overlays range rings and a rotating sweep at geographic coordinates in 2D and 3D. Run `npm run dev`, select a city in the station list or on the globe, and adjust its scan speed and coverage radius. Use `chart.setData("radar", [{ lon: 121.47, lat: 31.23 }])` to add a station to a chart. Toggle it with `chart.setLayerVisible("radar", false)` and `chart.setLayerVisible("radar", true)` to keep the stations and their scan phase.
++ **City radar (since 1.7.0)** overlays range rings and a rotating sweep at geographic coordinates in 2D and 3D.
+
+Run `npm run dev`, select Shanghai in the station list or on the globe, and click **暂停扫描** (Pause scan). Adjust the radius, then click **继续扫描** (Resume scan). The sweep continues from the frozen angle at its previous speed. A negative speed reverses the sweep.
+
+```js
+await chart.setData("radar", [
+  { id: "shanghai", lon: 121.47, lat: 31.23, style: { radius: 8, speed: 0.25 } },
+]);
+const selectedId = "shanghai";
+chart.updateRadarStyle(selectedId, { speed: 0 });    // On pause
+chart.updateRadarStyle(selectedId, { speed: 0.25 }); // On resume, one turn every four seconds
+```
+
+Since v1.8.0, `chart.updateRadarStyle(id: string | number, patch: Partial<RadarStyle>): boolean` synchronously updates every matching station. Explicit IDs are compared as strings. Stations with no explicit ID use `${lon}-${lat}`. The patch accepts a `color` string, a `radius` greater than 0 and at most 45, a signed `speed` in turns per second, and an `opacity` clamped to the range 0–1. Every adjustment preserves the current sweep angle.
+
+The method returns `true` on success and `false` if no station matches, the chart has been destroyed, or a numeric field is invalid. To hide the whole layer while its scans continue, call `chart.setLayerVisible("radar", false)`. [Method reference (Chinese)](https://globestream3d.netlify.app/reference/methods/#updateradarstyle)
 
 
 
