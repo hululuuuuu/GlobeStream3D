@@ -2,7 +2,7 @@
 
 # GlobeStream3D
 
-The Chinese documentation includes map previews, an installation guide, examples, and API references. [Open the documentation](https://globestream3d.netlify.app/)
+The documentation homepage has three base layers in both 2D and 3D: flight lines, station ripples, and value bars. In **3D 地球** (3D globe), select the optional **装饰轨道** (Decorative orbits) checkbox to show two demo circles. [Open the map preview](https://globestream3d.netlify.app/#map-preview)
 
 ### Please let us know if you encounter any [issues](https://github.com/hululuuuuu/GlobeStream3D/issues) while using our project. Your feedback is valuable and will help us improve it.If you find our project helpful, please give us a star to support us. Thank you for support！！！
 ## Introduction
@@ -32,7 +32,22 @@ Since v1.8.0, `chart.updateRadarStyle(id: string | number, patch: Partial<RadarS
 
 The method returns `true` on success and `false` if no station matches, the chart has been destroyed, or a numeric field is invalid. To hide the whole layer while its scans continue, call `chart.setLayerVisible("radar", false)`. [Method reference (Chinese)](https://globestream3d.netlify.app/reference/methods/#updateradarstyle)
 
+### Decorative 3D orbits (v1.9.0)
 
+The `orbit` layer uses geometric parameters for decorative animation on the globe. This orbit is inclined at 55°, sits `0.2 × R` above the surface, and completes a turn every 18 seconds.
+
+```js
+await chart.setData("orbit", [{ id: 7, inclination: 55, altitude: 0.2, period: 18 }]);
+await chart.addData("orbit", [{ id: "equator" }]);
+chart.setOrbitState(7, { paused: true });          // Freeze at the current position
+chart.setOrbitState("equator", { visible: false }); // Keep moving while hidden
+```
+
+The exported `OrbitData` type requires a string or finite numeric `id`. Defaults are `inclination: 0` (0–180°), `altitude: 0.12` (a positive fraction of the globe radius above the surface), `period: 12` (positive seconds per turn), `phase: 0` (any finite angle in degrees), and `color: "#88cfff"` (a string).
+
+`addData` skips duplicate stringified IDs. `setData` replaces the whole layer. Both methods reject invalid new data and nonempty orbit arrays in 2D, preserving the existing layer.
+
+`setOrbitState` returns a boolean synchronously, with `false` for a missing or removed ID or a destroyed chart. Hiding the layer with `chart.setLayerVisible("orbit", false)` and showing it again preserves each orbit’s visibility and pause state. Remove a numeric ID with `chart.remove("orbit", ["7"])`. [Orbit example (Chinese)](https://globestream3d.netlify.app/reference/example/#装饰轨道)
 
 ## 📦 Install
 

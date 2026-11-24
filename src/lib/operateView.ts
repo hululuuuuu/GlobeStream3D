@@ -10,6 +10,7 @@ import { Wall } from "@/lib/figures/Wall";
 import TextMark from "@/lib/figures/Text";
 import MapStreamLine from "@/lib/figures/MapStreamLine";
 import Bar from "@/lib/figures/Bar";
+import Orbit from "@/lib/figures/Orbit";
 import { createRadar } from "@/lib/figures/Radar";
 import { disposeObjectResources } from "@/lib/utils/dispose";
 
@@ -30,6 +31,16 @@ type LayerBuilders = {
 };
 
 const builders: LayerBuilders = {
+  orbit: (store, data, groups, reserveId) => {
+    if (store.mode !== "3d") throw new Error("Orbit layers require 3D mode");
+    if (!Array.isArray(data)) throw new TypeError("Orbit data must be an array");
+    for (const orbit of data) {
+      if (typeof orbit.id !== "string" && !Number.isFinite(orbit.id)) {
+        throw new TypeError("Orbit id must be a string or a finite number");
+      }
+      if (reserveId(String(orbit.id))) groups.push(new Orbit(store.config.R, orbit));
+    }
+  },
   flyLine: (store, data, groups, reserveId) => {
     data.forEach((item) => {
       const { from, to } = item;
@@ -137,6 +148,7 @@ const builders: LayerBuilders = {
 export default class OperateView {
   private readonly hiddenLayers = new Set<keyof SetData>();
   private readonly layerIds: Partial<Record<keyof SetData, Set<string>>> = {
+    orbit: new Set(),
     point: new Set(),
     flyLine: new Set(),
   };
@@ -195,7 +207,7 @@ export default class OperateView {
     const selected = ids === "removeAll" ? undefined : new Set(ids);
     const removed = selected ? groups.filter(group => selected.has(group.name)) : groups;
     this.discardGroups(removed);
-    if (type === "point" || type === "flyLine") {
+    if (type === "point" || type === "flyLine" || type === "orbit") {
       for (const group of removed) this.layerIds[type]?.delete(group.name);
     }
   }

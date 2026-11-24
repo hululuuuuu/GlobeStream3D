@@ -1,3 +1,3 @@
 import earthFlyLine from "./lib/index";
-export type { RadarStation, RadarStyle } from "./lib/interface";
+export type { OrbitData, OrbitState, RadarStation, RadarStyle } from "./lib/interface";
 export default earthFlyLine;

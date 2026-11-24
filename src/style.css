@@ -164,6 +164,16 @@ h1 { font-size: clamp(32px, 3.5vw, 50px); font-weight: 550; letter-spacing: .025
 .legend-toggle[aria-pressed="false"] .key-line { border-top-style: dashed; opacity: .55; }
 .drag-hint { margin-left: auto; color: var(--muted); }
 
+.orbit-panel { flex-basis: 100%; min-width: 0; padding-block: 10px 5px; border-top: 1px solid var(--line); }
+.orbit-panel h2 { margin-bottom: 6px; color: var(--muted); font-size: 12px; }
+.orbit-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 255px), 1fr)); gap: 8px 24px; }
+.orbit-list li { display: flex; gap: 6px; align-items: center; }
+.orbit-info { margin-right: auto; }
+.orbit-info strong { display: flex; align-items: center; gap: 6px; color: #e1eaed; font-size: 13px; }
+.orbit-info i { width: 15px; border-top: 2px solid; }
+.orbit-info span { color: var(--muted); font-size: 12px; }
+.orbit-hidden .orbit-info i { border-top-style: dashed; opacity: .6; }
+
 .details { padding-top: 6px; }
 .section-heading { gap: 12px; padding-bottom: 14px; border-bottom: 1px solid var(--line); }
 h2 { font-size: 16px; font-weight: 600; letter-spacing: .04em; }

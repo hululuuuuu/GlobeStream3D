@@ -8,6 +8,11 @@ import chinaBoundary from "./map/ChinaAdditionalRouteMap.geojson?raw";
 
 const globeRadius = 174;
 const radarStyle = { color: "#50f5cc", radius: 10, speed: 0.25 };
+const orbits = [
+  { name: "青蓝轨道", id: "demo-cyan", inclination: 28, altitude: 0.12, period: 18, phase: 35, color: "#69d6ea" },
+  { name: "珊瑚轨道", id: "demo-coral", inclination: 72, altitude: 0.23, period: 31, phase: 20, color: "#f19c88" },
+].map(({ name, ...path }) => ({ name, path, state: reactive({ visible: true, paused: false }) }));
+const outerRadius = globeRadius * (1 + Math.max(...orbits.map(({ path }) => path.altitude)));
 const stations = [
   {
     name: "上海",
@@ -107,6 +112,11 @@ function toggleLayer(type: keyof typeof layerVisible) {
   if (type === "bar" && visible) refreshBars();
 }
 
+function toggleOrbit(orbit: typeof orbits[number], key: "visible" | "paused") {
+  const next = !orbit.state[key];
+  if (scene?.setOrbitState(orbit.path.id, { [key]: next })) orbit.state[key] = next;
+}
+
 function centerView(lon: number, lat: number) {
   if (!scene || !("reset" in scene.controls)) return;
   scene.controls.reset();
@@ -149,9 +159,9 @@ function fitGlobe() {
   const camera = scene.camera;
   if (!(camera instanceof OrthographicCamera)) return;
 
-  // 以容器短边为基准，竖屏和横屏都能容纳完整球体。
+  // 在默认缩放下，让最外圈轨道在容器短边也留有余量。
   const aspect = width / height;
-  const halfHeight = 200 * Math.max(1, 1 / aspect);
+  const halfHeight = outerRadius * 1.07 * Math.max(1, 1 / aspect);
   camera.top = halfHeight;
   camera.bottom = -halfHeight;
   camera.right = halfHeight * aspect;
@@ -221,6 +231,7 @@ onMounted(() => {
     style: { color: "#e2edf1", fontSize: 25 },
   })));
   scene.setData("radar", stations.map(radarData));
+  scene.setData("orbit", orbits.map(({ path }) => path));
 });
 
 onBeforeUnmount(() => {
@@ -277,6 +288,25 @@ onBeforeUnmount(() => {
           </button>
           <span class="drag-hint">拖动旋转 · 滚轮或双指缩放</span>
           <span v-if="layerVisible.bar" class="bar-units">柱高按各站覆盖半径（°）等比显示</span>
+          <section class="orbit-panel" aria-labelledby="orbit-title">
+            <h2 id="orbit-title">演示轨道</h2>
+            <ul class="orbit-list">
+              <li v-for="orbit in orbits" :key="orbit.path.id" :class="{ 'orbit-hidden': !orbit.state.visible }">
+                <div class="orbit-info">
+                  <strong><i aria-hidden="true" :style="{ color: orbit.path.color }"></i>{{ orbit.name }}</strong>
+                  <span>倾角 {{ orbit.path.inclination }}° · {{ orbit.path.period }} 秒/圈</span>
+                </div>
+                <button type="button" class="legend-toggle" aria-controls="globe" :disabled="sceneFailed"
+                  :aria-label="(orbit.state.visible ? '隐藏' : '显示') + orbit.name" @click="toggleOrbit(orbit, 'visible')">
+                  {{ orbit.state.visible ? '隐藏' : '显示' }}
+                </button>
+                <button type="button" class="legend-toggle" aria-controls="globe" :disabled="sceneFailed"
+                  :aria-label="(orbit.state.paused ? '继续' : '暂停') + orbit.name" @click="toggleOrbit(orbit, 'paused')">
+                  {{ orbit.state.paused ? '继续' : '暂停' }}
+                </button>
+              </li>
+            </ul>
+          </section>
         </figcaption>
       </figure>
 

@@ -308,7 +308,24 @@ export interface MapStreamStyle {
   speed: number;
   splitLine: number;
 }
+export interface OrbitData {
+  id: string | number;
+  /** Degrees from the equatorial plane, from 0 to 180. */
+  inclination?: number;
+  /** Height above the surface as a fraction of the globe radius. */
+  altitude?: number;
+  /** Seconds per revolution. */
+  period?: number;
+  /** Initial angle along the circle, in degrees. */
+  phase?: number;
+  color?: Color;
+}
+export interface OrbitState {
+  visible?: boolean;
+  paused?: boolean;
+}
 export interface SetData {
+  orbit: OrbitData[];
   radar: RadarStation[];
   flyLine: FlyLineData[];
   point: Coordinates[];

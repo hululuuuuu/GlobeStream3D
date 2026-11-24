@@ -1,5 +1,5 @@
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
-import { Options, RadarStyle, SetData } from "@/lib/interface";
+import { Options, OrbitState, RadarStyle, SetData } from "@/lib/interface";
 import OperateView from "@/lib/operateView";
 import {
   AmbientLight,
@@ -18,6 +18,7 @@ import {
   WebGLRenderer,
 } from "three";
 import { updateRadarStyle } from "@/lib/figures/Radar";
+import Orbit from "@/lib/figures/Orbit";
 import CreateEarth from "@/lib/figures/Earth";
 import MapShape from "@/lib/figures/MapShape";
 import sprite from "@/lib/figures/Sprite";
@@ -440,6 +441,18 @@ export default class ChartScene {
   /** Change matching radar stations in place, preserving their current sweep angle. */
   updateRadarStyle(id: string | number, patch: Partial<RadarStyle>): boolean {
     return !this._store.animations.disposed && updateRadarStyle(this.mainContainer, id, patch);
+  }
+
+  /** Change one orbit's visibility or pause its marker at its current position. */
+  setOrbitState(id: string | number, state: OrbitState): boolean {
+    if (this._store.animations.disposed || !state || typeof state !== "object" ||
+        (state.visible !== undefined && typeof state.visible !== "boolean") ||
+        (state.paused !== undefined && typeof state.paused !== "boolean")) return false;
+    const name = String(id);
+    const orbit = this.mainContainer.children.find((child): child is Orbit => child instanceof Orbit && child.name === name);
+    if (!orbit) return false;
+    orbit.setState(state);
+    return true;
   }
 
   /** Toggle drawing and picking for a data layer while its animation clock keeps running. */

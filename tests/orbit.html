@@ -1,0 +1,100 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>3D orbit layer integration tests</title>
+<link rel="icon" href="data:,">
+<div id="map" style="width:400px;height:400px"></div>
+<pre id="result">Running…</pre>
+<script type="module">
+  import earth from "../src/entry.ts";
+
+  const assert = (ok, message) => { if (!ok) throw new Error(message); };
+  async function rejects(action, message) {
+    try { await action(); } catch { return; }
+    throw new Error(message);
+  }
+  earth.registerMap("orbit-test", { type: "FeatureCollection", features: [] });
+  const chartFor = mode => earth.init({
+    dom: document.querySelector("#map"), map: "orbit-test", mode, autoRotate: false,
+    config: { R: 100, spriteStyle: { show: false }, pixelRatio: 1 },
+  });
+  async function run() {
+    let now = 1000;
+    const original = Object.getOwnPropertyDescriptor(performance, "now");
+    Object.defineProperty(performance, "now", { configurable: true, value: () => now });
+    const chart = chartFor("3d");
+    const groups = () => chart.mainContainer.children.filter(g => g.userData.figureType === "orbit");
+    const render = () => chart.renderer.render(chart.scene, chart.camera);
+    const point = mesh => mesh.getWorldPosition(mesh.position.clone());
+    const close = (a, b) => a.distanceTo(b) < 1e-5;
+    const visible = mesh => { for (let o = mesh; o; o = o.parent) if (!o.visible) return false; return true; };
+    try {
+      const a = { id: 0, altitude: 0.1, inclination: 0, period: 4 };
+      const b = { id: "steep", inclination: 65, period: 8, altitude: 0.2 };
+      await chart.setData("orbit", [a, b]);
+      assert(groups().length === 2, "two independent orbits mounted");
+      const [first, second] = groups();
+      const markerA = first.getObjectByProperty("isMesh", true);
+      const markerB = second.getObjectByProperty("isMesh", true);
+      assert(markerA && markerB, "visible marker per orbit");
+      render();
+      const start = point(markerA), startB = point(markerB);
+      assert(Math.abs(start.length() - 110) < 1e-5 && Math.abs(start.y) < 1e-5, "altitude above equator");
+      assert(Math.abs(startB.length() - 120) < 1e-5 && Math.abs(startB.y) > 50, "tilted orbit");
+      now += 1000;
+      render();
+      const quarter = point(markerA);
+      assert(Math.abs(quarter.dot(start)) < 1e-3, "quarter cycle in one second");
+      assert(chart.setOrbitState(0, { paused: true }), "pause by numeric ID");
+      assert(chart.setOrbitState("steep", { visible: false }), "hide independent orbit");
+      assert(visible(markerA) && !visible(markerB), "per-orbit visibility");
+      now += 1000;
+      render();
+      assert(close(point(markerA), quarter), "paused marker holds position");
+      chart.setLayerVisible("orbit", false);
+      chart.setLayerVisible("orbit", true);
+      assert(!visible(markerB), "per-orbit visibility survives whole-layer toggles");
+      chart.setOrbitState("steep", { visible: true });
+      render();
+      assert(Math.abs(point(markerB).dot(startB)) < 1e-3, "hidden orbit clock continues");
+      assert(chart.setOrbitState("0", { paused: false }), "resume by string ID");
+      render();
+      assert(close(point(markerA), quarter), "resume from paused position");
+      now += 1000;
+      render();
+      assert(close(point(markerA), start.clone().negate()), "resumed cycle continues");
+      await chart.addData("orbit", [{ ...a, id: "0" }]);
+      assert(groups().length === 2, "duplicate ID is ignored");
+      await rejects(() => chart.setData("orbit", [b, { id: "bad", period: 0 }]), "invalid replacement must reject");
+      for (const invalid of ["", [{ period: 5 }], [{ id: "bad", inclination: 181 }],
+          [{ id: "bad", altitude: Number.MAX_VALUE }], [{ id: "bad", phase: NaN }]]) {
+        await rejects(() => chart.setData("orbit", invalid), "invalid input must reject: " + JSON.stringify(invalid));
+      }
+      assert(groups()[0] === first && groups()[1] === second, "failed replacement keeps existing data");
+      assert(!chart.setOrbitState(0, { visible: false, paused: "no" }) && visible(markerA), "invalid state leaves both flags unchanged");
+      let disposed = 0;
+      first.traverse(o => {
+        if (o.geometry) o.geometry.addEventListener("dispose", () => disposed++);
+        if (o.material) o.material.addEventListener("dispose", () => disposed++);
+      });
+      chart.remove("orbit", ["0"]);
+      assert(disposed === 4 && groups().length === 1 && !chart.setOrbitState(0, { visible: true }), "remove disposes both shapes");
+      await chart.addData("orbit", [a]);
+      assert(groups().length === 2, "removed ID can be reused");
+      await chart.setData("orbit", []);
+      assert(groups().length === 0, "clear layer");
+    } finally {
+      chart.destroy();
+      if (original) Object.defineProperty(performance, "now", original);
+      else delete performance.now;
+    }
+    assert(!chart.setOrbitState(0, { paused: true }), "destroyed scene");
+    const flat = chartFor("2d");
+    try {
+      await rejects(() => flat.addData("orbit", [{ id: "x" }]), "nonempty orbit input in 2D must reject");
+      await flat.setData("orbit", []);
+    } finally { flat.destroy(); }
+  }
+  const result = document.querySelector("#result");
+  try { await run(); result.textContent = "PASS"; }
+  catch (error) { result.textContent = String(error.stack || error); throw error; }
+</script>

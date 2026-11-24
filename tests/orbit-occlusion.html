@@ -1,0 +1,110 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Orbit depth occlusion</title>
+<link rel="icon" href="data:,">
+<div id="map" style="width:512px;height:512px"></div>
+<pre id="result">Running…</pre>
+<pre id="metrics"></pre>
+<script type="module">
+  import earth from "../src/entry.ts";
+  import { Vector3 } from "three";
+
+  const radius = 160;
+  const orbit = { id: "equator", inclination: 0, altitude: 0.12, period: 12, phase: 90, color: "#ff22ff" };
+  const metrics = [];
+  const assert = (ok, message) => { if (!ok) throw new Error(message); };
+  earth.registerMap("orbit-depth", { type: "FeatureCollection", features: [] });
+
+  function checkPose(chart, phase, rotated) {
+    const { mainContainer, camera, renderer, scene } = chart;
+    const globe = mainContainer.getObjectByName("earthMesh");
+    const parts = [];
+    mainContainer.traverse(obj => { if (obj.userData.type === "orbit") parts.push(obj); });
+    const ring = parts.find(obj => obj.isLineLoop);
+    const marker = parts.find(obj => obj.isMesh);
+    assert(ring && marker, "orbit must provide a pickable ring and marker");
+    const ringVisible = ring.visible, markerVisible = marker.visible;
+
+    mainContainer.rotation.x = rotated ? Math.PI + Math.PI / 10 : 0;
+    scene.updateMatrixWorld(true);
+    camera.updateMatrixWorld();
+    const gl = renderer.getContext();
+    const side = 13;
+    // Compute probes from the public phase convention, independently of the rendered geometry.
+    function probe(degrees) {
+      const a = degrees * Math.PI / 180;
+      const p = new Vector3(Math.cos(a), 0, -Math.sin(a)).multiplyScalar(radius * (1 + orbit.altitude));
+      mainContainer.localToWorld(p).project(camera);
+      const x = Math.floor((p.x + 1) * gl.drawingBufferWidth / 2) - (side >> 1);
+      const y = Math.floor((p.y + 1) * gl.drawingBufferHeight / 2) - (side >> 1);
+      assert(x >= 0 && y >= 0 && x + side <= gl.drawingBufferWidth && y + side <= gl.drawingBufferHeight,
+        "orbit probe outside drawing buffer");
+      return [x, y];
+    }
+    // The elevated camera separates both arcs on screen. Both probes are inside the globe silhouette.
+    const probes = [probe(rotated ? 60 : 240), probe(rotated ? 240 : 60), probe(phase)];
+    function capture() {
+      renderer.render(scene, camera);
+      return probes.map(([x, y]) => {
+        const pixels = new Uint8Array(side * side * 4);
+        gl.readPixels(x, y, side, side, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+        return pixels;
+      });
+    }
+    function changed(a, b) {
+      let count = 0;
+      for (let i = 0; i < a.length; i += 4) {
+        const delta = Math.max(Math.abs(a[i] - b[i]), Math.abs(a[i + 1] - b[i + 1]), Math.abs(a[i + 2] - b[i + 2]));
+        if (delta > 8) count++;
+      }
+      return count;
+    }
+    function measure(withGlobe) {
+      globe.visible = withGlobe;
+      ring.visible = marker.visible = false;
+      const baseline = capture();
+      ring.visible = ringVisible;
+      const ringOnly = capture();
+      marker.visible = markerVisible;
+      const both = capture();
+      // Subtract the ring-only render so a ring pixel cannot stand in for a missing marker.
+      return [changed(ringOnly[0], baseline[0]), changed(ringOnly[1], baseline[1]), changed(both[2], ringOnly[2])];
+    }
+    const label = `${rotated ? "rotated" : "initial"} phase ${phase}`;
+    const reference = measure(false);
+    const actual = measure(true);
+    metrics.push(`${label} [front ring, back ring, marker] pixels, globe off [${reference}], on [${actual}]`);
+    assert(reference.every(n => n >= 2), label + " missing unoccluded reference pixels");
+    assert(actual[0] >= 2, label + " front ring disappeared");
+    assert(actual[1] === 0, label + " rear ring leaked through the globe");
+    const markerInFront = rotated ? phase === 90 : phase === 270;
+    assert(markerInFront ? actual[2] >= 2 : actual[2] === 0,
+      label + (markerInFront ? " front marker disappeared" : " rear marker leaked through the globe"));
+  }
+
+  let chart;
+  try {
+    Object.defineProperty(performance, "now", { configurable: true, value: () => 1000 });
+    chart = earth.init({
+      dom: document.querySelector("#map"), map: "orbit-depth", mode: "3d", autoRotate: false,
+      config: { R: radius, pixelRatio: 1, spriteStyle: { show: false },
+        earth: { color: "#243648", material: "MeshBasicMaterial", transparent: false, opacity: 1 } },
+    });
+    chart.camera.position.set(0, 220, 500);
+    chart.camera.lookAt(0, 0, 0);
+    await chart.addData("orbit", [orbit]);
+    for (const phase of [90, 270]) {
+      if (phase === 270) await chart.setData("orbit", [{ ...orbit, phase }]);
+      checkPose(chart, phase, false);
+      checkPose(chart, phase, true);
+    }
+    document.querySelector("#result").textContent = "PASS";
+  } catch (error) {
+    document.querySelector("#result").textContent = String(error.stack || error);
+    throw error;
+  } finally {
+    document.querySelector("#metrics").textContent = metrics.join("\n");
+    chart?.destroy();
+    delete performance.now;
+  }
+</script>
