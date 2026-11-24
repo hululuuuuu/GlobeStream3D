@@ -2,7 +2,7 @@
 
 # GlobeStream3D
 
-The documentation homepage has three base layers in both 2D and 3D: flight lines, station ripples, and value bars. In **3D 地球** (3D globe), select the optional **装饰轨道** (Decorative orbits) checkbox to show two demo circles. [Open the map preview](https://globestream3d.netlify.app/#map-preview)
+The 2D and 3D previews on the documentation homepage share three base layers for flight lines, station ripples, and value bars. Select **3D 地球** (3D globe), then check **装饰轨道** (Decorative orbits) to show two demo circles. This option is off by default. [Open the map preview](https://globestream3d.netlify.app/#map-preview)
 
 ### Please let us know if you encounter any [issues](https://github.com/hululuuuuu/GlobeStream3D/issues) while using our project. Your feedback is valuable and will help us improve it.If you find our project helpful, please give us a star to support us. Thank you for support！！！
 ## Introduction
