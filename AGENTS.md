@@ -29,3 +29,5 @@ npm view earth-flyline dist-tags.latest --registry="$registry"
 ```
 
 交付说明列出 Git 提交、npm 版本和本地包路径。组件功能发布后，配套使用文档同步更新可用版本和示例。
+
+公开文档统一部署到 Netlify。文档仓库的 `netlify.toml` 指定构建命令和发布目录，发布后以 [Netlify 在线文档](https://globestream3d.netlify.app/) 核对本次更新。
